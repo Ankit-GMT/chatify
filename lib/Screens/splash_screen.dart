@@ -1,5 +1,6 @@
-import 'package:chatify/home_screen.dart';
-import 'package:chatify/login_screen.dart';
+import 'package:chatify/Screens/home_screen.dart';
+import 'package:chatify/Screens/login_screen.dart';
+import 'package:chatify/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -38,7 +39,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Image.asset("assets/images/app_logo.png"),
             Text("Chatify",style: GoogleFonts.poppins(
               fontWeight: FontWeight.bold,
-              color: Color(0xffC35E31),
+              color: AppColors.primary,
               fontSize: 32
             ),),
           ],
