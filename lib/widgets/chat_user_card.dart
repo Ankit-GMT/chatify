@@ -4,9 +4,10 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ChatUserCard extends StatefulWidget {
-  final index;
+  final int index;
+  final Function()? onTap;
 
-  const ChatUserCard({super.key, required this.index});
+  const ChatUserCard({super.key, required this.index, required this.onTap});
 
   @override
   State<ChatUserCard> createState() => _ChatUserCardState();
@@ -59,7 +60,7 @@ class _ChatUserCardState extends State<ChatUserCard> {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      onTap: () {},
+      onTap: widget.onTap,
       leading: InkWell(
           onTap: () {},
           child: Badge(

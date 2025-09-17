@@ -1,3 +1,5 @@
+import 'package:chatify/Screens/chat_screen.dart';
+import 'package:chatify/Screens/settings_screen.dart';
 import 'package:chatify/Screens/splash_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:flutter/material.dart';

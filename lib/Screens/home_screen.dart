@@ -1,3 +1,5 @@
+import 'package:chatify/Screens/chat_screen.dart';
+import 'package:chatify/Screens/settings_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/index_controller.dart';
 import 'package:chatify/widgets/chat_user_card.dart';
@@ -127,6 +129,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemBuilder: (context, index) {
                   return ChatUserCard(
                     index: index,
+                    onTap: (){
+                      Get.to(()=> ChatScreen());
+                    },
                   );
                 },
                 separatorBuilder: (BuildContext context, int index) {
@@ -185,7 +190,9 @@ class _HomeScreenState extends State<HomeScreen> {
               endIndent: 22,
             ),
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                Get.to(()=> SettingsScreen());
+              },
               icon: Image.asset("assets/images/bottom_profile.png",scale: 2,),
             ),
           ],

@@ -7,6 +7,7 @@ class AppColors {
 
   // static const Color primary = Colors.black; // Brown (used in your tab)
   // static const Color secondary = Colors.grey;
+  static const Color chatBackground = Color(0xfff0e6e2);
 
   // solid colors
   static const Color black = Colors.black;
@@ -15,6 +16,8 @@ class AppColors {
 
   // colors with shade
   static const Color botttomGrey = Color(0xffD9D9D9);
+  static const Color settingTile = Color(0xffD9D9D9);
+
 
 
   // Text colors

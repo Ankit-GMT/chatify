@@ -36,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           spacing: Get.height *0.02,
           children: [
-            Image.asset("assets/images/app_logo.png"),
+            Image.asset("assets/images/app_logo.png",scale: 4,),
             Text("Chatify",style: GoogleFonts.poppins(
               fontWeight: FontWeight.bold,
               color: AppColors.primary,
