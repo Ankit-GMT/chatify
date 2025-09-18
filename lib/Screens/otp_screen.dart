@@ -20,18 +20,20 @@ class _OtpScreenState extends State<OtpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 IconButton(
+                  color: AppColors.iconGrey,
                   style: ButtonStyle(
+                    backgroundColor: WidgetStatePropertyAll(AppColors.white),
                     shape: WidgetStatePropertyAll(
                       RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(color: Colors.grey.shade100)),
+                          side: BorderSide(color: Colors.grey.shade200)),
                     ),
                   ),
                   onPressed: () {
@@ -66,7 +68,6 @@ class _OtpScreenState extends State<OtpScreen> {
                   TextSpan(
                     text: "Didn't receive code ?  ",
                     style: GoogleFonts.poppins(
-                      color: Color(0xff383838),
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -88,7 +89,7 @@ class _OtpScreenState extends State<OtpScreen> {
               child: PinCodeTextField(
                 appContext: context,
                 length: 4,
-                // number of digits
+                textStyle: TextStyle(color: Colors.black),
                 onChanged: (value) {
                   // otpCode = value;
                 },
@@ -150,6 +151,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   child: Text(
                     "Verify",
                     style: GoogleFonts.poppins(
+                      color: AppColors.black,
                         fontSize: 16, fontWeight: FontWeight.w400),
                   ),
                 ),

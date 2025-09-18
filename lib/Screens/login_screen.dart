@@ -1,8 +1,6 @@
 import 'package:chatify/Screens/otp_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
-import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
@@ -24,14 +22,16 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       // backgroundColor: Colors.white,
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 IconButton(
+                  color: AppColors.iconGrey,
                   style: ButtonStyle(
+                    backgroundColor: WidgetStatePropertyAll(AppColors.white),
                     shape: WidgetStatePropertyAll(
                       RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -93,14 +93,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   initialCountryCode: 'IN',
                   autofocus: true,
                   cursorWidth: 1,
-
+                  dropdownTextStyle: TextStyle(
+                    color: AppColors.black.withAlpha(180),
+                    fontWeight: FontWeight.bold
+                  ),
+                  style: TextStyle(color: AppColors.black),
+                  dropdownIcon: Icon(Icons.arrow_drop_down,color: AppColors.black.withAlpha(180),),
                   decoration: InputDecoration(
                       fillColor: Colors.white,
                       filled: true,
                       hintText: "9876543210",
                       hintStyle: GoogleFonts.poppins(color: AppColors.grey),
-                      contentPadding: EdgeInsets.symmetric(
-                          vertical: 10),
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
                       counterText: "",
                       border: InputBorder.none),
                   languageCode: "en",
@@ -138,10 +142,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(
                     "Continue",
                     style: GoogleFonts.poppins(
+                      color: AppColors.black,
                         fontSize: 16, fontWeight: FontWeight.w400),
                   ),
                 ),
               ),
+            ),
+            SizedBox(
+              height: Get.height * 0.04,
             ),
           ],
         ),

@@ -1,4 +1,5 @@
 import 'package:chatify/Screens/chat_screen.dart';
+import 'package:chatify/Screens/group_profile_screen.dart';
 import 'package:chatify/Screens/settings_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/index_controller.dart';
@@ -23,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final List<String> tabList = ["All Chat", "Groups", "Contacts"];
     return Scaffold(
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 30),
         child: Column(
@@ -37,14 +38,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontSize: 24, fontWeight: FontWeight.w600),
                 ),
                 IconButton(
+                  color: AppColors.iconGrey,
                   style: ButtonStyle(
+                    backgroundColor: WidgetStatePropertyAll(AppColors.white),
                     shape: WidgetStatePropertyAll(
                       RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                           side: BorderSide(color: Colors.grey.shade200)),
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Get.to(()=> GroupProfileScreen());
+                  },
                   icon: Image.asset(
                     "assets/images/notification_logo.png",
                     scale: 4,
@@ -58,15 +63,16 @@ class _HomeScreenState extends State<HomeScreen> {
             SearchBar(
               backgroundColor: WidgetStatePropertyAll(Color(0xfff4f4f4)),
               padding: WidgetStatePropertyAll(
-                EdgeInsets.symmetric(horizontal: 15),
+                EdgeInsets.symmetric(horizontal: 10),
               ),
+              textStyle: WidgetStatePropertyAll(TextStyle(color: AppColors.black),),
               leading: Icon(
                 CupertinoIcons.search,
                 color: Colors.grey.shade500,
               ),
               hintText: "Search",
               hintStyle: WidgetStatePropertyAll(GoogleFonts.poppins(
-                  color: Colors.grey.shade500,
+                  // color: Colors.grey.shade500,
                   fontSize: 16,
                   fontWeight: FontWeight.w400)),
               elevation: WidgetStatePropertyAll(0),
@@ -86,6 +92,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.secondary,
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.secondary,
+                    width: 1,
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -136,7 +146,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 separatorBuilder: (BuildContext context, int index) {
                   return Divider(
-                    color: Colors.grey.shade300,
                     thickness: 1,
                     indent: 15,
                     endIndent: 15,

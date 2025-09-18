@@ -1,3 +1,4 @@
+import 'package:chatify/Screens/profile_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/models/message.dart';
 import 'package:chatify/widgets/message_card.dart';
@@ -10,7 +11,7 @@ class ChatScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.chatBackground,
+      // backgroundColor: AppColors.chatBackground,
       appBar: AppBar(
         toolbarHeight: 85,
         elevation: 0,
@@ -30,10 +31,15 @@ class ChatScreen extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 25,
-                    backgroundImage: NetworkImage(
-                        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d"),
+                  InkWell(
+                    onTap: () {
+                      Get.to(()=> ProfileScreen());
+                    },
+                    child: CircleAvatar(
+                      radius: 25,
+                      backgroundImage: NetworkImage(
+                          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d"),
+                    ),
                   ),
                   SizedBox(
                     width: Get.width * 0.04,
@@ -45,7 +51,7 @@ class ChatScreen extends StatelessWidget {
                       SizedBox(
                         width: Get.width*0.25,
                         child: Text(
-                          "Ankit Patel djhjhhd jhjdh",
+                          "Ankit Patel",
                           maxLines: 1,
                           style: TextStyle(
                               fontWeight: FontWeight.w500,

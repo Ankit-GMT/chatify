@@ -19,7 +19,7 @@ class MessageCard extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             margin: EdgeInsets.symmetric(vertical: Get.height * .01),
             decoration: BoxDecoration(
-              color: isMe ? AppColors.primary : AppColors.black,
+              color: isMe ? AppColors.primary : Get.isDarkMode ? AppColors.white.withAlpha(50): AppColors.black,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(

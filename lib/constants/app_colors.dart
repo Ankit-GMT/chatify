@@ -17,6 +17,7 @@ class AppColors {
   // colors with shade
   static const Color botttomGrey = Color(0xffD9D9D9);
   static const Color settingTile = Color(0xffD9D9D9);
+  static const Color iconGrey = Color(0xff515151);
 
 
 

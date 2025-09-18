@@ -15,71 +15,35 @@ class SettingsScreen extends StatelessWidget {
           spacing: 20,
           children: [
             SizedBox(height: Get.height * 0.01),
-            Container(
-              height: 85,
-              // padding: EdgeInsets.symmetric(horizontal: Get.width * 0.06),
-              decoration: BoxDecoration(
-                  // color: Color(0xff2A2A2A),
-                  borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              )),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(onPressed: (){
-                        Get.back();
-                      }, icon: Icon(Icons.arrow_back),),
-                      CircleAvatar(
-                        radius: 25,
-                        backgroundImage: NetworkImage(
-                            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d"),
-                      ),
-                      SizedBox(
-                        width: Get.width * 0.03,
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Ankit Patel",
-                            style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
-                                color: AppColors.black),
-                          ),
-                          Text(
-                            "Online",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w300,
-                              fontSize: 12,
-                              color: AppColors.black.withAlpha(220),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    style: ButtonStyle(
-                      shape: WidgetStatePropertyAll(
-                        RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            side: BorderSide(color: Colors.grey.shade200)),
-                      ),
-                    ),
-                    onPressed: () {},
-                    icon: Image.asset(
-                      "assets/images/notification_logo.png",
-                      scale: 4,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                IconButton(
+                  color: AppColors.iconGrey,
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStatePropertyAll(AppColors.white),
+                    shape: WidgetStatePropertyAll(
+                      RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(color: Colors.grey.shade200)),
                     ),
                   ),
-                ],
-              ),
+                  onPressed: () {
+                    Get.back();
+                  },
+                  icon: Icon(Icons.arrow_left),
+                ),
+                SizedBox(width: Get.width * 0.24),
+                Text(
+                  "Settings",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
+            SizedBox(height: Get.height*0.02,),
             CustomTile(
               title: "Edit Profile",
               image: "assets/images/setting_profile.png",
@@ -115,7 +79,14 @@ class SettingsScreen extends StatelessWidget {
               image: "assets/images/setting_invite.png",
               onTap: () {},
             ),
-            Text("Version 1.0.0",style: TextStyle(fontSize: 14,fontWeight: FontWeight.w500,color: AppColors.black.withAlpha(100)),textAlign: TextAlign.center,),
+            Text(
+              "Version 1.0.0",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

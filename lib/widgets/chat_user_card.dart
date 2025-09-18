@@ -104,7 +104,7 @@ class _ChatUserCardState extends State<ChatUserCard> {
             // width: 34,
             // height: 24,
             decoration: BoxDecoration(
-              color: AppColors.primary.withAlpha(82),
+              color: AppColors.primary.withAlpha(100),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Text(
