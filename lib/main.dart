@@ -1,3 +1,4 @@
+import 'package:chatify/Screens/edit_profile_screen.dart';
 import 'package:chatify/Screens/group_profile_screen.dart';
 import 'package:chatify/Screens/profile_screen.dart';
 import 'package:chatify/Screens/splash_screen.dart';

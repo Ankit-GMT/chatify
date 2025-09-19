@@ -1,24 +1,24 @@
 import 'package:chatify/Screens/otp_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  TextEditingController _mobileController = TextEditingController();
-  String selectedCode = "+91";
-  String? mobileNumber;
-
-  @override
   Widget build(BuildContext context) {
+
+    final authController = Get.put(AuthController());
+
+    TextEditingController _mobileController = TextEditingController();
+
+    String selectedCode = "+91";
+
+    String? mobileNumber;
     return Scaffold(
       // backgroundColor: Colors.white,
       body: Padding(
@@ -94,11 +94,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   autofocus: true,
                   cursorWidth: 1,
                   dropdownTextStyle: TextStyle(
-                    color: AppColors.black.withAlpha(180),
-                    fontWeight: FontWeight.bold
-                  ),
+                      color: AppColors.black.withAlpha(180),
+                      fontWeight: FontWeight.bold),
                   style: TextStyle(color: AppColors.black),
-                  dropdownIcon: Icon(Icons.arrow_drop_down,color: AppColors.black.withAlpha(180),),
+                  dropdownIcon: Icon(
+                    Icons.arrow_drop_down,
+                    color: AppColors.black.withAlpha(180),
+                  ),
                   decoration: InputDecoration(
                       fillColor: Colors.white,
                       filled: true,
@@ -109,10 +111,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: InputBorder.none),
                   languageCode: "en",
                   onChanged: (phone) {
-                    print(phone.completeNumber);
+                    mobileNumber = phone.number.toString();
                   },
                   onCountryChanged: (country) {
-                    print('Country changed to: ' + country.name);
+                    // print('Country changed to: ' + country.name);
                   },
                 ),
               ),
@@ -122,7 +124,10 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             GestureDetector(
               onTap: () {
-                Get.to(() => OtpScreen());
+                print(mobileNumber);
+                if(mobileNumber?.length == 10){
+                  authController.sendOtp(mobileNumber!);
+                }
               },
               child: Container(
                 width: double.infinity,
@@ -139,12 +144,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 child: Center(
-                  child: Text(
-                    "Continue",
-                    style: GoogleFonts.poppins(
-                      color: AppColors.black,
-                        fontSize: 16, fontWeight: FontWeight.w400),
-                  ),
+                  child: authController.isLoading.value
+                      ? CircularProgressIndicator(
+                          color: AppColors.primary,
+                        )
+                      : Text(
+                          "Continue",
+                          style: GoogleFonts.poppins(
+                              color: AppColors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400),
+                        ),
                 ),
               ),
             ),

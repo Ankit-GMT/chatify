@@ -13,29 +13,33 @@ class ProfileScreen extends StatelessWidget {
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 10),
           child: Column(
             spacing: 20,
             children: [
-              SizedBox(height: Get.height * 0.01),
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  IconButton(
-                    color: AppColors.iconGrey,
-                    style: ButtonStyle(
-                      backgroundColor: WidgetStatePropertyAll(AppColors.white),
-                      shape: WidgetStatePropertyAll(
-                        RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            side: BorderSide(color: Colors.grey.shade200)),
-                      ),
-                    ),
-                    onPressed: () {
+                  GestureDetector(
+                    onTap: () {
                       Get.back();
                     },
-                    icon: Icon(Icons.arrow_left),
-                  ),
+                      child: Image.asset("assets/images/back_icon.png",scale: 3,))
+                  // IconButton(
+                  //   color: AppColors.iconGrey,
+                  //   style: ButtonStyle(
+                  //     backgroundColor: WidgetStatePropertyAll(AppColors.white),
+                  //     shape: WidgetStatePropertyAll(
+                  //       RoundedRectangleBorder(
+                  //           borderRadius: BorderRadius.circular(20),
+                  //           side: BorderSide(color: Colors.grey.shade200)),
+                  //     ),
+                  //   ),
+                  //   onPressed: () {
+                  //     Get.back();
+                  //   },
+                  //   icon: Icon(Icons.arrow_left),
+                  // ),
                 ],
               ),
               CircleAvatar(

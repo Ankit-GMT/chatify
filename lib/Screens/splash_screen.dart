@@ -1,4 +1,4 @@
-import 'package:chatify/Screens/home_screen.dart';
+import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/Screens/login_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:flutter/material.dart';

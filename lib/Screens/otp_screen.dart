@@ -1,23 +1,20 @@
-import 'package:chatify/Screens/home_screen.dart';
+import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
-import 'package:country_code_picker/country_code_picker.dart';
+import 'package:chatify/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
-class OtpScreen extends StatefulWidget {
+class OtpScreen extends StatelessWidget {
   const OtpScreen({super.key});
 
-  @override
-  State<OtpScreen> createState() => _OtpScreenState();
-}
 
-class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
+    final authController = Get.put(AuthController());
+
+    String otpCode = "";
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
@@ -91,7 +88,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 length: 4,
                 textStyle: TextStyle(color: Colors.black),
                 onChanged: (value) {
-                  // otpCode = value;
+                  otpCode = value;
                 },
                 onCompleted: (value) {
                   print("OTP Entered: $value");
@@ -131,7 +128,7 @@ class _OtpScreenState extends State<OtpScreen> {
             ),
             GestureDetector(
               onTap: () {
-                Get.to(() => HomeScreen());
+                authController.verifyOtp(otpCode);
               },
               child: Container(
                 width: double.infinity,
@@ -157,6 +154,10 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
               ),
             ),
+            SizedBox(
+              height: Get.height*0.1,
+            ),
+            Obx(() => Text("${authController.otp}",style: TextStyle(fontSize: 18,color: AppColors.primary),),)
           ],
         ),
       ),
