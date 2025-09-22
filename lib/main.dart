@@ -1,12 +1,11 @@
-import 'package:chatify/Screens/edit_profile_screen.dart';
-import 'package:chatify/Screens/group_profile_screen.dart';
-import 'package:chatify/Screens/profile_screen.dart';
 import 'package:chatify/Screens/splash_screen.dart';
 import 'package:chatify/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 
-void main() {
+void main() async{
+  await GetStorage.init();
   runApp(const MyApp());
 }
 

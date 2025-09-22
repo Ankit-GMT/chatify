@@ -1,4 +1,3 @@
-import 'package:chatify/Screens/otp_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
@@ -28,19 +27,19 @@ class LoginScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                IconButton(
-                  color: AppColors.iconGrey,
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStatePropertyAll(AppColors.white),
-                    shape: WidgetStatePropertyAll(
-                      RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(color: Colors.grey.shade200)),
-                    ),
-                  ),
-                  onPressed: () {},
-                  icon: Icon(Icons.arrow_left),
-                ),
+                // IconButton(
+                //   color: AppColors.iconGrey,
+                //   style: ButtonStyle(
+                //     backgroundColor: WidgetStatePropertyAll(AppColors.white),
+                //     shape: WidgetStatePropertyAll(
+                //       RoundedRectangleBorder(
+                //           borderRadius: BorderRadius.circular(20),
+                //           side: BorderSide(color: Colors.grey.shade200)),
+                //     ),
+                //   ),
+                //   onPressed: () {},
+                //   icon: Icon(Icons.arrow_left),
+                // ),
               ],
             ),
             SizedBox(
@@ -93,6 +92,7 @@ class LoginScreen extends StatelessWidget {
                   initialCountryCode: 'IN',
                   autofocus: true,
                   cursorWidth: 1,
+                  keyboardType: TextInputType.phone,
                   dropdownTextStyle: TextStyle(
                       color: AppColors.black.withAlpha(180),
                       fontWeight: FontWeight.bold),
@@ -105,8 +105,11 @@ class LoginScreen extends StatelessWidget {
                       fillColor: Colors.white,
                       filled: true,
                       hintText: "9876543210",
+                      errorStyle: TextStyle(
+                        color: Colors.red
+                      ),
                       hintStyle: GoogleFonts.poppins(color: AppColors.grey),
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                      contentPadding: EdgeInsets.symmetric(vertical: 10,horizontal: 10),
                       counterText: "",
                       border: InputBorder.none),
                   languageCode: "en",

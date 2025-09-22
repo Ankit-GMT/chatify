@@ -1,4 +1,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ✅ Internet access (API calls, Firebase, WebSockets) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!--  Check if network is available -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <!-- (Optional) Access Wi-Fi details -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+
+    <!-- (Optional) For reading/writing external storage (if you deal with files/images) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/> <!-- needed only for Android 10 and below -->
+
+    <!-- (Optional) Camera (if you allow profile pic capture / scanning QR) -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+
+    <!-- (Optional) For picking images in Android 13+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <application
         android:label="chatify"
         android:name="${applicationName}"

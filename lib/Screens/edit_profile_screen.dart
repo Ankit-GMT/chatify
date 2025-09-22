@@ -1,4 +1,5 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/widgets/profile_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,6 +9,7 @@ class EditProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authController = Get.put(AuthController());
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -98,6 +100,12 @@ class EditProfileScreen extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
+            SizedBox(
+              height: Get.height*0.01,
+            ),
+            IconButton(onPressed: (){
+              authController.logoutUser();
+            }, icon: Icon(Icons.logout_rounded,size: 30,color: AppColors.primary,),),
           ],
         ),
       ),
