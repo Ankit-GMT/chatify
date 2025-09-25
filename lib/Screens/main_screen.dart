@@ -1,8 +1,8 @@
 import 'package:chatify/Screens/edit_profile_screen.dart';
 import 'package:chatify/Screens/home_screen.dart';
-import 'package:chatify/Screens/settings_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/bottom_controller.dart';
+import 'package:chatify/controllers/profile_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -11,7 +11,8 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomController = Get.put(BottomController());
+
+    final bottomController = Get.find<BottomController>();
 
     return Scaffold(
       body: Obx(() => IndexedStack(

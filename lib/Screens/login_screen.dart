@@ -11,7 +11,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final authController = Get.put(AuthController());
+    final authController = Get.find<AuthController>();
 
     TextEditingController _mobileController = TextEditingController();
 

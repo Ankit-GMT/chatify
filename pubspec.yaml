@@ -36,13 +36,17 @@ dependencies:
   cupertino_icons: ^1.0.8
   get: ^4.7.2
   get_storage: ^2.1.1
+  http: ^1.5.0
   google_fonts: ^6.3.0
+  intl: ^0.20.2
 #  country_code_picker: ^3.4.0
   intl_phone_field: ^3.2.0
   country_code_picker: ^3.0.0
   flutter_multi_formatter: ^2.12.8
   pin_code_fields: ^8.0.1
   image_picker: ^1.2.0
+#  agora_rtc_engine: ^6.3.2
+#  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:

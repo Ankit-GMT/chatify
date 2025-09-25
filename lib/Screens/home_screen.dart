@@ -1,7 +1,9 @@
 import 'package:chatify/Screens/group_profile_screen.dart';
+import 'package:chatify/Screens/search_user_screen.dart';
 import 'package:chatify/TabView%20Screens/all_chats.dart';
+import 'package:chatify/TabView%20Screens/group_chats.dart';
 import 'package:chatify/constants/app_colors.dart';
-import 'package:chatify/controllers/tab_controller.dart';
+import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/widgets/tab_box.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +11,7 @@ import 'package:get/get.dart';
 
 class HomeScreen extends StatelessWidget {
 
-  final tabController = Get.put(TabBarController());
+  final tabController = Get.find<TabBarController>();
   // final List<String> tabList = ["All Chat", "Groups", "Contacts"];
    HomeScreen({super.key});
 
@@ -51,6 +53,9 @@ class HomeScreen extends StatelessWidget {
             height: Get.height * 0.02,
           ),
           SearchBar(
+            onTap: () {
+              Get.to(()=> SearchUserScreen());
+            },
             backgroundColor: WidgetStatePropertyAll(Color(0xfff4f4f4)),
             padding: WidgetStatePropertyAll(
               EdgeInsets.symmetric(horizontal: 10),
@@ -125,9 +130,7 @@ class HomeScreen extends StatelessWidget {
               index: tabController.currentIndex.value,
               children: [
                 AllChats(),
-                Center(
-                  child: Text("Groups"),
-                ),
+                GroupChats(),
                 Center(
                   child: Text("Contacts"),
                 ),

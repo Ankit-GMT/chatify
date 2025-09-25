@@ -1,4 +1,5 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/time_format.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,8 +7,9 @@ import 'package:get/get.dart';
 class MessageCard extends StatelessWidget {
   final String text;
   final bool isMe;
+  final String time;
 
-  const MessageCard({super.key, required this.text, required this.isMe});
+  const MessageCard({super.key, required this.text, required this.isMe, required this.time});
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +46,7 @@ class MessageCard extends StatelessWidget {
                       spacing: 4,
                       children: [
                         Text(
-                          "05:12 PM",
+                          TimeFormat.getFormattedTime(context: context, time: time),
                           style: TextStyle(
                             fontSize: 8,
                             color: AppColors.white.withAlpha(200),

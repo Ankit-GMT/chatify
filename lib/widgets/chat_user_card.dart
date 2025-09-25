@@ -1,4 +1,7 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/controllers/profile_controller.dart';
+import 'package:chatify/models/chat_type.dart';
+import 'package:chatify/models/chat_user.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,71 +9,53 @@ import 'package:google_fonts/google_fonts.dart';
 class ChatUserCard extends StatefulWidget {
   final int index;
   final Function()? onTap;
+  final ChatUser? chatUser;
+  final ChatType? chatType;
+  final bool isSearch;
 
-  const ChatUserCard({super.key, required this.index, required this.onTap});
+  const ChatUserCard(
+      {super.key,
+      required this.index,
+      required this.onTap,
+      required this.chatUser,
+      required this.chatType,
+
+      this.isSearch = false});
 
   @override
   State<ChatUserCard> createState() => _ChatUserCardState();
 }
 
 class _ChatUserCardState extends State<ChatUserCard> {
-  final List<String> peopleImages = [
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-    // portrait man
-    "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e",
-    // smiling woman
-    "https://images.unsplash.com/photo-1520813792240-56fc4a3765a7",
-    // group of friends
-    "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
-    // woman portrait
-    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
-    // man portrait
-    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
-    // business look
-    "https://images.unsplash.com/photo-1517841905240-472988babdf9",
-    // friends laughing
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-    // portrait man
-    "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e",
-    // smiling woman
-    "https://images.unsplash.com/photo-1520813792240-56fc4a3765a7",
-    // group of friends
-    "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
-    // woman portrait
-    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
-    // man portrait
-    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
-    // business look
-    "https://images.unsplash.com/photo-1517841905240-472988babdf9",
-    // friends laughing
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-    // portrait man
-    "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e",
-    // smiling woman
-    "https://images.unsplash.com/photo-1520813792240-56fc4a3765a7",
-    // group of friends
-    "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
-    // woman portrait
-    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
-    // man portrait
-    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
-    // business look
-  ];
+  final profileController = Get.put(ProfileController());
 
   @override
   Widget build(BuildContext context) {
+    final type = widget.chatType?.type ?? '';
+    final myId = profileController.user.value?.id;
+
     return ListTile(
       onTap: widget.onTap,
       leading: InkWell(
-          onTap: () {},
-          child: Badge(
-            backgroundColor: Colors.green,
-            smallSize: 10,
-            child: CircleAvatar(
-                backgroundImage: NetworkImage(peopleImages[widget.index])),
-          )),
+        onTap: () {},
+        child: Badge(
+          backgroundColor: Colors.green,
+          smallSize: 10,
+          child: CircleAvatar(
+            backgroundImage: NetworkImage(type=="GROUP" ? widget.chatType?.groupImageUrl ?? '' :  myId==widget.chatType?.members?[0].userId ? (widget.chatType?.members?[1].profileImageUrl) ?? '' : widget.chatType?.members?[0].profileImageUrl ?? ''),
+          ),
+        ),
+      ),
 
-      title: Text("Ankit Patel"),
+      title: widget.isSearch
+          ? Text("${widget.chatUser?.firstName} ${widget.chatUser?.lastName}")
+          : type == "GROUP"
+              ? Text(widget.chatType?.name ?? '')
+              : Text(myId == widget.chatType?.members?[0].userId
+                  ? ("${widget.chatType?.members?[1].firstName} ${widget.chatType?.members?[1].lastName}") ??
+                      ''
+                  : ("${widget.chatType?.members?[0].firstName} ${widget.chatType?.members?[0].lastName}") ??
+                      ''),
 
       subtitle: Row(
         children: [
@@ -84,7 +69,8 @@ class _ChatUserCardState extends State<ChatUserCard> {
             width: 130,
             child: Text('Hey, How are you?',
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(fontSize: 12), maxLines: 1),
+                style: GoogleFonts.poppins(fontSize: 12),
+                maxLines: 1),
           ),
         ],
       ),
@@ -95,12 +81,11 @@ class _ChatUserCardState extends State<ChatUserCard> {
         children: [
           Text(
             "05:15",
-            style: GoogleFonts.poppins(
-                fontSize: 14, fontWeight: FontWeight.w400
-            ),
+            style:
+                GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400),
           ),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 5,vertical: 1),
+            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 1),
             // width: 34,
             // height: 24,
             decoration: BoxDecoration(

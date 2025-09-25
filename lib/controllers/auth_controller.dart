@@ -4,24 +4,31 @@ import 'package:chatify/Screens/login_screen.dart';
 import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/Screens/otp_screen.dart';
 import 'package:chatify/Screens/user_register_screen.dart';
+import 'package:chatify/constants/apis.dart';
+import 'package:chatify/controllers/profile_controller.dart';
+import 'package:chatify/controllers/user_controller.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
-class AuthController extends GetxController {
-  // final String baseUrl = "https://51506be3ed77.ngrok-free.app";
-  final String baseUrl = "http://192.168.1.8:8080";
+import 'bottom_controller.dart';
 
-  //
+class AuthController extends GetxController {
+
+  final String baseUrl = APIs.url;
+
+  //for token storing
   final box = GetStorage();
 
   String? get token => box.read("accessToken");
+  final bottomController = Get.put(BottomController());
+
 
   var isLoading = false.obs;
   var isOtpSent = false.obs;
   var phoneNumber = "".obs;
   var otp = "".obs;
-  var timer = 30.obs;
+  var timer = 60.obs;
   Timer? _countdownTimer;
 
   // Request OTP
@@ -54,6 +61,7 @@ class AuthController extends GetxController {
       isLoading.value = false;
     }
   }
+
 
   // Verify OTP
   Future<void> verifyOtp(String otpCode) async {
@@ -121,7 +129,7 @@ class AuthController extends GetxController {
 
   // Timer
   void startTimer() {
-    timer.value = 30; // reset to 60 seconds
+    timer.value = 60; // reset to 60 seconds
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (timer.value > 0) {
@@ -213,7 +221,9 @@ class AuthController extends GetxController {
         await box.remove("accessToken");
         await box.remove("refreshToken");
 
+
         Get.snackbar("Logged out", "You have been logged out successfully.");
+        bottomController.currentIndex.value = 0;
         Get.offAll(() => LoginScreen());
       } else {
         Get.snackbar("Error", data['error'] ?? "Logout failed");
@@ -225,16 +235,4 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> getProfile() async {
-    final token = box.read("accessToken");
-
-    final res = await http.get(
-      Uri.parse("$baseUrl/api/user/me"),
-      headers: {
-        "Authorization": "Bearer $token", // attach JWT
-      },
-    );
-
-    print(res.body);
-  }
 }

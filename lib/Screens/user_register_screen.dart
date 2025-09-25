@@ -10,8 +10,8 @@ class UserRegisterScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authController = Get.put(AuthController());
-    final profileController = Get.put(ProfileController());
+    final authController = Get.find<AuthController>();
+    final profileController = Get.find<ProfileController>();
 
     TextEditingController firstNameController = TextEditingController();
     TextEditingController lastNameController = TextEditingController();
