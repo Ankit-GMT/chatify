@@ -2,6 +2,7 @@ import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/models/chat_user.dart';
 import 'package:chatify/widgets/dialog_textfield.dart';
+import 'package:chatify/widgets/profile_avatar.dart';
 import 'package:chatify/widgets/profile_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -66,16 +67,12 @@ class EditProfileScreen extends StatelessWidget {
               SizedBox(height: Get.height * 0.01),
               Stack(
                 children: [
-                  // Obx(
-                  //   () =>
-                        CircleAvatar(
-                      radius: 56,
-                      backgroundImage:
-                        NetworkImage('https://picsum.photos/200/300'),
-                      // NetworkImage(
-                      //     "${profileController.user.value?.profileImageUrl}"),
-                    ),
-                  // ),
+                  Obx(
+                    () => ProfileAvatar(
+                        imageUrl:
+                            "${profileController.user.value?.profileImageUrl}",
+                        radius: 56),
+                  ),
                   Positioned(
                     bottom: 0,
                     right: 0,

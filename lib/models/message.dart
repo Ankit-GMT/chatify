@@ -5,6 +5,9 @@ class Message {
   final String content;
   final String type;
   final DateTime sentAt;
+  final String senderFirstName;
+  final String senderLastName;
+  final String senderProfileImageUrl;
 
    Message({
     required this.id,
@@ -13,6 +16,9 @@ class Message {
     required this.content,
     required this.type,
     required this.sentAt,
+     required this.senderFirstName,
+     required this.senderLastName,
+     required this.senderProfileImageUrl,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -23,6 +29,10 @@ class Message {
       content: json['content'],
       type: json['type'],
       sentAt: DateTime.parse(json['sentAt']),
+      senderFirstName: json['senderFirstName'],
+      senderLastName: json['senderLastName'],
+      senderProfileImageUrl: json['senderProfileImageUrl'],
+
     );
   }
 }

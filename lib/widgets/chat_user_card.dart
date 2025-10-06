@@ -2,6 +2,7 @@ import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/chat_user.dart';
+import 'package:chatify/widgets/profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,7 +20,6 @@ class ChatUserCard extends StatefulWidget {
       required this.onTap,
       required this.chatUser,
       required this.chatType,
-
       this.isSearch = false});
 
   @override
@@ -27,7 +27,7 @@ class ChatUserCard extends StatefulWidget {
 }
 
 class _ChatUserCardState extends State<ChatUserCard> {
-  final profileController = Get.put(ProfileController());
+  final profileController = Get.find<ProfileController>();
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +41,13 @@ class _ChatUserCardState extends State<ChatUserCard> {
         child: Badge(
           backgroundColor: Colors.green,
           smallSize: 10,
-          child: CircleAvatar(
-            backgroundImage: NetworkImage(type=="GROUP" ? widget.chatType?.groupImageUrl ?? '' :  myId==widget.chatType?.members?[0].userId ? (widget.chatType?.members?[1].profileImageUrl) ?? '' : widget.chatType?.members?[0].profileImageUrl ?? ''),
-          ),
+          child: ProfileAvatar(
+              imageUrl: type == "GROUP"
+                  ? widget.chatType?.groupImageUrl ?? ''
+                  : myId == widget.chatType?.members?[0].userId
+                      ? (widget.chatType?.members?[1].profileImageUrl) ?? ''
+                      : widget.chatType?.members?[0].profileImageUrl ?? '',
+              radius: 20),
         ),
       ),
 

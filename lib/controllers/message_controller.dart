@@ -8,11 +8,11 @@ import 'package:http/http.dart' as http;
 
 class MessageController extends GetxController {
   final String baseUrl = APIs.url;
+  final box = GetStorage();
 
   // for load messages
   Future<List<Message>> fetchMessages(int chatId) async {
     try {
-      final box = GetStorage();
       final token = box.read("accessToken");
 
       final res = await http.get(
@@ -35,7 +35,6 @@ class MessageController extends GetxController {
     }
   }
 
-
   // for send message
   Future<bool> sendMessage({
     required int chatId,
@@ -43,7 +42,6 @@ class MessageController extends GetxController {
     String type = "TEXT",
   }) async {
     try {
-      final box = GetStorage();
       final token = box.read("accessToken");
 
       final res = await http.post(
@@ -73,7 +71,6 @@ class MessageController extends GetxController {
 
   Future<bool> deleteMessage(int chatId, int messageId) async {
     try {
-      final box = GetStorage();
       final token = box.read("accessToken");
 
       final res = await http.delete(
@@ -96,4 +93,37 @@ class MessageController extends GetxController {
     }
   }
 
+  // Update
+
+  Future<bool> updateMessage({
+    required int chatId,
+    required int messageId,
+    required String newContent,
+  }) async {
+    try {
+      final token = box.read("accessToken");
+
+      final res = await http.patch(
+        Uri.parse("$baseUrl/api/chats/$chatId/messages/$messageId"),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "content": newContent,
+        }),
+      );
+
+      if (res.statusCode == 200) {
+        print("Message updated: ${res.body}");
+        return true;
+      } else {
+        print("Failed to update: ${res.statusCode} ${res.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Error: $e");
+      return false;
+    }
+  }
 }

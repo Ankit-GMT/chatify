@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/models/chat_user.dart';
+import 'package:chatify/widgets/zego_initializer.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
@@ -79,8 +80,10 @@ class ProfileController extends GetxController {
       return false;
     }
   }
-  void fetchUserProfile() async {
+  Future<void> fetchUserProfile() async {
      user.value = await getProfile();
+     await box.write("userId", user.value?.id.toString());
+     await box.write("userName", user.value?.firstName);
   }
 
 
@@ -94,8 +97,10 @@ class ProfileController extends GetxController {
   }
 
   @override
-  void onInit() {
-    fetchUserProfile();
+  void onInit() async{
+    await fetchUserProfile();
+    await initZego(box.read("userId"), box.read("userName"));
+
     // TODO: implement onInit
     super.onInit();
   }

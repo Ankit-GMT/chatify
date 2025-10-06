@@ -1,3 +1,5 @@
+import 'package:chatify/Screens/call_screen.dart';
+import 'package:chatify/Screens/group_profile_screen.dart';
 import 'package:chatify/Screens/profile_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/message_controller.dart';
@@ -5,9 +7,15 @@ import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/chat_user.dart';
 import 'package:chatify/models/message.dart';
+import 'package:chatify/widgets/dialog_textfield.dart';
 import 'package:chatify/widgets/message_card.dart';
+import 'package:chatify/widgets/profile_avatar.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:zego_uikit/zego_uikit.dart';
+import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 
 class ChatScreen extends StatefulWidget {
   ChatUser? chatUser;
@@ -20,6 +28,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  //
   final profileController = Get.put(ProfileController());
   final messageController = Get.put(MessageController());
 
@@ -48,10 +57,47 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _deleteMessage(int index) async {
-    bool ok = await messageController.deleteMessage(widget.chatType!.id!, messages[index].id);
+    bool ok = await messageController.deleteMessage(
+        widget.chatType!.id!, messages[index].id);
     if (ok) {
       _loadMessages(); // reload after delete
     }
+  }
+
+  void _editMessage(Message msg) async {
+    final updateController = TextEditingController(text: msg.content);
+
+    Dialogs.editProfile(
+      context,
+      updateController,
+      "Message",
+      () async {
+        bool ok = await messageController.updateMessage(
+          chatId: widget.chatType!.id!,
+          messageId: msg.id,
+          newContent: updateController.text,
+        );
+        if (ok) {
+          Get.back();
+          _loadMessages(); // reload messages
+        }
+      },
+    );
+  }
+
+  void _startVoiceCall(BuildContext context) {
+    final box = GetStorage();
+    final userName = box.read("userName") ?? '';
+    final userId = box.read("userId") ?? '';
+
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CallScreen(
+              userId: userId,
+              userName: userName,
+              callID: widget.chatType!.id.toString()),
+        ));
   }
 
   @override
@@ -88,19 +134,27 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   InkWell(
                     onTap: () {
-                      Get.to(() => ProfileScreen());
+                      Get.to(() => type == "GROUP"
+                          ? GroupProfileScreen(
+                              chatType: widget.chatType,
+                            )
+                          : ProfileScreen(
+                              id: myId == widget.chatType?.members?[0].userId
+                                  ? (widget.chatType?.members?[1].userId!)
+                                  : (widget.chatType?.members?[0].userId!),
+                            ));
                     },
-                    child: CircleAvatar(
-                      radius: 25,
-                      backgroundImage: NetworkImage(type == "GROUP"
-                          ? widget.chatType?.groupImageUrl ?? ''
-                          : myId == widget.chatType?.members?[0].userId
-                              ? (widget
-                                      .chatType?.members?[1].profileImageUrl) ??
-                                  ''
-                              : widget.chatType?.members?[0].profileImageUrl ??
-                                  ''),
-                    ),
+                    child: ProfileAvatar(
+                        imageUrl: type == "GROUP"
+                            ? widget.chatType?.groupImageUrl ?? ''
+                            : myId == widget.chatType?.members?[0].userId
+                                ? (widget.chatType?.members?[1]
+                                        .profileImageUrl) ??
+                                    ''
+                                : widget.chatType?.members?[0]
+                                        .profileImageUrl ??
+                                    '',
+                        radius: 25),
                   ),
                   SizedBox(
                     width: Get.width * 0.04,
@@ -112,7 +166,15 @@ class _ChatScreenState extends State<ChatScreen> {
                       SizedBox(
                         width: Get.width * 0.25,
                         child: type == "GROUP"
-                            ? Text(widget.chatType?.name ?? '')
+                            ? Text(
+                                widget.chatType?.name ?? '',
+                                maxLines: 1,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 16,
+                                    overflow: TextOverflow.ellipsis,
+                                    color: AppColors.white),
+                              )
                             : Text(
                                 myId == widget.chatType?.members?[0].userId
                                     ? ("${widget.chatType?.members?[1].firstName} ${widget.chatType?.members?[1].lastName}") ??
@@ -141,10 +203,26 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 27,
-                    backgroundColor: Colors.white,
-                    child: Image.asset("assets/images/chat_call.png", scale: 2),
+                  // InkWell(
+                  //   onTap: (){
+                  //     _startVoiceCall(context);
+                  //   },
+                  //   child: CircleAvatar(
+                  //     radius: 27,
+                  //     backgroundColor: Colors.white,
+                  //     child:
+                  //         Image.asset("assets/images/chat_call.png", scale: 2),
+                  //   ),
+                  // ),
+                  ZegoSendCallInvitationButton(
+                    isVideoCall: true,   // false for voice call
+                    resourceID: "zego_call", // keep same for all users
+                    invitees: [
+                      ZegoUIKitUser(
+                        id: '19',      // friend's user id
+                        name: 'Ankit',  // optional, just display
+                      ),
+                    ],
                   ),
                   SizedBox(
                     width: Get.width * 0.05,
@@ -177,13 +255,51 @@ class _ChatScreenState extends State<ChatScreen> {
                 physics: AlwaysScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
                   return GestureDetector(
+                    onDoubleTap: () {
+                      _editMessage(messages[messages.length - index - 1]);
+                    },
                     onLongPress: () {
-                      _deleteMessage(messages.length - index -1);
+                      showCupertinoModalPopup(
+                        barrierDismissible: false,
+                        context: context,
+                        builder: (context) {
+                          return CupertinoActionSheet(
+                            title: Text("Delete Message"),
+                            message: Text(
+                                "Are you sure you want to delete this message?"),
+                            actions: [
+                              CupertinoActionSheetAction(
+                                child: Text(
+                                  "Delete",
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                                onPressed: () {
+                                  _deleteMessage(messages.length - index - 1);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                              CupertinoActionSheetAction(
+                                child: Text("Cancel"),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
                     },
                     child: MessageCard(
-                      text: messages[messages.length - index -1 ].content,
-                      isMe: messages[messages.length - index -1 ].senderId == myId,
-                      time: messages[ messages.length -index -1 ].sentAt.toString(),
+                      text: messages[messages.length - index - 1].content,
+                      isMe: messages[messages.length - index - 1].senderId ==
+                          myId,
+                      time: messages[messages.length - index - 1]
+                          .sentAt
+                          .toString(),
+                      imageUrl: messages[messages.length - index - 1]
+                          .senderProfileImageUrl,
+                      name:
+                          "${messages[messages.length - index - 1].senderFirstName} ${messages[messages.length - index - 1].senderLastName}",
                     ),
                   );
                 },
@@ -226,10 +342,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child:
-                      InkWell(
-                          onTap: _sendMessage,
-                          child: Icon(Icons.send,color: AppColors.white,)),
+                    child: InkWell(
+                        onTap: _sendMessage,
+                        child: Icon(
+                          Icons.send,
+                          color: AppColors.white,
+                        )),
                     // Row(
                     //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     //   children: [

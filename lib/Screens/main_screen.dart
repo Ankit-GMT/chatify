@@ -1,10 +1,11 @@
+import 'package:chatify/Screens/call_screen.dart';
 import 'package:chatify/Screens/edit_profile_screen.dart';
 import 'package:chatify/Screens/home_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/bottom_controller.dart';
-import 'package:chatify/controllers/profile_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -12,13 +13,15 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final bottomController = Get.find<BottomController>();
+    final bottomController = Get.put(BottomController());
+    final box = GetStorage();
 
     return Scaffold(
       body: Obx(() => IndexedStack(
         index: bottomController.currentIndex.value,
         children: [
           HomeScreen(),
+          // CallScreen(userId: box.read("userId"), userName: box.read("userName")),
           Center(child: Text("Calls")),
           Center(child: Text("Video Calls")),
           EditProfileScreen(),

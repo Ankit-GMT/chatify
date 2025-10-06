@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class Dialogs {
-   static void editProfile(
+  static void editProfile(
     BuildContext context,
     TextEditingController controller,
     String title,
-      VoidCallback? onSave,
-  ) {
+    VoidCallback? onSave)
+  {
     showDialog(
       context: context,
       builder: (_) {
@@ -14,6 +14,7 @@ class Dialogs {
             title: Text("Edit $title"),
             content: TextField(
               controller: controller,
+              maxLines: 2,
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
               ),

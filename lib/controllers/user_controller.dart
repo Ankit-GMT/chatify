@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/chat_user.dart';
+import 'package:chatify/models/contact_model.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -13,6 +15,47 @@ class UserController extends GetxController {
   final String baseUrl = APIs.url;
 
   final box = GetStorage();
+  
+ // for first time if user chat
+  Future<dynamic> createChat(int otherUserId) async {
+    final token = box.read("accessToken");
+
+    final body = {
+      "participantIds": [otherUserId],
+      "type": "PRIVATE"
+    };
+
+    print("Create Chat Payload: $body");
+
+    try {
+      isLoading.value = true;
+
+      final res = await http.post(
+        Uri.parse("$baseUrl/api/chats"),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode(body),
+      );
+
+      isLoading.value = false;
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        final data = jsonDecode(res.body);
+        print("Chat Created, data: $data");
+        getAllChats();
+        return ChatType.fromJson(data);
+      } else {
+        print("Failed to create chat: ${res.statusCode} ${res.body}");
+        return null;
+      }
+    } catch (e) {
+      isLoading.value = false;
+      print("Exception while creating chat: $e");
+      return null;
+    }
+  }
 
   Future<void> searchUsers(String phone) async {
     try {
@@ -31,7 +74,7 @@ class UserController extends GetxController {
       final data = jsonDecode(res.body);
       print("search... $data");
 
-      if (res.statusCode==200) {
+      if (res.statusCode == 200) {
         List users = data ?? [];
         searchResults.value = users.map((u) => ChatUser.fromJson(u)).toList();
       } else {
@@ -48,13 +91,15 @@ class UserController extends GetxController {
   // All users
   var allChats = <ChatType>[].obs;
   var groupChats = <ChatType>[].obs;
-
+  var user = ChatUser().obs;
 
   Future<void> getAllChats() async {
     try {
       isLoading.value = true;
 
-      final token = box.read("accessToken"); // Get stored JWT
+      final token = box.read("accessToken");
+
+      print('Token: $token'); // Get stored JWT
 
       final res = await http.get(
         Uri.parse("$baseUrl/api/chats"),
@@ -67,10 +112,11 @@ class UserController extends GetxController {
       final data = jsonDecode(res.body);
       print("All chats... $data");
 
-      if (res.statusCode==200) {
+      if (res.statusCode == 200) {
         List users = data ?? [];
         allChats.value = users.map((u) => ChatType.fromJson(u)).toList();
-        groupChats.value = allChats.where((chat) => chat.type == "GROUP").toList();
+        groupChats.value =
+            allChats.where((chat) => chat.type == "GROUP").toList();
       } else {
         searchResults.clear();
         Get.snackbar("Error", data['error'] ?? "No chats found");
@@ -81,9 +127,139 @@ class UserController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  Future<void> fetchUserProfile(int userId) async {
+    try {
+      final box = GetStorage();
+      final token = box.read("accessToken");
+
+      final res = await http.get(
+        Uri.parse("$baseUrl/api/user/$userId"),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+
+        final Map<String, dynamic> userJson =
+            body is Map && (body['id'] != null)
+                ? body
+                : (body['user'] ?? body['data'] ?? body);
+        print(userJson);
+
+        user.value = ChatUser.fromJson(Map<String, dynamic>.from(userJson));
+      } else {
+        print("Failed to fetch profile: ${res.statusCode} ${res.body}");
+      }
+    } catch (e) {
+      print("Error fetchUserProfile: $e");
+    }
+  }
+
+  // for contacts
+  Future<List<String>> getPhoneContacts() async {
+    // Ask permission
+    if (!await FlutterContacts.requestPermission(readonly: true)) {
+      return [];
+    }
+
+    // Get contacts with phones
+    final contacts = await FlutterContacts.getContacts(withProperties: true);
+
+    print("Contacts: $contacts");
+    List<String> phoneNumbers = [];
+    for (var c in contacts) {
+      for (var p in c.phones) {
+        // remove non-digit characters
+        String cleaned = p.number.replaceAll(RegExp(r'[^0-9]'), '');
+
+        // keep only last 10 digits
+        if (cleaned.length >= 10) {
+          String last10 = cleaned.substring(cleaned.length - 10);
+          phoneNumbers.add(last10);
+        }
+      }
+    }
+    return phoneNumbers.toSet().toList(); // unique 10-digit numbers
+  }
+
+// check if users are on app
+  Future<List<ContactModel>> checkUsersOnApp(List<String> phoneNumbers) async {
+    final token = box.read("accessToken");
+
+    final res = await http.post(
+      Uri.parse("$baseUrl/api/user/contacts/sync"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({"contacts": phoneNumbers}),
+    );
+
+    if (res.statusCode == 200) {
+      final List data = jsonDecode(res.body);
+      print("Data: $data");
+      return data.map((e) => ContactModel.fromJson(e)).toList();
+    } else {
+      print("Error: ${res.statusCode} ${res.body}");
+      return [];
+    }
+  }
+
+  RxList<ContactModel> registeredUsers = <ContactModel>[].obs;
+  RxList<ContactModel> notRegisteredUsers = <ContactModel>[].obs;
+
+  Future<void> _loadContacts() async {
+    isLoading.value = true;
+    final phoneNumbers = await getPhoneContacts();
+    final users = await checkUsersOnApp(phoneNumbers);
+    // for registered users
+    registeredUsers.value = users.where((user) => user.registered!).toList();
+    // for not registered users
+    notRegisteredUsers.value = users.where((user) => !user.registered!).toList();
+    final contacts = await FlutterContacts.getContacts(withProperties: true);
+    //
+    mergeNotRegisteredWithContacts(notRegisteredUsers, contacts);
+    isLoading.value = false;
+    print("users: $users");
+    print("App users: $registeredUsers");
+  }
+
+  String normalizePhone(String number) {
+    String cleaned = number.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleaned.length >= 10) {
+      return cleaned.substring(cleaned.length - 10);
+    }
+    return cleaned;
+  }
+  void mergeNotRegisteredWithContacts(
+      List<ContactModel> notRegisteredUsers, List<Contact> localContacts) {
+    for (var user in notRegisteredUsers) {
+      String apiPhone = normalizePhone(user.phoneNumber!);
+
+      for (var c in localContacts) {
+        for (var p in c.phones) {
+          String contactPhone = normalizePhone(p.number);
+
+          if (apiPhone == contactPhone) {
+            // Fill missing details
+            user.firstName ??= c.name.first;
+            user.lastName ??= c.name.last;
+
+          }
+        }
+      }
+    }
+  }
+
+
   @override
   void onInit() {
     super.onInit();
     getAllChats();
+    _loadContacts();
   }
 }

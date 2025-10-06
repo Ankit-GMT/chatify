@@ -1,11 +1,14 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/widgets/custom_box.dart';
 import 'package:chatify/widgets/custom_tile.dart';
+import 'package:chatify/widgets/profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class GroupProfileScreen extends StatelessWidget {
-  const GroupProfileScreen({super.key});
+  final ChatType? chatType;
+  const GroupProfileScreen({super.key, required this.chatType});
 
   @override
   Widget build(BuildContext context) {
@@ -38,16 +41,11 @@ class GroupProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              CircleAvatar(
-                radius: 50,
-                backgroundImage: NetworkImage(
-                    "https://media.istockphoto.com/id/1947499352/photo/concentrated-group-of-business-people-planning-strategy-during-team-meeting-at-the-office.jpg?s=2048x2048&w=is&k=20&c=8BqwFYcZW6GRgcXl1eqb2FlEzaad-lWFCwJGnGHqHeQ="),
-
-              ),
+              ProfileAvatar(imageUrl: chatType!.groupImageUrl!, radius: 50),
               Column(
                 children: [
-                  Text("Task Group",style: TextStyle(fontSize: 16,fontWeight: FontWeight.w500),),
-                  Text("21 Members",style: TextStyle(fontSize: 14,fontWeight: FontWeight.w500,color: AppColors.grey),),
+                  Text(chatType!.name! ?? '',style: TextStyle(fontSize: 16,fontWeight: FontWeight.w500),),
+                  Text("${chatType!.members!.length.toString()} Members",style: TextStyle(fontSize: 14,fontWeight: FontWeight.w500,color: AppColors.grey),),
                 ],
               ),
               Row(
@@ -92,16 +90,17 @@ class GroupProfileScreen extends StatelessWidget {
                 height: 250,
                 child: ListView.separated(
                     shrinkWrap: true,
+                    itemCount: chatType!.members!.length,
                     scrollDirection: Axis.vertical,
                     itemBuilder: (context, index) {
                       return ListTile(
                         leading: CircleAvatar(
                           // radius: 25,
                           backgroundImage: NetworkImage(
-                              "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d"),
+                              chatType!.members![index].profileImageUrl! ?? ''),
                         ),
-                        title: Text("Ankit Patel"),
-                        subtitle: Text("Hey, Whats'up",style: TextStyle(fontSize: 12),),
+                        title: Text("${chatType!.members![index].firstName} ${chatType!.members![index].lastName}"),
+                        subtitle: Text(chatType!.members![index].role!,style: TextStyle(fontSize: 12),),
                       );
                     }, separatorBuilder: (context, index) {
                   return Divider(
@@ -109,7 +108,7 @@ class GroupProfileScreen extends StatelessWidget {
                     indent: 15,
                     endIndent: 15,
                   );
-                }, itemCount: 4),
+                }),
               ),
               CustomTile(
                 title: "Notification",

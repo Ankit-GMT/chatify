@@ -221,9 +221,12 @@ class AuthController extends GetxController {
         await box.remove("accessToken");
         await box.remove("refreshToken");
 
-
         Get.snackbar("Logged out", "You have been logged out successfully.");
-        bottomController.currentIndex.value = 0;
+
+        Get.delete<UserController>();
+        Get.delete<ProfileController>();
+        Get.delete<BottomController>();
+
         Get.offAll(() => LoginScreen());
       } else {
         Get.snackbar("Error", data['error'] ?? "Logout failed");
