@@ -14,8 +14,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:zego_uikit/zego_uikit.dart';
-import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
+// import 'package:zego_uikit/zego_uikit.dart';
+// import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 
 class ChatScreen extends StatefulWidget {
   ChatUser? chatUser;
@@ -85,20 +85,20 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  void _startVoiceCall(BuildContext context) {
-    final box = GetStorage();
-    final userName = box.read("userName") ?? '';
-    final userId = box.read("userId") ?? '';
-
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CallScreen(
-              userId: userId,
-              userName: userName,
-              callID: widget.chatType!.id.toString()),
-        ));
-  }
+  // void _startVoiceCall(BuildContext context) {
+  //   final box = GetStorage();
+  //   final userName = box.read("userName") ?? '';
+  //   final userId = box.read("userId") ?? '';
+  //
+  //   Navigator.push(
+  //       context,
+  //       MaterialPageRoute(
+  //         builder: (context) => CallScreen(
+  //             userId: userId,
+  //             userName: userName,
+  //             callID: widget.chatType!.id.toString()),
+  //       ));
+  // }
 
   @override
   void initState() {
@@ -214,16 +214,16 @@ class _ChatScreenState extends State<ChatScreen> {
                   //         Image.asset("assets/images/chat_call.png", scale: 2),
                   //   ),
                   // ),
-                  ZegoSendCallInvitationButton(
-                    isVideoCall: true,   // false for voice call
-                    resourceID: "zego_call", // keep same for all users
-                    invitees: [
-                      ZegoUIKitUser(
-                        id: '19',      // friend's user id
-                        name: 'Ankit',  // optional, just display
-                      ),
-                    ],
-                  ),
+                  // ZegoSendCallInvitationButton(
+                  //   isVideoCall: true,   // false for voice call
+                  //   resourceID: "zego_call", // keep same for all users
+                  //   invitees: [
+                  //     ZegoUIKitUser(
+                  //       id: '19',      // friend's user id
+                  //       name: 'Ankit',  // optional, just display
+                  //     ),
+                  //   ],
+                  // ),
                   SizedBox(
                     width: Get.width * 0.05,
                   ),

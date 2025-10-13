@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +16,7 @@ void main() async {
   await GetStorage.init();
   final box = GetStorage();
 // box.erase();
-  await initZego(box.read("userId") ?? "", box.read("userName") ?? '');
+//   await initZego(box.read("userId") ?? "", box.read("userName") ?? '');
   print("User ID: ${box.read('userId')}");
   print("User Name: ${box.read('userName')}");
   Get.put(AuthController(), permanent: true);
@@ -39,18 +38,18 @@ class MyApp extends StatelessWidget {
         darkTheme: AppThemes.darkTheme,
         themeMode: ThemeMode.light,
         home: SplashScreen(),
-        builder: (context, child) {
-          return Stack(
-            children: [
-              child!,
-              ZegoUIKitPrebuiltCallMiniOverlayPage(
-                contextQuery: () {
-                  return navigatorKey.currentState!.context;
-                },
-              ),
-            ],
-          );
-        },
+        // builder: (context, child) {
+        //   return Stack(
+        //     children: [
+        //       child!,
+        //       ZegoUIKitPrebuiltCallMiniOverlayPage(
+        //         contextQuery: () {
+        //           return navigatorKey.currentState!.context;
+        //         },
+        //       ),
+        //     ],
+        //   );
+        // },
       ),
     );
   }

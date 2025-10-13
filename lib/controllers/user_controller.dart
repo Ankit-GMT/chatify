@@ -3,6 +3,7 @@ import 'package:chatify/constants/apis.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/chat_user.dart';
 import 'package:chatify/models/contact_model.dart';
+import 'package:chatify/widgets/api_service.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -30,14 +31,16 @@ class UserController extends GetxController {
     try {
       isLoading.value = true;
 
-      final res = await http.post(
-        Uri.parse("$baseUrl/api/chats"),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode(body),
-      );
+      // final res = await http.post(
+      //   Uri.parse("$baseUrl/api/chats"),
+      //   headers: {
+      //     "Authorization": "Bearer $token",
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: jsonEncode(body),
+      // );
+
+      final res = await ApiService.request(url: "$baseUrl/api/chats", method: "POST",body: body,);
 
       isLoading.value = false;
 
@@ -63,13 +66,14 @@ class UserController extends GetxController {
 
       final token = box.read("accessToken"); // Get stored JWT
 
-      final res = await http.get(
-        Uri.parse("$baseUrl/api/users/search?q=$phone"),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-      );
+      // final res = await http.get(
+      //   Uri.parse("$baseUrl/api/users/search?q=$phone"),
+      //   headers: {
+      //     "Authorization": "Bearer $token",
+      //     "Content-Type": "application/json",
+      //   },
+      // );
+       final res = await ApiService.request(url: "$baseUrl/api/users/search?q=$phone", method: "GET");
 
       final data = jsonDecode(res.body);
       print("search... $data");
@@ -101,13 +105,15 @@ class UserController extends GetxController {
 
       print('Token: $token'); // Get stored JWT
 
-      final res = await http.get(
-        Uri.parse("$baseUrl/api/chats"),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-      );
+      // final res = await http.get(
+      //   Uri.parse("$baseUrl/api/chats"),
+      //   headers: {
+      //     "Authorization": "Bearer $token",
+      //     "Content-Type": "application/json",
+      //   },
+      // );
+
+      final res = await ApiService.request(url: "$baseUrl/api/chats", method: "GET");
 
       final data = jsonDecode(res.body);
       print("All chats... $data");
@@ -133,13 +139,15 @@ class UserController extends GetxController {
       final box = GetStorage();
       final token = box.read("accessToken");
 
-      final res = await http.get(
-        Uri.parse("$baseUrl/api/user/$userId"),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-      );
+      // final res = await http.get(
+      //   Uri.parse("$baseUrl/api/user/$userId"),
+      //   headers: {
+      //     "Authorization": "Bearer $token",
+      //     "Content-Type": "application/json",
+      //   },
+      // );
+
+      final res = await ApiService.request(url: "$baseUrl/api/user/$userId", method: "GET");
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
@@ -190,14 +198,16 @@ class UserController extends GetxController {
   Future<List<ContactModel>> checkUsersOnApp(List<String> phoneNumbers) async {
     final token = box.read("accessToken");
 
-    final res = await http.post(
-      Uri.parse("$baseUrl/api/user/contacts/sync"),
-      headers: {
-        "Authorization": "Bearer $token",
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode({"contacts": phoneNumbers}),
-    );
+    // final res = await http.post(
+    //   Uri.parse("$baseUrl/api/user/contacts/sync"),
+    //   headers: {
+    //     "Authorization": "Bearer $token",
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: jsonEncode({"contacts": phoneNumbers}),
+    // );
+
+    final res = await ApiService.request(url: "$baseUrl/api/user/contacts/sync", method: "POST", body: {"contacts": phoneNumbers});
 
     if (res.statusCode == 200) {
       final List data = jsonDecode(res.body);

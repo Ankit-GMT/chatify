@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/models/chat_user.dart';
+import 'package:chatify/widgets/api_service.dart';
 import 'package:chatify/widgets/zego_initializer.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -22,18 +23,19 @@ class ProfileController extends GetxController {
 
   Rx<ChatUser?> user = Rx<ChatUser?>(null);
 
-
   Future<ChatUser?> getProfile() async {
     try {
       final token = box.read("accessToken");
 
-      final res = await http.get(
-        Uri.parse("$baseUrl/api/user/me"),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-      );
+      // final res = await http.get(
+      //   Uri.parse("$baseUrl/api/user/me"),
+      //   headers: {
+      //     "Authorization": "Bearer $token",
+      //     "Content-Type": "application/json",
+      //   },
+      // );
+      final res =
+          await ApiService.request(url: "$baseUrl/api/user/me", method: "GET");
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -53,19 +55,24 @@ class ProfileController extends GetxController {
     }
   }
 
-
   // Edit Profile
   Future<bool> editProfile(ChatUser user) async {
     try {
       final token = box.read("accessToken");
 
-      final res = await http.patch(
-        Uri.parse("$baseUrl/api/user/me"),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode(user.toJson()),
+      // final res = await http.patch(
+      //   Uri.parse("$baseUrl/api/user/me"),
+      //   headers: {
+      //     "Authorization": "Bearer $token",
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: jsonEncode(user.toJson()),
+      // );
+
+      final res = await ApiService.request(
+        url: "$baseUrl/api/user/me",
+        method: "PATCH",
+        body: user.toJson(),
       );
 
       if (res.statusCode == 200) {
@@ -80,16 +87,17 @@ class ProfileController extends GetxController {
       return false;
     }
   }
-  Future<void> fetchUserProfile() async {
-     user.value = await getProfile();
-     await box.write("userId", user.value?.id.toString());
-     await box.write("userName", user.value?.firstName);
-  }
 
+  // fetch user profile
+  Future<void> fetchUserProfile() async {
+    user.value = await getProfile();
+    await box.write("userId", user.value?.id.toString());
+    await box.write("userName", user.value?.firstName);
+  }
 
   Future<void> pickImage() async {
     final XFile? image =
-    await _picker.pickImage(source: ImageSource.gallery); // or camera
+        await _picker.pickImage(source: ImageSource.gallery); // or camera
 
     if (image != null) {
       pickedImage.value = File(image.path);
@@ -97,12 +105,11 @@ class ProfileController extends GetxController {
   }
 
   @override
-  void onInit() async{
+  void onInit() async {
     await fetchUserProfile();
-    await initZego(box.read("userId"), box.read("userName"));
+    // await initZego(box.read("userId"), box.read("userName"));
 
     // TODO: implement onInit
     super.onInit();
   }
-
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/models/message.dart';
+import 'package:chatify/widgets/api_service.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -15,12 +16,15 @@ class MessageController extends GetxController {
     try {
       final token = box.read("accessToken");
 
-      final res = await http.get(
-        Uri.parse("$baseUrl/api/chats/$chatId/messages"),
-        headers: {
-          "Authorization": "Bearer $token",
-        },
-      );
+      // final res = await http.get(
+      //   Uri.parse("$baseUrl/api/chats/$chatId/messages"),
+      //   headers: {
+      //     "Authorization": "Bearer $token",
+      //   },
+      // );
+
+      final res = await ApiService.request(
+          url: "$baseUrl/api/chats/$chatId/messages", method: "GET");
 
       if (res.statusCode == 200) {
         final List data = jsonDecode(res.body);
@@ -44,17 +48,25 @@ class MessageController extends GetxController {
     try {
       final token = box.read("accessToken");
 
-      final res = await http.post(
-        Uri.parse("$baseUrl/api/chats/$chatId/messages"),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({
-          "content": content,
-          "type": type,
-        }),
-      );
+      // final res = await http.post(
+      //   Uri.parse("$baseUrl/api/chats/$chatId/messages"),
+      //   headers: {
+      //     "Authorization": "Bearer $token",
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: jsonEncode({
+      //     "content": content,
+      //     "type": type,
+      //   }),
+      // );
+
+      final res = await ApiService.request(
+          url: "$baseUrl/api/chats/$chatId/messages",
+          method: "POST",
+          body: {
+            "content": content,
+            "type": type,
+          });
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         print("Message sent: ${res.body}");
@@ -73,12 +85,16 @@ class MessageController extends GetxController {
     try {
       final token = box.read("accessToken");
 
-      final res = await http.delete(
-        Uri.parse("$baseUrl/api/chats/$chatId/messages/$messageId"),
-        headers: {
-          "Authorization": "Bearer $token",
-        },
-      );
+      // final res = await http.delete(
+      //   Uri.parse("$baseUrl/api/chats/$chatId/messages/$messageId"),
+      //   headers: {
+      //     "Authorization": "Bearer $token",
+      //   },
+      // );
+
+      final res = await ApiService.request(
+          url: "$baseUrl/api/chats/$chatId/messages/$messageId",
+          method: "DELETE");
 
       if (res.statusCode == 200 || res.statusCode == 204) {
         print("Message deleted");
@@ -103,16 +119,22 @@ class MessageController extends GetxController {
     try {
       final token = box.read("accessToken");
 
-      final res = await http.patch(
-        Uri.parse("$baseUrl/api/chats/$chatId/messages/$messageId"),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({
-          "content": newContent,
-        }),
-      );
+      // final res = await http.patch(
+      //   Uri.parse("$baseUrl/api/chats/$chatId/messages/$messageId"),
+      //   headers: {
+      //     "Authorization": "Bearer $token",
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: jsonEncode({
+      //     "content": newContent,
+      //   }),
+      // );
+      final res = await ApiService.request(
+          url: "$baseUrl/api/chats/$chatId/messages/$messageId",
+          method: "PATCH",
+          body: {
+            "content": newContent,
+          });
 
       if (res.statusCode == 200) {
         print("Message updated: ${res.body}");

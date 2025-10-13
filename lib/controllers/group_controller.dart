@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:chatify/constants/apis.dart';
+import 'package:chatify/widgets/api_service.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -35,14 +36,17 @@ class GroupController extends GetxController {
     try {
       isLoading.value = true;
       final token = box.read("accessToken");
-      final res = await http.post(
-        Uri.parse("$baseUrl/api/groups"),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-        body: jsonEncode(body),
-      );
+
+      // final res = await http.post(
+      //   Uri.parse("$baseUrl/api/groups"),
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     "Authorization": "Bearer $token",
+      //   },
+      //   body: jsonEncode(body),
+      // );
+
+       final res = await ApiService.request(url: "$baseUrl/api/groups", method: "POST", body: body);
 
       isLoading.value = false;
 

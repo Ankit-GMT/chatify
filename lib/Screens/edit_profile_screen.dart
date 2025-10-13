@@ -159,7 +159,7 @@ class EditProfileScreen extends StatelessWidget {
                                         "Error", "Failed to update name");
                                   }
                                   profileController.fetchUserProfile();
-                                  Get.back();
+                                  Navigator.pop(context);
                                 },
                                 child: Text("Update"))
                           ],
@@ -288,7 +288,13 @@ class EditProfileScreen extends StatelessWidget {
                           Get.snackbar("Error", "Failed to update about");
                         }
                         profileController.fetchUserProfile();
-                        Navigator.pop(context);
+
+
+                        if(context.mounted)
+                          {
+                            Navigator.pop(context);
+                          }
+
                       });
                     },
                     subtitle: "${profileController.user.value?.about}"),

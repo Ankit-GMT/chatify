@@ -13,6 +13,7 @@ class GroupChats extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(
           () => ListView.separated(
+            physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
           return ChatUserCard(
             index: index,

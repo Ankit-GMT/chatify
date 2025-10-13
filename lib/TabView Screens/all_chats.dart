@@ -16,6 +16,7 @@ class AllChats extends StatelessWidget {
     return Obx(
       () =>
           ListView.separated(
+            physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
           return ChatUserCard(
             index: index,
