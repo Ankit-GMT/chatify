@@ -1,4 +1,7 @@
+import 'package:chatify/Screens/login_screen.dart';
+import 'package:chatify/Screens/otp_screen.dart';
 import 'package:chatify/Screens/splash_screen.dart';
+import 'package:chatify/Screens/welcome_screen.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/theme.dart';
 import 'package:chatify/widgets/zego_initializer.dart';
@@ -37,7 +40,7 @@ class MyApp extends StatelessWidget {
         theme: AppThemes.lightTheme,
         darkTheme: AppThemes.darkTheme,
         themeMode: ThemeMode.light,
-        home: SplashScreen(),
+        home: OtpScreen(),
         // builder: (context, child) {
         //   return Stack(
         //     children: [
