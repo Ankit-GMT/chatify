@@ -16,18 +16,31 @@ class AllChats extends StatelessWidget {
     return Obx(
       () =>
           ListView.separated(
+            padding: EdgeInsets.zero,
             physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
-          return ChatUserCard(
-            index: index,
-            onTap: () {
-              Get.to(() => ChatScreen(
+          final chat = userController.allChats[index];
+          final isSelected = userController.selectedChats.contains(chat);
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onLongPress: () => userController.toggleSelection(chat),
+            child: ChatUserCard(
+              index: index,
+              onTap: () {
+                if (userController.isSelectionMode.value) {
+                  userController.toggleSelection(chat);
+                } else {
+                  Get.to(() => ChatScreen(
                     chatUser: null,
-                chatType: userController.allChats.elementAt(index),
+                    chatType: userController.allChats.elementAt(index),
                   ));
-            },
-            chatUser: null,
-            chatType: userController.allChats.elementAt(index),
+                }
+
+              },
+              chatUser: null,
+              chatType: userController.allChats.elementAt(index),
+              isSelected: isSelected,
+            ),
           );
         },
         separatorBuilder: (BuildContext context, int index) {

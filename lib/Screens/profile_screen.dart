@@ -27,29 +27,32 @@ class ProfileScreen extends StatelessWidget {
           Obx(() => Column(
             spacing: 20,
             children: [
+              SizedBox(
+                height: Get.height*0.03,
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  GestureDetector(
-                      onTap: () {
-                        Get.back();
-                      },
-                      child: Image.asset("assets/images/back_icon.png",scale: 3,))
-                  // IconButton(
-                  //   color: AppColors.iconGrey,
-                  //   style: ButtonStyle(
-                  //     backgroundColor: WidgetStatePropertyAll(AppColors.white),
-                  //     shape: WidgetStatePropertyAll(
-                  //       RoundedRectangleBorder(
-                  //           borderRadius: BorderRadius.circular(20),
-                  //           side: BorderSide(color: Colors.grey.shade200)),
-                  //     ),
-                  //   ),
-                  //   onPressed: () {
-                  //     Get.back();
-                  //   },
-                  //   icon: Icon(Icons.arrow_left),
-                  // ),
+                  // GestureDetector(
+                  //     onTap: () {
+                  //       Get.back();
+                  //     },
+                  //     child: Image.asset("assets/images/back_icon.png",scale: 3,))
+                  IconButton(
+                    color: AppColors.iconGrey,
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStatePropertyAll(AppColors.white),
+                      shape: WidgetStatePropertyAll(
+                        RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(color: Colors.grey.shade200)),
+                      ),
+                    ),
+                    onPressed: () {
+                      Get.back();
+                    },
+                    icon: Icon(Icons.arrow_left),
+                  ),
                 ],
               ),
               ProfileAvatar(imageUrl: '${userController.user.value.profileImageUrl}', radius: 50),

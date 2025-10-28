@@ -20,7 +20,7 @@ class GroupProfileScreen extends StatelessWidget {
           child: Column(
             spacing: 20,
             children: [
-              SizedBox(height: Get.height * 0.01),
+              SizedBox(height: Get.height * 0.03),
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
@@ -90,6 +90,7 @@ class GroupProfileScreen extends StatelessWidget {
                 height: 250,
                 child: ListView.separated(
                     shrinkWrap: true,
+                    padding: EdgeInsets.zero,
                     itemCount: chatType!.members!.length,
                     scrollDirection: Axis.vertical,
                     itemBuilder: (context, index) {

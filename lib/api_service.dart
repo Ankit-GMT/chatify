@@ -45,7 +45,7 @@ class ApiService {
       }
 
       // If token expired, try to refresh it
-      if (response.statusCode == 401) {
+      if (response.statusCode == 401 || response.statusCode == 403) {
         bool refreshed = await _refreshToken();
         if (refreshed) {
           print("Retrying API after refresh...");
@@ -56,6 +56,7 @@ class ApiService {
           _logoutUser();
         }
       }
+      print('status Code :- ${response.statusCode}');
 
       return response;
     } catch (e) {

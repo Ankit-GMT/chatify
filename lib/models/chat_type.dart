@@ -1,3 +1,5 @@
+import 'package:get/get.dart';
+
 class ChatType {
   int? id;
   String? type;
@@ -7,6 +9,8 @@ class ChatType {
   Null? lastMessage;
   int? unreadCount;
   List<Members>? members;
+
+  RxBool isPinned = false.obs;
 
   ChatType(
       {this.id,

@@ -56,17 +56,25 @@ class UserRegisterScreen extends StatelessWidget {
             SizedBox(height: Get.height * 0.01),
             Stack(
               children: [
-                CircleAvatar(
-                  radius: 56,
-                  backgroundImage:
-                      NetworkImage("https://i.sstatic.net/l60Hf.png"),
+                Obx(
+                  () => profileController.pickedImage.value != null
+                      ? CircleAvatar(
+                          radius: 56,
+                          backgroundImage:
+                              FileImage(profileController.pickedImage.value!),
+                        )
+                      : CircleAvatar(
+                          radius: 56,
+                          backgroundImage:
+                              NetworkImage("https://i.sstatic.net/l60Hf.png"),
+                        ),
                 ),
                 Positioned(
                   bottom: 0,
                   right: 0,
                   child: GestureDetector(
                     onTap: () {
-                      profileController.pickImage();
+                      profileController.showPickerBottomSheet();
                     },
                     child: CircleAvatar(
                       radius: 13,
@@ -84,8 +92,9 @@ class UserRegisterScreen extends StatelessWidget {
                         child: Icon(
                           Icons.edit_rounded,
                           size: 14,
-                          color:
-                              Get.isDarkMode ? AppColors.black : AppColors.white,
+                          color: Get.isDarkMode
+                              ? AppColors.black
+                              : AppColors.white,
                         ),
                       ),
                     ),
@@ -178,16 +187,18 @@ class UserRegisterScreen extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  if(firstNameController.text.isNotEmpty && lastNameController.text.isNotEmpty && dobController.text.isNotEmpty){
+                  if (firstNameController.text.isNotEmpty &&
+                      lastNameController.text.isNotEmpty &&
+                      dobController.text.isNotEmpty) {
                     authController.registerUser(
                         firstName: firstNameController.text,
                         lastName: lastNameController.text,
                         phoneNumber: authController.phoneNumber.value,
                         dateOfBirth: dobController.text,
                         profileImageUrl: "https://i.sstatic.net/l60Hf.png");
-                  }
-                  else{
-                    Get.snackbar("Error", "Please fill all the required fields");
+                  } else {
+                    Get.snackbar(
+                        "Error", "Please fill all the required fields");
                   }
                 },
                 child: Text("Continue"),

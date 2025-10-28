@@ -3,21 +3,20 @@ import 'package:chatify/constants/apis.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/chat_user.dart';
 import 'package:chatify/models/contact_model.dart';
-import 'package:chatify/widgets/api_service.dart';
+import 'package:chatify/api_service.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
 class UserController extends GetxController {
-
   var searchResults = <ChatUser>[].obs;
   var isLoading = false.obs;
   final String baseUrl = APIs.url;
 
   final box = GetStorage();
-  
- // for first time if user chat
+
+  // for first time if user chat
   Future<dynamic> createChat(int otherUserId) async {
     final token = box.read("accessToken");
 
@@ -40,7 +39,11 @@ class UserController extends GetxController {
       //   body: jsonEncode(body),
       // );
 
-      final res = await ApiService.request(url: "$baseUrl/api/chats", method: "POST",body: body,);
+      final res = await ApiService.request(
+        url: "$baseUrl/api/chats",
+        method: "POST",
+        body: body,
+      );
 
       isLoading.value = false;
 
@@ -73,7 +76,8 @@ class UserController extends GetxController {
       //     "Content-Type": "application/json",
       //   },
       // );
-       final res = await ApiService.request(url: "$baseUrl/api/users/search?q=$phone", method: "GET");
+      final res = await ApiService.request(
+          url: "$baseUrl/api/users/search?q=$phone", method: "GET");
 
       final data = jsonDecode(res.body);
       print("search... $data");
@@ -113,7 +117,8 @@ class UserController extends GetxController {
       //   },
       // );
 
-      final res = await ApiService.request(url: "$baseUrl/api/chats", method: "GET");
+      final res =
+          await ApiService.request(url: "$baseUrl/api/chats", method: "GET");
 
       final data = jsonDecode(res.body);
       print("All chats... $data");
@@ -147,7 +152,8 @@ class UserController extends GetxController {
       //   },
       // );
 
-      final res = await ApiService.request(url: "$baseUrl/api/user/$userId", method: "GET");
+      final res = await ApiService.request(
+          url: "$baseUrl/api/user/$userId", method: "GET");
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
@@ -207,7 +213,10 @@ class UserController extends GetxController {
     //   body: jsonEncode({"contacts": phoneNumbers}),
     // );
 
-    final res = await ApiService.request(url: "$baseUrl/api/user/contacts/sync", method: "POST", body: {"contacts": phoneNumbers});
+    final res = await ApiService.request(
+        url: "$baseUrl/api/user/contacts/sync",
+        method: "POST",
+        body: {"contacts": phoneNumbers});
 
     if (res.statusCode == 200) {
       final List data = jsonDecode(res.body);
@@ -229,7 +238,8 @@ class UserController extends GetxController {
     // for registered users
     registeredUsers.value = users.where((user) => user.registered!).toList();
     // for not registered users
-    notRegisteredUsers.value = users.where((user) => !user.registered!).toList();
+    notRegisteredUsers.value =
+        users.where((user) => !user.registered!).toList();
     final contacts = await FlutterContacts.getContacts(withProperties: true);
     //
     mergeNotRegisteredWithContacts(notRegisteredUsers, contacts);
@@ -245,6 +255,7 @@ class UserController extends GetxController {
     }
     return cleaned;
   }
+
   void mergeNotRegisteredWithContacts(
       List<ContactModel> notRegisteredUsers, List<Contact> localContacts) {
     for (var user in notRegisteredUsers) {
@@ -258,13 +269,78 @@ class UserController extends GetxController {
             // Fill missing details
             user.firstName ??= c.name.first;
             user.lastName ??= c.name.last;
-
           }
         }
       }
     }
   }
 
+  // For pinned chats
+
+  RxList<ChatType> selectedChats = <ChatType>[].obs;
+  RxBool isSelectionMode = false.obs;
+
+  void toggleSelection(ChatType chat) {
+    if (selectedChats.contains(chat)) {
+      selectedChats.remove(chat);
+    } else {
+      selectedChats.add(chat);
+    }
+
+    // Enable or disable selection mode based on list
+    isSelectionMode.value = selectedChats.isNotEmpty;
+  }
+
+  void clearSelection() {
+    selectedChats.clear();
+    isSelectionMode.value = false;
+  }
+
+  // void pinSelected() {
+  //   for (var chat in selectedChats) {
+  //     chat.isPinned.value = true;
+  //   }
+  //   reorderChats();
+  //   clearSelection();
+  // }
+  //
+  // void unpinSelected() {
+  //   for (var chat in selectedChats) {
+  //     chat.isPinned.value = false;
+  //   }
+  //   reorderChats();
+  //   clearSelection();
+  // }
+
+  void togglePinSelected() {
+    // Check if all selected chats are already pinned
+    final allPinned = selectedChats.every((chat) => chat.isPinned.value);
+
+    // If all are pinned → unpin them; otherwise, pin them
+    for (var chat in selectedChats) {
+      chat.isPinned.value = !allPinned;
+    }
+
+    reorderChats();
+    clearSelection();
+  }
+
+  bool get areAllSelectedPinned =>
+      selectedChats.isNotEmpty &&
+      selectedChats.every((chat) => chat.isPinned.value);
+
+  void reorderChats() {
+    allChats.sort((a, b) {
+      if (a.isPinned.value && !b.isPinned.value) return -1;
+      if (!a.isPinned.value && b.isPinned.value) return 1;
+      return 0;
+    });
+    groupChats.sort((a, b) {
+      if (a.isPinned.value && !b.isPinned.value) return -1;
+      if (!a.isPinned.value && b.isPinned.value) return 1;
+      return 0;
+    });
+  }
 
   @override
   void onInit() {

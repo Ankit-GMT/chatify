@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class AppColors {
   // Primary colors
   static const Color primary = Color(0xffC35E31); // Brown (used in your tab)
-  static const Color secondary = Color(0xffF1D8CD); // Light brown (used in your tab)
+  static const Color secondary =
+      Color(0xffF1D8CD); // Light brown (used in your tab)
 
   // static const Color primary = Colors.black; // Brown (used in your tab)
   // static const Color secondary = Colors.grey;
@@ -19,8 +21,6 @@ class AppColors {
   static const Color settingTile = Color(0xffD9D9D9);
   static const Color iconGrey = Color(0xff515151);
 
-
-
   // Text colors
   static const Color textPrimary = Colors.brown;
   static const Color textOnPrimary = Colors.white;
@@ -28,4 +28,5 @@ class AppColors {
   // Neutral colors
   static const Color background = Colors.white;
   static const Color shadow = Color(0x33000000); // Black with opacity
+
 }

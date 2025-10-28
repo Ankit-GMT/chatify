@@ -1,4 +1,5 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/controllers/theme_controller.dart';
 import 'package:chatify/widgets/custom_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,13 +9,14 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           spacing: 20,
           children: [
-            SizedBox(height: Get.height * 0.01),
+            SizedBox(height: Get.height * 0.05),
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -43,16 +45,27 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: Get.height*0.02,),
+            SizedBox(
+              height: Get.height * 0.02,
+            ),
             CustomTile(
               title: "Edit Profile",
               image: "assets/images/setting_profile.png",
               onTap: () {},
             ),
             CustomTile(
-              title: "Change Theme",
+              title: "Dark Theme",
               image: "assets/images/setting_theme.png",
               onTap: () {},
+              isTheme: true,
+              icon: Obx(
+                () => Switch(
+                  value: themeController.isDarkMode.value,
+                  onChanged: (value) {
+                    themeController.toggleTheme();
+                  },
+                ),
+              ),
             ),
             CustomTile(
               title: "About Us",
@@ -82,9 +95,9 @@ class SettingsScreen extends StatelessWidget {
             Text(
               "Version 1.0.0",
               style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  ),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

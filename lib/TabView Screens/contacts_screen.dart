@@ -27,6 +27,7 @@ class ContactsScreen extends StatelessWidget {
                   Text("Contacts on Chatify",style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold),),
                   ListView.builder(
                     shrinkWrap: true,
+                    padding: EdgeInsets.zero,
                     physics: NeverScrollableScrollPhysics(),
                     itemCount: userController.registeredUsers.length,
                     itemBuilder: (context, index) {
@@ -68,6 +69,7 @@ class ContactsScreen extends StatelessWidget {
                   Text("Invite to Chatify",style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold),),
                   ListView.builder(
                     shrinkWrap: true,
+                    padding: EdgeInsets.zero,
                     physics: NeverScrollableScrollPhysics(),
                     itemCount: userController.notRegisteredUsers.length,
                     itemBuilder: (context, index) {

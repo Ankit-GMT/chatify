@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/models/chat_user.dart';
-import 'package:chatify/widgets/api_service.dart';
+import 'package:chatify/api_service.dart';
 import 'package:chatify/widgets/zego_initializer.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
@@ -95,9 +96,9 @@ class ProfileController extends GetxController {
     await box.write("userName", user.value?.firstName);
   }
 
-  Future<void> pickImage() async {
+  Future<void> pickImage(ImageSource source) async {
     final XFile? image =
-        await _picker.pickImage(source: ImageSource.gallery); // or camera
+        await _picker.pickImage(source: source);
 
     if (image != null) {
       pickedImage.value = File(image.path);
@@ -111,5 +112,39 @@ class ProfileController extends GetxController {
 
     // TODO: implement onInit
     super.onInit();
+  }
+
+ // for showing options to pick image
+
+  void showPickerBottomSheet() {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take a Photo'),
+              onTap: () {
+                pickImage(ImageSource.camera);
+                Get.back();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                pickImage(ImageSource.gallery);
+                Get.back();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

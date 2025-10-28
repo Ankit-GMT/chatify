@@ -2,7 +2,8 @@ import 'dart:convert';
 
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/models/message.dart';
-import 'package:chatify/widgets/api_service.dart';
+import 'package:chatify/api_service.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -10,6 +11,7 @@ import 'package:http/http.dart' as http;
 class MessageController extends GetxController {
   final String baseUrl = APIs.url;
   final box = GetStorage();
+
 
   // for load messages
   Future<List<Message>> fetchMessages(int chatId) async {
@@ -147,5 +149,32 @@ class MessageController extends GetxController {
       print("Error: $e");
       return false;
     }
+  }
+
+  // for emoji
+
+  final FocusNode focusNode = FocusNode();
+
+  var isEmojiVisible = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    // When keyboard opens, hide emoji picker
+    focusNode.addListener(() {
+      if (focusNode.hasFocus) {
+        isEmojiVisible.value = false;
+      }
+    });
+  }
+
+  void toggleEmojiPicker() {
+    if (isEmojiVisible.value) {
+      focusNode.requestFocus();
+    } else {
+      focusNode.unfocus();
+    }
+    isEmojiVisible.toggle();
   }
 }

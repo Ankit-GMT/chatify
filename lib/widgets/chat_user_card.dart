@@ -12,6 +12,7 @@ class ChatUserCard extends StatefulWidget {
   final Function()? onTap;
   final ChatUser? chatUser;
   final ChatType? chatType;
+  final bool isSelected;
   final bool isSearch;
 
   const ChatUserCard(
@@ -20,6 +21,7 @@ class ChatUserCard extends StatefulWidget {
       required this.onTap,
       required this.chatUser,
       required this.chatType,
+      this.isSelected = false,
       this.isSearch = false});
 
   @override
@@ -35,6 +37,7 @@ class _ChatUserCardState extends State<ChatUserCard> {
     final myId = profileController.user.value?.id;
 
     return ListTile(
+      tileColor: widget.isSelected ? AppColors.primary.withAlpha(35):Colors.transparent ,
       onTap: widget.onTap,
       leading: InkWell(
         onTap: () {},
@@ -80,30 +83,39 @@ class _ChatUserCardState extends State<ChatUserCard> {
       ),
 
       //last message time
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      trailing:
+      Obx(() => Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        spacing: 5,
         children: [
-          Text(
-            "05:15",
-            style:
+          widget.chatType!.isPinned.value ? const Icon(Icons.push_pin,color: Colors.grey,size: 20,) : SizedBox(),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "05:15",
+                style:
                 GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-            // width: 34,
-            // height: 24,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withAlpha(100),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Text(
-              "55",
-              style: GoogleFonts.poppins(
-                  fontSize: 14, fontWeight: FontWeight.w400),
-            ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                // width: 34,
+                // height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(100),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Text(
+                  "55",
+                  style: GoogleFonts.poppins(
+                      fontSize: 14, fontWeight: FontWeight.w400),
+                ),
+              ),
+            ],
           ),
         ],
-      ),
+      ),),
     );
   }
 }
