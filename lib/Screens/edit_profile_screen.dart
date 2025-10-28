@@ -271,7 +271,7 @@ class EditProfileScreen extends StatelessWidget {
                         image: "assets/images/profile_email.png",
                         onTap: () {
                           Dialogs.editProfile(
-                              context, emailController, "Edit email", () async {
+                              context, emailController, "Email", () async {
                             ChatUser updatedUser = ChatUser(
                               email: emailController.text.trim(),
                             );
@@ -296,7 +296,7 @@ class EditProfileScreen extends StatelessWidget {
                         image: "assets/images/setting_about.png",
                         onTap: () {
                           Dialogs.editProfile(
-                              context, aboutController, "Edit about", () async {
+                              context, aboutController, "About", () async {
                             ChatUser updatedUser = ChatUser(
                               about: aboutController.text.trim(),
                             );

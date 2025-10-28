@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:chatify/constants/apis.dart';
+import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/models/chat_user.dart';
 import 'package:chatify/api_service.dart';
 import 'package:chatify/widgets/zego_initializer.dart';
@@ -120,8 +121,8 @@ class ProfileController extends GetxController {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration:  BoxDecoration(
+          color: Get.isDarkMode? AppColors.primary:AppColors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Wrap(

@@ -16,12 +16,12 @@ void main() async {
   if (!await Permission.contacts.isGranted) {
     await Permission.contacts.request();
   }
-  await GetStorage.init();
-  final box = GetStorage();
+  // await GetStorage.init();
+  // final box = GetStorage();
 // box.erase();
 //   await initZego(box.read("userId") ?? "", box.read("userName") ?? '');
-  print("User ID: ${box.read('userId')}");
-  print("User Name: ${box.read('userName')}");
+//   print("User ID: ${box.read('userId')}");
+//   print("User Name: ${box.read('userName')}");
   Get.put(AuthController(), permanent: true);
   Get.put(ThemeController(), permanent: true);
   runApp(MyApp(

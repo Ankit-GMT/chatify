@@ -11,6 +11,7 @@ import 'package:chatify/widgets/tab_box.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatelessWidget {
   final tabController = Get.put(TabBarController());

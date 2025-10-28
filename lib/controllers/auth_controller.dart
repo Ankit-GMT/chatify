@@ -83,10 +83,10 @@ class AuthController extends GetxController {
         await box.write("refreshToken", data['refreshToken']);
 
         Get.snackbar("Success", "Login successful!");
-        Get.off(() => MainScreen());
+        Get.offAll(() => MainScreen());
       }
       else if(data['message'] == "OTP verified. Please register."){
-        Get.off(UserRegisterScreen());
+        Get.off(()=>UserRegisterScreen());
       }
       else {
         Get.snackbar("Invalid OTP", data['error'] ?? "Try again");
@@ -184,7 +184,7 @@ class AuthController extends GetxController {
         await box.write("refreshToken", data['refreshToken']);
 
         Get.snackbar("Success", "Registration successful!");
-        Get.off(() => MainScreen());
+        Get.offAll(() => MainScreen());
       } else {
         Get.snackbar("Error", data['error'] ?? "Something went wrong");
       }
