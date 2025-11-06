@@ -109,7 +109,6 @@ class ProfileController extends GetxController {
   @override
   void onInit() async {
     await fetchUserProfile();
-    // await initZego(box.read("userId"), box.read("userName"));
 
     // TODO: implement onInit
     super.onInit();

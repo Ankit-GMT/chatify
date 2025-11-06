@@ -7,7 +7,6 @@ import 'package:chatify/api_service.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:http/http.dart' as http;
 
 class UserController extends GetxController {
   var searchResults = <ChatUser>[].obs;

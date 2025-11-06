@@ -1,4 +1,4 @@
-import 'package:chatify/Screens/call_screen.dart';
+import 'package:chatify/Screens/video_call_screen.dart';
 import 'package:chatify/Screens/edit_profile_screen.dart';
 import 'package:chatify/Screens/home_screen.dart';
 import 'package:chatify/constants/app_colors.dart';

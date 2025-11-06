@@ -7,6 +7,7 @@ import 'package:chatify/Screens/user_register_screen.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/controllers/user_controller.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -14,15 +15,16 @@ import 'package:http/http.dart' as http;
 import 'bottom_controller.dart';
 
 class AuthController extends GetxController {
-
   final String baseUrl = APIs.url;
+
+  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
 
   //for token storing
   final box = GetStorage();
+  late final String fcmToken;
 
   String? get token => box.read("accessToken");
   final bottomController = Get.put(BottomController());
-
 
   var isLoading = false.obs;
   var isOtpSent = false.obs;
@@ -62,16 +64,21 @@ class AuthController extends GetxController {
     }
   }
 
-
   // Verify OTP
   Future<void> verifyOtp(String otpCode) async {
+
+    print('token---------$fcmToken');
     try {
       isLoading.value = true;
 
       final res = await http.post(
         Uri.parse("$baseUrl/api/auth/verify-otp"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"phoneNumber": phoneNumber.value, "otp": otpCode}),
+        body: jsonEncode({
+          "phoneNumber": phoneNumber.value,
+          "otp": otpCode,
+          "fcmToken": fcmToken,
+        }),
       );
       final data = jsonDecode(res.body);
 
@@ -84,11 +91,9 @@ class AuthController extends GetxController {
 
         Get.snackbar("Success", "Login successful!");
         Get.offAll(() => MainScreen());
-      }
-      else if(data['message'] == "OTP verified. Please register."){
-        Get.off(()=>UserRegisterScreen());
-      }
-      else {
+      } else if (data['message'] == "OTP verified. Please register.") {
+        Get.off(() => UserRegisterScreen());
+      } else {
         Get.snackbar("Invalid OTP", data['error'] ?? "Try again");
       }
     } catch (e) {
@@ -238,4 +243,11 @@ class AuthController extends GetxController {
     }
   }
 
+  @override
+  void onInit() async {
+    // TODO: implement onInit
+    super.onInit();
+    fcmToken = (await _fcm.getToken())!;
+    print("FCM:- $fcmToken");
+  }
 }

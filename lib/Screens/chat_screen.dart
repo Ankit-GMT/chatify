@@ -1,4 +1,3 @@
-import 'package:chatify/Screens/call_screen.dart';
 import 'package:chatify/Screens/group_profile_screen.dart';
 import 'package:chatify/Screens/profile_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
@@ -13,10 +12,7 @@ import 'package:chatify/widgets/profile_avatar.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-// import 'package:zego_uikit/zego_uikit.dart';
-// import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 
 class ChatScreen extends StatefulWidget {
   ChatUser? chatUser;
@@ -86,21 +82,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // void _startVoiceCall(BuildContext context) {
-  //   final box = GetStorage();
-  //   final userName = box.read("userName") ?? '';
-  //   final userId = box.read("userId") ?? '';
-  //
-  //   Navigator.push(
-  //       context,
-  //       MaterialPageRoute(
-  //         builder: (context) => CallScreen(
-  //             userId: userId,
-  //             userName: userName,
-  //             callID: widget.chatType!.id.toString()),
-  //       ));
-  // }
-
   @override
   void initState() {
     super.initState();
@@ -128,8 +109,8 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Container(
             height: 85,
-            padding:
-            EdgeInsets.only(left: Get.width*0.02,right: Get.width * 0.04),
+            padding: EdgeInsets.only(
+                left: Get.width * 0.02, right: Get.width * 0.04),
             decoration: BoxDecoration(
                 color: Color(0xff2A2A2A),
                 borderRadius: BorderRadius.only(
@@ -140,33 +121,37 @@ class _ChatScreenState extends State<ChatScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
-                  spacing: Get.width*0.04,
+                  spacing: Get.width * 0.04,
                   children: [
-                    IconButton(onPressed: (){
-                      Get.back();
-                    }, icon: Icon(Icons.arrow_back),color: AppColors.white,),
+                    IconButton(
+                      onPressed: () {
+                        Get.back();
+                      },
+                      icon: Icon(Icons.arrow_back),
+                      color: AppColors.white,
+                    ),
                     InkWell(
                       onTap: () {
                         Get.to(() => type == "GROUP"
                             ? GroupProfileScreen(
-                          chatType: widget.chatType,
-                        )
+                                chatType: widget.chatType,
+                              )
                             : ProfileScreen(
-                          id: myId == widget.chatType?.members?[0].userId
-                              ? (widget.chatType?.members?[1].userId!)
-                              : (widget.chatType?.members?[0].userId!),
-                        ));
+                                id: myId == widget.chatType?.members?[0].userId
+                                    ? (widget.chatType?.members?[1].userId!)
+                                    : (widget.chatType?.members?[0].userId!),
+                              ));
                       },
                       child: ProfileAvatar(
                           imageUrl: type == "GROUP"
                               ? widget.chatType?.groupImageUrl ?? ''
                               : myId == widget.chatType?.members?[0].userId
-                              ? (widget.chatType?.members?[1]
-                              .profileImageUrl) ??
-                              ''
-                              : widget.chatType?.members?[0]
-                              .profileImageUrl ??
-                              '',
+                                  ? (widget.chatType?.members?[1]
+                                          .profileImageUrl) ??
+                                      ''
+                                  : widget.chatType?.members?[0]
+                                          .profileImageUrl ??
+                                      '',
                           radius: 25),
                     ),
                     // SizedBox(
@@ -180,27 +165,27 @@ class _ChatScreenState extends State<ChatScreen> {
                           width: Get.width * 0.25,
                           child: type == "GROUP"
                               ? Text(
-                            widget.chatType?.name ?? '',
-                            maxLines: 1,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
-                                overflow: TextOverflow.ellipsis,
-                                color: AppColors.white),
-                          )
+                                  widget.chatType?.name ?? '',
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16,
+                                      overflow: TextOverflow.ellipsis,
+                                      color: AppColors.white),
+                                )
                               : Text(
-                            myId == widget.chatType?.members?[0].userId
-                                ? ("${widget.chatType?.members?[1].firstName} ${widget.chatType?.members?[1].lastName}") ??
-                                ''
-                                : ("${widget.chatType?.members?[0].firstName} ${widget.chatType?.members?[0].lastName}") ??
-                                '',
-                            maxLines: 1,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
-                                overflow: TextOverflow.ellipsis,
-                                color: AppColors.white),
-                          ),
+                                  myId == widget.chatType?.members?[0].userId
+                                      ? ("${widget.chatType?.members?[1].firstName} ${widget.chatType?.members?[1].lastName}") ??
+                                          ''
+                                      : ("${widget.chatType?.members?[0].firstName} ${widget.chatType?.members?[0].lastName}") ??
+                                          '',
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16,
+                                      overflow: TextOverflow.ellipsis,
+                                      color: AppColors.white),
+                                ),
                         ),
                         Text(
                           "Online",
@@ -216,36 +201,39 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 Row(
                   children: [
-                    // InkWell(
-                    //   onTap: (){
-                    //     _startVoiceCall(context);
-                    //   },
-                    //   child: CircleAvatar(
-                    //     radius: 27,
-                    //     backgroundColor: Colors.white,
-                    //     child:
-                    //         Image.asset("assets/images/chat_call.png", scale: 2),
-                    //   ),
-                    // ),
-                    // ZegoSendCallInvitationButton(
-                    //   isVideoCall: true,   // false for voice call
-                    //   resourceID: "zego_call", // keep same for all users
-                    //   invitees: [
-                    //     ZegoUIKitUser(
-                    //       id: '19',      // friend's user id
-                    //       name: 'Ankit',  // optional, just display
-                    //     ),
-                    //   ],
-                    // ),
+                    InkWell(
+                      onTap: () {
+                        final channelId = widget.chatType!.id;
+                        print('StartCAll :-   $channelId');
+                        final receiverId =
+                            (myId == widget.chatType?.members?[0].userId)
+                                ? (widget.chatType?.members?[1].userId!)
+                                : (widget.chatType?.members?[0].userId!);
+
+
+                        messageController.startCall(receiverId.toString(),
+                            channelId.toString(), false, context);
+
+                      },
+                      child: CircleAvatar(
+                        radius: 27,
+                        backgroundColor: Colors.white,
+                        child: Image.asset("assets/images/chat_call.png",
+                            scale: 2),
+                      ),
+                    ),
                     SizedBox(
                       width: Get.width * 0.05,
                     ),
-                    CircleAvatar(
-                      radius: 27,
-                      backgroundColor: Colors.white,
-                      child: Image.asset(
-                        "assets/images/chat_videocall.png",
-                        scale: 2,
+                    InkWell(
+                      onTap: () {},
+                      child: CircleAvatar(
+                        radius: 27,
+                        backgroundColor: Colors.white,
+                        child: Image.asset(
+                          "assets/images/chat_videocall.png",
+                          scale: 2,
+                        ),
                       ),
                     ),
                   ],
@@ -257,7 +245,10 @@ class _ChatScreenState extends State<ChatScreen> {
             child: ListView.builder(
               itemCount: messages.length,
               reverse: true,
-              padding: EdgeInsets.only(top: Get.height * .01,left: Get.width*0.05,right: Get.width*0.05),
+              padding: EdgeInsets.only(
+                  top: Get.height * .01,
+                  left: Get.width * 0.05,
+                  right: Get.width * 0.05),
               physics: AlwaysScrollableScrollPhysics(),
               itemBuilder: (context, index) {
                 return GestureDetector(
@@ -297,11 +288,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   },
                   child: MessageCard(
                     text: messages[messages.length - index - 1].content,
-                    isMe: messages[messages.length - index - 1].senderId ==
-                        myId,
-                    time: messages[messages.length - index - 1]
-                        .sentAt
-                        .toString(),
+                    isMe:
+                        messages[messages.length - index - 1].senderId == myId,
+                    time:
+                        messages[messages.length - index - 1].sentAt.toString(),
                     imageUrl: messages[messages.length - index - 1]
                         .senderProfileImageUrl,
                     name:
@@ -312,7 +302,8 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: Get.width * 0.05, vertical: 5),
+            padding:
+                EdgeInsets.symmetric(horizontal: Get.width * 0.05, vertical: 5),
             child: SizedBox(
               width: double.infinity,
               height: 44,
@@ -320,9 +311,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Expanded(
                     child: TextField(
-                      style: TextStyle(
-                        color: AppColors.white
-                      ),
+                      style: TextStyle(color: AppColors.white),
                       focusNode: messageController.focusNode,
                       controller: msgController,
                       decoration: InputDecoration(
@@ -386,33 +375,29 @@ class _ChatScreenState extends State<ChatScreen> {
             height: 5,
           ),
           Obx(() => Offstage(
-
-            offstage: !messageController.isEmojiVisible.value,
-            child:
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: EmojiPicker(
-                textEditingController: msgController,
-                config: Config(
-                  height: 280,
-                  checkPlatformCompatibility: true,
-                  emojiViewConfig: EmojiViewConfig(
-                    columns: 7,
-                    emojiSizeMax: 25,
-                    backgroundColor: Colors.transparent,
+                offstage: !messageController.isEmojiVisible.value,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: EmojiPicker(
+                    textEditingController: msgController,
+                    config: Config(
+                        height: 280,
+                        checkPlatformCompatibility: true,
+                        emojiViewConfig: EmojiViewConfig(
+                          columns: 7,
+                          emojiSizeMax: 25,
+                          backgroundColor: Colors.transparent,
+                        ),
+                        categoryViewConfig: CategoryViewConfig(
+                          backgroundColor: Colors.transparent,
+                          indicatorColor: AppColors.primary,
+                          iconColorSelected: AppColors.primary,
+                        ),
+                        bottomActionBarConfig:
+                            BottomActionBarConfig(enabled: false)),
                   ),
-                  categoryViewConfig: CategoryViewConfig(
-                    backgroundColor: Colors.transparent,
-                    indicatorColor: AppColors.primary,
-                    iconColorSelected: AppColors.primary,
-                  ),
-                  bottomActionBarConfig: BottomActionBarConfig(
-                    enabled: false
-                  )
                 ),
-              ),
-            ),
-          )),
+              )),
         ],
       ),
     );

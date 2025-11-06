@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/api_service.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:http/http.dart' as http;
 
 class GroupController extends GetxController {
 

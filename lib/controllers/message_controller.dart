@@ -1,9 +1,13 @@
 import 'dart:convert';
 
+import 'package:chatify/Screens/video_call_screen.dart';
+import 'package:chatify/Screens/voice_call_screen.dart';
 import 'package:chatify/constants/apis.dart';
+import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/message.dart';
 import 'package:chatify/api_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -11,6 +15,7 @@ import 'package:http/http.dart' as http;
 class MessageController extends GetxController {
   final String baseUrl = APIs.url;
   final box = GetStorage();
+  final profileController = Get.find<ProfileController>();
 
 
   // for load messages
@@ -168,6 +173,53 @@ class MessageController extends GetxController {
       }
     });
   }
+
+  // for call start
+
+  Future<void> startCall(String receiverId, String channelId, bool isVideo, BuildContext context) async {
+    final callType = isVideo ? "video" : "voice";
+
+    final response = await http.post(
+      Uri.parse("$baseUrl/api/call/invite"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "channelId": channelId,
+        "receiverId": receiverId,
+        "callerId": profileController.user.value!.id.toString(),
+        "callerName": profileController.user.value!.firstName,
+        "callType": callType,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    print('scSDcsDcSD$data');
+
+    if (response.statusCode == 200) {
+      // Navigate immediately to call screen
+      if (callType == "video") {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => VideoCallScreen(
+              channelId: data['channelId'],
+              token: data['token'],
+            ),
+          ),
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => VoiceCallScreen(
+              channelId: data['channelId'],
+              token: data['token'],
+            ),
+          ),
+        );
+      }
+    }
+  }
+
 
   void toggleEmojiPicker() {
     if (isEmojiVisible.value) {
