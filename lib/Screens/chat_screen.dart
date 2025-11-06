@@ -120,84 +120,84 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  spacing: Get.width * 0.04,
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        Get.back();
-                      },
-                      icon: Icon(Icons.arrow_back),
-                      color: AppColors.white,
-                    ),
-                    InkWell(
-                      onTap: () {
-                        Get.to(() => type == "GROUP"
-                            ? GroupProfileScreen(
-                                chatType: widget.chatType,
-                              )
-                            : ProfileScreen(
-                                id: myId == widget.chatType?.members?[0].userId
-                                    ? (widget.chatType?.members?[1].userId!)
-                                    : (widget.chatType?.members?[0].userId!),
-                              ));
-                      },
-                      child: ProfileAvatar(
-                          imageUrl: type == "GROUP"
-                              ? widget.chatType?.groupImageUrl ?? ''
-                              : myId == widget.chatType?.members?[0].userId
-                                  ? (widget.chatType?.members?[1]
-                                          .profileImageUrl) ??
-                                      ''
-                                  : widget.chatType?.members?[0]
-                                          .profileImageUrl ??
-                                      '',
-                          radius: 25),
-                    ),
-                    // SizedBox(
-                    //   width: Get.width * 0.04,
-                    // ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: Get.width * 0.25,
-                          child: type == "GROUP"
-                              ? Text(
-                                  widget.chatType?.name ?? '',
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 16,
-                                      overflow: TextOverflow.ellipsis,
-                                      color: AppColors.white),
-                                )
-                              : Text(
-                                  myId == widget.chatType?.members?[0].userId
-                                      ? ("${widget.chatType?.members?[1].firstName} ${widget.chatType?.members?[1].lastName}") ??
-                                          ''
-                                      : ("${widget.chatType?.members?[0].firstName} ${widget.chatType?.members?[0].lastName}") ??
-                                          '',
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 16,
-                                      overflow: TextOverflow.ellipsis,
-                                      color: AppColors.white),
-                                ),
-                        ),
-                        Text(
-                          "Online",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w300,
-                            fontSize: 12,
-                            color: AppColors.white.withAlpha(220),
+                InkWell(
+                  onTap: () {
+                    Get.to(() => type == "GROUP"
+                        ? GroupProfileScreen(
+                      chatType: widget.chatType,
+                    )
+                        : ProfileScreen(
+                      id: myId == widget.chatType?.members?[0].userId
+                          ? (widget.chatType?.members?[1].userId!)
+                          : (widget.chatType?.members?[0].userId!),
+                    ));
+                  },
+                  child: Row(
+                    spacing: Get.width * 0.04,
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          Get.back();
+                        },
+                        icon: Icon(Icons.arrow_back),
+                        color: AppColors.white,
+                      ),
+                      ProfileAvatar(
+                            imageUrl: type == "GROUP"
+                                ? widget.chatType?.groupImageUrl ?? ''
+                                : myId == widget.chatType?.members?[0].userId
+                                    ? (widget.chatType?.members?[1]
+                                            .profileImageUrl) ??
+                                        ''
+                                    : widget.chatType?.members?[0]
+                                            .profileImageUrl ??
+                                        '',
+                            radius: 25),
+                      // SizedBox(
+                      //   width: Get.width * 0.04,
+                      // ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: Get.width * 0.25,
+                            child: type == "GROUP"
+                                ? Text(
+                                    widget.chatType?.name ?? '',
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16,
+                                        overflow: TextOverflow.ellipsis,
+                                        color: AppColors.white),
+                                  )
+                                : Text(
+                                    myId == widget.chatType?.members?[0].userId
+                                        ? ("${widget.chatType?.members?[1].firstName} ${widget.chatType?.members?[1].lastName}") ??
+                                            ''
+                                        : ("${widget.chatType?.members?[0].firstName} ${widget.chatType?.members?[0].lastName}") ??
+                                            '',
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16,
+                                        overflow: TextOverflow.ellipsis,
+                                        color: AppColors.white),
+                                  ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          Text(
+                            "Online",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w300,
+                              fontSize: 12,
+                              color: AppColors.white.withAlpha(220),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
                 Row(
                   children: [
@@ -216,7 +216,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
                       },
                       child: CircleAvatar(
-                        radius: 27,
+                        radius: Get.width*0.05,
                         backgroundColor: Colors.white,
                         child: Image.asset("assets/images/chat_call.png",
                             scale: 2),
@@ -226,9 +226,20 @@ class _ChatScreenState extends State<ChatScreen> {
                       width: Get.width * 0.05,
                     ),
                     InkWell(
-                      onTap: () {},
+                      onTap: () {
+                        final channelId = widget.chatType!.id;
+                        print('StartCAll :-   $channelId');
+                        final receiverId =
+                        (myId == widget.chatType?.members?[0].userId)
+                            ? (widget.chatType?.members?[1].userId!)
+                            : (widget.chatType?.members?[0].userId!);
+
+
+                        messageController.startCall(receiverId.toString(),
+                            channelId.toString(), true, context);
+                      },
                       child: CircleAvatar(
-                        radius: 27,
+                        radius: Get.width*0.05,
                         backgroundColor: Colors.white,
                         child: Image.asset(
                           "assets/images/chat_videocall.png",

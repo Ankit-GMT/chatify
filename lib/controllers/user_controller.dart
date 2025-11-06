@@ -24,7 +24,7 @@ class UserController extends GetxController {
       "type": "PRIVATE"
     };
 
-    print("Create Chat Payload: $body");
+    // print("Create Chat Payload: $body");
 
     try {
       isLoading.value = true;
@@ -48,16 +48,16 @@ class UserController extends GetxController {
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         final data = jsonDecode(res.body);
-        print("Chat Created, data: $data");
+        // print("Chat Created, data: $data");
         getAllChats();
         return ChatType.fromJson(data);
       } else {
-        print("Failed to create chat: ${res.statusCode} ${res.body}");
+        // print("Failed to create chat: ${res.statusCode} ${res.body}");
         return null;
       }
     } catch (e) {
       isLoading.value = false;
-      print("Exception while creating chat: $e");
+      // print("Exception while creating chat: $e");
       return null;
     }
   }
@@ -120,13 +120,14 @@ class UserController extends GetxController {
           await ApiService.request(url: "$baseUrl/api/chats", method: "GET");
 
       final data = jsonDecode(res.body);
-      print("All chats... $data");
+      // print("All chats... $data");
 
       if (res.statusCode == 200) {
         List users = data ?? [];
         allChats.value = users.map((u) => ChatType.fromJson(u)).toList();
         groupChats.value =
             allChats.where((chat) => chat.type == "GROUP").toList();
+        print("Group chats: ${groupChats().map((chat) => chat.members!.map((d)=> d.userId).toList()).toList()}");
       } else {
         searchResults.clear();
         Get.snackbar("Error", data['error'] ?? "No chats found");
@@ -161,7 +162,7 @@ class UserController extends GetxController {
             body is Map && (body['id'] != null)
                 ? body
                 : (body['user'] ?? body['data'] ?? body);
-        print(userJson);
+        // print(userJson);
 
         user.value = ChatUser.fromJson(Map<String, dynamic>.from(userJson));
       } else {
@@ -182,7 +183,7 @@ class UserController extends GetxController {
     // Get contacts with phones
     final contacts = await FlutterContacts.getContacts(withProperties: true);
 
-    print("Contacts: $contacts");
+    // print("Contacts: $contacts");
     List<String> phoneNumbers = [];
     for (var c in contacts) {
       for (var p in c.phones) {
@@ -219,7 +220,7 @@ class UserController extends GetxController {
 
     if (res.statusCode == 200) {
       final List data = jsonDecode(res.body);
-      print("Data: $data");
+      // print("Data: $data");
       return data.map((e) => ContactModel.fromJson(e)).toList();
     } else {
       print("Error: ${res.statusCode} ${res.body}");
@@ -243,8 +244,8 @@ class UserController extends GetxController {
     //
     mergeNotRegisteredWithContacts(notRegisteredUsers, contacts);
     isLoading.value = false;
-    print("users: $users");
-    print("App users: $registeredUsers");
+    // print("users: $users");
+    // print("App users: $registeredUsers");
   }
 
   String normalizePhone(String number) {

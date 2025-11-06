@@ -202,7 +202,9 @@ class MessageController extends GetxController {
           MaterialPageRoute(
             builder: (_) => VideoCallScreen(
               channelId: data['channelId'],
-              token: data['token'],
+              token: data['agoraToken'],
+              callerId: profileController.user.value!.id.toString(),
+              receiverId: receiverId,
             ),
           ),
         );
@@ -212,11 +214,54 @@ class MessageController extends GetxController {
           MaterialPageRoute(
             builder: (_) => VoiceCallScreen(
               channelId: data['channelId'],
-              token: data['token'],
+              token: data['agoraToken'],
+              callerId: profileController.user.value!.id.toString(),
+              receiverId: receiverId,
             ),
           ),
         );
       }
+    }
+  }
+
+  // for call end
+
+  Future<void> endCall({
+    required String channelId,
+    required String callerId,
+    required String receiverId,
+  }) async {
+    try {
+      //Tell backend to end the call for both users
+      final response = await http.post(
+        Uri.parse("$baseUrl/api/call/end"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "channelId": channelId,
+          "receiverId": receiverId,
+          "callerId": callerId
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print("✅ Call end request sent to backend");
+      } else {
+        print("⚠️ Failed to end call: ${response.body}");
+      }
+
+      // 2️⃣ End local Agora session
+      // await AgoraRtcEngine.instance.leaveChannel();
+      // await AgoraRtcEngine.instance.release();
+      //
+      // // 3️⃣ Close CallKit UI
+      // await FlutterCallkitIncoming.endAllCalls();
+      //
+      // // 4️⃣ Navigate back to chat or home screen
+      // if (navigatorKey.currentState != null) {
+      //   navigatorKey.currentState!.popUntil((route) => route.isFirst);
+      // }
+    } catch (e) {
+      print("❌ Error ending call: $e");
     }
   }
 

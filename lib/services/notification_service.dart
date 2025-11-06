@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:chatify/Screens/video_call_screen.dart';
 import 'package:chatify/Screens/voice_call_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -20,12 +21,19 @@ class NotificationService {
   Future<void> initialize() async {
     await _requestPermissions();
     await _initFirebaseListeners();
+
   }
 
-  /// 🔹 Ask for notification permission (Android 13+, iOS)
+  ///  Ask for notification permission (Android 13+, iOS)
   Future<void> _requestPermissions() async {
     if (await Permission.notification.isDenied) {
       await Permission.notification.request();
+    }
+    if(await Permission.microphone.isDenied){
+      await Permission.microphone.request();
+    }
+    if(await Permission.camera.isDenied){
+      await Permission.camera.request();
     }
 
     await _fcm.requestPermission(
@@ -60,6 +68,10 @@ class NotificationService {
     if (message.data['type'] == 'call_invite') {
       await _showIncomingCall(message.data);
     }
+    else if (message.data['type'] == 'call_end') {
+      await FlutterCallkitIncoming.endAllCalls();
+      // navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    }
   }
 
   /// 🔹 Background handler (required to be static)
@@ -68,12 +80,13 @@ class NotificationService {
     await Firebase.initializeApp();
     if (message.data['type'] == 'call_invite') {
       final callData = message.data;
+      final callType = callData['callType'];
       final params = CallKitParams(
         id: callData['channelId'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
         nameCaller: callData['callerName'] ?? 'Unknown',
         appName: 'MyApp',
-        handle: 'Voice Call',
-        type: 0,
+        handle: callType == 'video' ? 'Video Call' : 'Voice Call',
+        type: callType == 'video' ? 1 : 0,
         extra: callData,
       );
       await FlutterCallkitIncoming.showCallkitIncoming(params);
@@ -82,12 +95,15 @@ class NotificationService {
 
   /// 🔹 Show CallKit screen
   Future<void> _showIncomingCall(Map<String, dynamic> callData) async {
+
+    final callType = callData['callType'];
+
     final params = CallKitParams(
       id: callData['channelId'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
       nameCaller: callData['callerName'] ?? 'Unknown',
       appName: 'MyApp',
-      handle: 'Voice Call',
-      type: 0,
+      handle: callType == 'video' ? 'Video Call' : 'Voice Call',
+      type: callType == 'video' ? 1 : 0,
       extra: callData,
 
     );
@@ -101,12 +117,33 @@ class NotificationService {
     switch (event.event) {
       case Event.actionCallAccept:
         final callData = event.body['extra'];
-        Navigator.push(
-          navigatorKey.currentContext!,
-          MaterialPageRoute(
-            builder: (_) => VoiceCallScreen(channelId: callData['channelId'],token: callData['token'],),
-          ),
-        );
+        print("CALL DATA :- $callData");
+        if (callData['callType'] == 'voice') {
+          Navigator.push(navigatorKey.currentContext!, MaterialPageRoute(
+            builder: (_) => VoiceCallScreen(
+              channelId: callData['channelId'],
+              token: callData['token'],
+              callerId: callData['callerId'],
+              receiverId: callData['receiverId'],
+            ),
+          ));
+        } else {
+          Navigator.push(navigatorKey.currentContext!, MaterialPageRoute(
+            builder: (_) => VideoCallScreen(
+              channelId: callData['channelId'],
+              token: callData['token'],
+              callerId: callData['callerId'],
+              receiverId: callData['receiverId'],
+            ),
+          ));
+        }
+
+        // Navigator.push(
+        //   navigatorKey.currentContext!,
+        //   MaterialPageRoute(
+        //     builder: (_) => VoiceCallScreen(channelId: callData['channelId'],token: callData['token'],),
+        //   ),
+        // );
         break;
 
       case Event.actionCallDecline:

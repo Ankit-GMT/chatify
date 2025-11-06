@@ -73,7 +73,7 @@ class ProfileScreen extends StatelessWidget {
               Align(
                 alignment: Alignment.topLeft,
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 16,horizontal: 8),
+                  padding: EdgeInsets.symmetric(vertical: 0,horizontal: 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -91,7 +91,7 @@ class ProfileScreen extends StatelessWidget {
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: 10,
-                  padding: EdgeInsets.only(left: 10),
+                  padding: EdgeInsets.only(left: 0),
                   itemBuilder: (context, index) {
                     return Container(
                       height: 70,

@@ -20,8 +20,8 @@ class TabBox extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: 40,
-        width: Get.width*0.25,
-        padding: EdgeInsets.symmetric(horizontal: 14),
+        width: Get.width*0.26,
+        padding: EdgeInsets.symmetric(horizontal: 13),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(20),

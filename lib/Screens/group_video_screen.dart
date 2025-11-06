@@ -6,32 +6,38 @@ import '../constants/apis.dart';
 import '../controllers/message_controller.dart';
 import '../controllers/profile_controller.dart';
 
-class VideoCallScreen extends StatefulWidget {
+class GroupVideoCallScreen extends StatefulWidget {
   final String channelId;
   final String token;
   final String callerId;
   final String receiverId;
-  const VideoCallScreen({super.key, required this.channelId, required this.token, required this.callerId, required this.receiverId});
+
+  const GroupVideoCallScreen(
+      {super.key,
+      required this.channelId,
+      required this.token,
+      required this.callerId,
+      required this.receiverId});
 
   @override
   _MainScreenScreenState createState() => _MainScreenScreenState();
 }
 
-class _MainScreenScreenState extends State<VideoCallScreen> {
+class _MainScreenScreenState extends State<GroupVideoCallScreen> {
   bool _isMuted = false;
   bool _isVideoOff = false;
   bool _isConnected = false;
   bool _isCallActive = true;
-  bool _isRemoteVideoOff = false;
+  final Map<int, bool> _remoteVideoStates = {};
   bool _isLocalMain = false;
   double _localVideoX = 20;
   double _localVideoY = 50;
   Duration _callDuration = Duration.zero;
   Timer? _timer;
 
-  int? _remoteUid; // Stores remote user ID
+  final Set<int> _remoteUids = {}; // Stores remote user ID
   bool _localUserJoined =
-  false; // Indicates if local user has joined the channel
+      false; // Indicates if local user has joined the channel
   late RtcEngine _engine; // Stores Agora RTC Engine instance
 
   final messageController = Get.put(MessageController());
@@ -83,32 +89,27 @@ class _MainScreenScreenState extends State<VideoCallScreen> {
           setState(() => _localUserJoined = true);
         },
         onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
-          debugPrint("Remote user $remoteUid joined");
+          debugPrint("👤 Remote user $remoteUid joined");
           setState(() {
-            _remoteUid = remoteUid;
-            _isRemoteVideoOff = false;
+            _remoteUids.add(remoteUid);
             _isConnected = true;
           });
-          _startTimer();
+          if (_callDuration == Duration.zero) _startTimer();
         },
-        onUserOffline: (
-            RtcConnection connection,
-            int remoteUid,
-            UserOfflineReasonType reason,
-            ) {
-          debugPrint("Remote user $remoteUid left");
-          if (remoteUid == _remoteUid) {
-            setState(() {
-              _remoteUid = null;
-              _isRemoteVideoOff = false;
-            });
+        onUserOffline: (RtcConnection connection, int remoteUid,
+            UserOfflineReasonType reason) {
+          debugPrint(" Remote user $remoteUid left");
+          setState(() => _remoteUids.remove(remoteUid));
+
+          // End call only if all remote users left
+          if (_remoteUids.isEmpty) {
+            _endCallForBoth();
           }
-          _endCallForBoth();
         },
         onUserMuteVideo: (RtcConnection connection, int remoteUid, bool muted) {
-          if (remoteUid == _remoteUid) {
-            setState(() => _isRemoteVideoOff = muted);
-          }
+          setState(() {
+            _remoteVideoStates[remoteUid] = muted;
+          });
         },
       ),
     );
@@ -138,8 +139,25 @@ class _MainScreenScreenState extends State<VideoCallScreen> {
 
   // Leaves the channel and releases resources
   Future<void> _cleanupAgoraEngine() async {
-    await _engine.leaveChannel();
-    await _engine.release();
+    try {
+      await _engine.leaveChannel();
+    } catch (e) {
+      debugPrint(" leaveChannel error: $e");
+    }
+
+    try {
+      await _engine.stopPreview();
+    } catch (e) {
+      debugPrint("stopPreview error: $e");
+    }
+
+    try {
+      await _engine.release();
+    } catch (e) {
+      debugPrint(" release error: $e");
+    }
+
+    debugPrint("Agora engine cleaned up safely");
   }
 
   void _toggleMute() async {
@@ -166,7 +184,9 @@ class _MainScreenScreenState extends State<VideoCallScreen> {
     _isCallActive = false;
 
     await messageController.endCall(
-        channelId: widget.channelId, callerId: widget.callerId, receiverId: widget.receiverId);
+        channelId: widget.channelId,
+        callerId: widget.callerId,
+        receiverId: widget.receiverId);
     _timer?.cancel();
     await _cleanupAgoraEngine();
 
@@ -223,8 +243,8 @@ class _MainScreenScreenState extends State<VideoCallScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final mainVideo = _isLocalMain ? _localVideo() : _remoteVideo();
-    final smallVideo = _isLocalMain ? _remoteVideo() : _localVideo();
+    final mainVideo = _remoteVideoGrid();
+    final smallVideo = _localVideo();
 
     final size = MediaQuery.sizeOf(context);
 
@@ -239,33 +259,7 @@ class _MainScreenScreenState extends State<VideoCallScreen> {
         child: Stack(
           children: [
             Center(child: mainVideo),
-
-            // Small preview (tappable)
-            // if (_localUserJoined || _remoteUid != null)
-            //   Positioned(
-            //     left: _localVideoX,
-            //     top: _localVideoY,
-            //     width: size.width*0.3,
-            //     height: size.height *0.2,
-            //     child: GestureDetector(
-            //       onPanUpdate: (details) {
-            //         setState(() {
-            //           _localVideoX = (_localVideoX + details.delta.dx).clamp(0.0, size.width - size.width*0.3);
-            //           _localVideoY = (_localVideoY + details.delta.dy).clamp(0.0, size.height - size.height *0.3);
-            //         });
-            //       },
-            //       onTap: _swapVideos,
-            //       child: ClipRRect(
-            //         borderRadius: BorderRadius.circular(12),
-            //         child: Container(
-            //           color: Colors.black54,
-            //           child: smallVideo,
-            //         ),
-            //       ),
-            //     ),
-            //   ),
-
-            if (_localUserJoined || _remoteUid != null)
+            if (_localUserJoined || _remoteUids.isNotEmpty)
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOut,
@@ -287,8 +281,8 @@ class _MainScreenScreenState extends State<VideoCallScreen> {
                     final targetX = _localVideoX < screenWidth / 2
                         ? 16.0 // Snap to left with margin
                         : screenWidth -
-                        size.width * 0.3 -
-                        16.0; // Snap to right with margin
+                            size.width * 0.3 -
+                            16.0; // Snap to right with margin
 
                     // Keep vertical position inside screen bounds
                     final targetY = _localVideoY.clamp(
@@ -337,9 +331,7 @@ class _MainScreenScreenState extends State<VideoCallScreen> {
                           ? _formatDuration(_callDuration)
                           : "Calling…",
                       style: TextStyle(
-                        color: _isConnected
-                            ? Colors.greenAccent
-                            : Colors.grey,
+                        color: _isConnected ? Colors.greenAccent : Colors.grey,
                         fontSize: 16,
                       ),
                     ),
@@ -359,62 +351,62 @@ class _MainScreenScreenState extends State<VideoCallScreen> {
                 child: !_localUserJoined
                     ? SizedBox()
                     : Center(
-                  child: Container(
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        spacing: 5,
-                        // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _controlButton(
-                            icon: _isMuted ? Icons.mic_off : Icons.mic,
-                            onPressed: _toggleMute,
+                        child: Container(
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(40),
                           ),
-                          VerticalDivider(
-                            color: Colors.white38,
-                            thickness: 1,
-                            indent: 15,
-                            endIndent: 15,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: 5,
+                              // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _controlButton(
+                                  icon: _isMuted ? Icons.mic_off : Icons.mic,
+                                  onPressed: _toggleMute,
+                                ),
+                                VerticalDivider(
+                                  color: Colors.white38,
+                                  thickness: 1,
+                                  indent: 15,
+                                  endIndent: 15,
+                                ),
+                                _controlButton(
+                                  icon: Icons.call_end,
+                                  color: Colors.redAccent,
+                                  onPressed: _endCallForBoth,
+                                ),
+                                VerticalDivider(
+                                  color: Colors.white38,
+                                  thickness: 1,
+                                  indent: 15,
+                                  endIndent: 15,
+                                ),
+                                _controlButton(
+                                  icon: Icons.cameraswitch,
+                                  onPressed: _switchCamera,
+                                ),
+                                VerticalDivider(
+                                  color: Colors.white38,
+                                  thickness: 1,
+                                  indent: 15,
+                                  endIndent: 15,
+                                ),
+                                _controlButton(
+                                  icon: _isVideoOff
+                                      ? Icons.videocam_off
+                                      : Icons.videocam,
+                                  onPressed: _toggleVideo,
+                                ),
+                              ],
+                            ),
                           ),
-                          _controlButton(
-                            icon: Icons.call_end,
-                            color: Colors.redAccent,
-                            onPressed: _endCallForBoth,
-                          ),
-                          VerticalDivider(
-                            color: Colors.white38,
-                            thickness: 1,
-                            indent: 15,
-                            endIndent: 15,
-                          ),
-                          _controlButton(
-                            icon: Icons.cameraswitch,
-                            onPressed: _switchCamera,
-                          ),
-                          VerticalDivider(
-                            color: Colors.white38,
-                            thickness: 1,
-                            indent: 15,
-                            endIndent: 15,
-                          ),
-                          _controlButton(
-                            icon: _isVideoOff
-                                ? Icons.videocam_off
-                                : Icons.videocam,
-                            onPressed: _toggleVideo,
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-                ),
               ),
             ),
           ],
@@ -443,27 +435,51 @@ class _MainScreenScreenState extends State<VideoCallScreen> {
   }
 
   // Displays remote video view
-  Widget _remoteVideo() {
-    if (_remoteUid != null) {
-      if (_isRemoteVideoOff) {
-        // Remote user turned off camera → show placeholder
-        return const Center(
-          child: Icon(Icons.videocam_off, size: 80),
-        );
-      }
-      return AgoraVideoView(
-        controller: VideoViewController.remote(
-          rtcEngine: _engine,
-          canvas: VideoCanvas(uid: _remoteUid),
-          connection: RtcConnection(channelId: widget.channelId ),
-        ),
-      );
-    } else {
-      return const Text(
-        'Waiting for remote user to join...',
-        textAlign: TextAlign.center,
+  Widget _remoteVideoGrid() {
+    if (_remoteUids.isEmpty) {
+      return const Center(
+        child: Text('Waiting for participants...'),
       );
     }
+
+    final remoteViews = _remoteUids.map((uid) {
+      final isMuted = _remoteVideoStates[uid] ?? false;
+      return Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.white10),
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.black,
+        ),
+        child: isMuted
+            ? Center(
+                child: Text(
+                  'User $uid',
+                  style: const TextStyle(color: Colors.white54, fontSize: 16),
+                ),
+              )
+            : AgoraVideoView(
+                controller: VideoViewController.remote(
+                  rtcEngine: _engine,
+                  canvas: VideoCanvas(uid: uid),
+                  connection: RtcConnection(channelId: widget.channelId),
+                ),
+              ),
+      );
+    }).toList();
+
+    int count = remoteViews.length + 1; // +1 for local user
+    int crossAxisCount = count <= 2 ? 1 : (count <= 4 ? 2 : 3);
+
+    return GridView.count(
+      crossAxisCount: crossAxisCount,
+      mainAxisSpacing: 4,
+      crossAxisSpacing: 4,
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      children: [
+        ...remoteViews,
+      ],
+    );
   }
 
   Widget _controlButton({

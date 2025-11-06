@@ -69,7 +69,7 @@ class ContactsScreen extends StatelessWidget {
                   Text("Invite to Chatify",style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold),),
                   ListView.builder(
                     shrinkWrap: true,
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.only(bottom: 80),
                     physics: NeverScrollableScrollPhysics(),
                     itemCount: userController.notRegisteredUsers.length,
                     itemBuilder: (context, index) {

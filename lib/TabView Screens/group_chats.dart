@@ -13,7 +13,7 @@ class GroupChats extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(
       () => ListView.separated(
-        padding: EdgeInsets.zero,
+        padding: const EdgeInsets.only(bottom: 80),
         physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
           final chat = userController.groupChats[index];

@@ -133,7 +133,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       ),
       floatingActionButton:
            FloatingActionButton(
-              onPressed:selectedContacts.isNotEmpty && nameController.text.isNotEmpty ? () {
+              onPressed: selectedContacts.isNotEmpty && nameController.text.isNotEmpty ? () {
                 groupController.createGroup(
                   name: nameController.text.trim(),
                   groupImageUrl: "https://cdn.example.com/work.png",
@@ -143,9 +143,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   userController.getAllChats();
 
                 },);
+                print("created group ${nameController.text}");
                 Navigator.pop(context);
               } : null,
-              child: Icon(Icons.arrow_forward),
+              child: Icon(Icons.arrow_forward,color: AppColors.white,),
             ),
     );
   }
