@@ -199,6 +199,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ],
                   ),
                 ),
+                type == "GROUP" ? SizedBox() :
                 Row(
                   children: [
                     InkWell(

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:chatify/Screens/group_video_screen.dart';
+import 'package:chatify/Screens/group_voice_screen.dart';
 import 'package:chatify/Screens/video_call_screen.dart';
 import 'package:chatify/Screens/voice_call_screen.dart';
 import 'package:chatify/constants/apis.dart';
@@ -16,7 +18,6 @@ class MessageController extends GetxController {
   final String baseUrl = APIs.url;
   final box = GetStorage();
   final profileController = Get.find<ProfileController>();
-
 
   // for load messages
   Future<List<Message>> fetchMessages(int chatId) async {
@@ -176,7 +177,8 @@ class MessageController extends GetxController {
 
   // for call start
 
-  Future<void> startCall(String receiverId, String channelId, bool isVideo, BuildContext context) async {
+  Future<void> startCall(String receiverId, String channelId, bool isVideo,
+      BuildContext context) async {
     final callType = isVideo ? "video" : "voice";
 
     final response = await http.post(
@@ -265,6 +267,108 @@ class MessageController extends GetxController {
     }
   }
 
+  // for group call
+
+  Future<void> startGroupCall({
+    required BuildContext context,
+    required String channelId,
+    required String callerId,
+    required String callerName,
+    required String callType, // "groupvoice" or "groupvideo"
+    required List<String> receiverIds,
+  }) async {
+    try {
+      final url = Uri.parse("$baseUrl/api/call/group/invite");
+
+      final body = {
+        "channelId": channelId,
+        "callerId": callerId,
+        "callerName": callerName,
+        "callType": callType,
+        "receiverIds": receiverIds,
+      };
+
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print(" Group call started: $data");
+
+        final agoraToken = data["agoraToken"];
+        final channel = data["channelId"];
+
+        // Navigate to call screen
+        if (callType == "groupVideo") {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => GroupVideoCallScreen(
+                  channelId: channel,
+                  token: agoraToken,
+                  callerId: callerId,
+                  receiverIds: receiverIds),
+            ),
+          );
+        } else if (callType == "groupVoice"){
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => GroupVoiceCallScreen(
+                  channelId: channel,
+                  token: agoraToken,
+                  callerId: callerId,
+                  receiverIds: receiverIds),
+            ),
+          );
+        }
+      } else {
+        print("⚠️ Failed to start group call: ${response.body}");
+      }
+    } catch (e) {
+      print("❌ Error starting group call: $e");
+    }
+  }
+ // for end group call
+  Future<Map<String, dynamic>> endGroupCall({
+    required String channelId,
+    required String callerId,
+    required List<String> receiverIds,
+  }) async {
+    final String apiUrl = '$baseUrl/api/call/group/end';
+
+    final body = {
+      "channelId": channelId,
+      "callerId": callerId,
+      "receiverIds": receiverIds,
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print(" Group call ended successfully: ${data['status']}");
+        print(" Notified users: ${data['notifiedUsers']}");
+        return data;
+      } else {
+        print(" Failed to end group call: ${response.body}");
+        return {"error": "Failed to end group call"};
+      }
+    } catch (e) {
+      print("⚠️ Exception while ending group call: $e");
+      return {"error": e.toString()};
+    }
+  }
 
   void toggleEmojiPicker() {
     if (isEmojiVisible.value) {

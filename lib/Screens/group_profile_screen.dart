@@ -1,4 +1,6 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/controllers/message_controller.dart';
+import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/widgets/custom_box.dart';
 import 'package:chatify/widgets/custom_tile.dart';
@@ -8,10 +10,15 @@ import 'package:get/get.dart';
 
 class GroupProfileScreen extends StatelessWidget {
   final ChatType? chatType;
+
   const GroupProfileScreen({super.key, required this.chatType});
 
   @override
   Widget build(BuildContext context) {
+    final profileController = Get.find<ProfileController>();
+    final messageController = Get.find<MessageController>();
+
+    final myId = profileController.user.value?.id;
     return Scaffold(
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
@@ -44,21 +51,81 @@ class GroupProfileScreen extends StatelessWidget {
               ProfileAvatar(imageUrl: chatType!.groupImageUrl!, radius: 50),
               Column(
                 children: [
-                  Text(chatType!.name! ?? '',style: TextStyle(fontSize: 16,fontWeight: FontWeight.w500),),
-                  Text("${chatType!.members!.length.toString()} Members",style: TextStyle(fontSize: 14,fontWeight: FontWeight.w500,color: AppColors.grey),),
+                  Text(
+                    chatType!.name! ?? '',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  Text(
+                    "${chatType!.members!.length.toString()} Members",
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.grey),
+                  ),
                 ],
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  CustomBox(title: "Voice Call",image: "assets/images/profile_voice.png",onTap: (){},),
-                  CustomBox(title: "Video Call",image: "assets/images/profile_video.png",onTap: (){},),
-                  CustomBox(title: "Add ",image: "assets/images/profile_addUser.png",onTap: (){},),
+                  CustomBox(
+                    title: "Voice Call",
+                    image: "assets/images/profile_voice.png",
+                    onTap: () {
+                      final channelId = chatType!.id.toString();
+                      print('StartCAll channel:-   $channelId');
+                      final rIds = chatType?.members
+                          ?.map((m) => m.userId)
+                          .where((id) => id != myId)
+                          .toList();
+                      final receiverIds =
+                          rIds?.map((id) => id.toString()).toList() ?? [];
+                      print("Start call receiverids:- $receiverIds");
+                      messageController.startGroupCall(
+                          context: context,
+                          channelId: channelId,
+                          callerId: profileController.user.value!.id.toString(),
+                          callerName: profileController.user.value!.firstName
+                              .toString(),
+                          callType: "groupVoice",
+                          receiverIds: receiverIds);
+                    },
+                  ),
+                  CustomBox(
+                    title: "Video Call",
+                    image: "assets/images/profile_video.png",
+                    onTap: () {
+                      final channelId = chatType!.id.toString();
+                      print('StartCAll channel:-   $channelId');
+                      final rIds = chatType?.members
+                          ?.map((m) => m.userId)
+                          .where((id) => id != myId)
+                          .toList();
+                      final receiverIds =
+                          rIds?.map((id) => id.toString()).toList() ?? [];
+                      print("Start call receiverids:- $receiverIds");
+                      messageController.startGroupCall(
+                          context: context,
+                          channelId: channelId,
+                          callerId: profileController.user.value!.id.toString(),
+                          callerName: profileController.user.value!.firstName
+                              .toString(),
+                          callType: "groupVideo",
+                          receiverIds: receiverIds);
+                    },
+                  ),
+                  CustomBox(
+                    title: "Add ",
+                    image: "assets/images/profile_addUser.png",
+                    onTap: () {},
+                  ),
                 ],
               ),
               Align(
                   alignment: Alignment.centerLeft,
-                  child: Text("Media",style: TextStyle(fontSize: 16,fontWeight: FontWeight.w500),)),
+                  child: Text(
+                    "Media",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  )),
               SizedBox(
                 height: 80,
                 child: ListView.builder(
@@ -75,15 +142,28 @@ class GroupProfileScreen extends StatelessWidget {
                       ),
                       child: ClipRRect(
                           borderRadius: BorderRadius.circular(5),
-                          child: Image.network("https://picsum.photos/200/300",fit: BoxFit.cover,)),
+                          child: Image.network(
+                            "https://picsum.photos/200/300",
+                            fit: BoxFit.cover,
+                          )),
                     );
-                  },),
+                  },
+                ),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Members",style: TextStyle(fontSize: 16,fontWeight: FontWeight.w500),),
-                  Text("View All",style: TextStyle(fontSize: 14,fontWeight: FontWeight.w500,color: AppColors.grey),),
+                  Text(
+                    "Members",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  Text(
+                    "View All",
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.grey),
+                  ),
                 ],
               ),
               SizedBox(
@@ -100,16 +180,21 @@ class GroupProfileScreen extends StatelessWidget {
                           backgroundImage: NetworkImage(
                               chatType!.members![index].profileImageUrl! ?? ''),
                         ),
-                        title: Text("${chatType!.members![index].firstName} ${chatType!.members![index].lastName}"),
-                        subtitle: Text(chatType!.members![index].role!,style: TextStyle(fontSize: 12),),
+                        title: Text(
+                            "${chatType!.members![index].firstName} ${chatType!.members![index].lastName}"),
+                        subtitle: Text(
+                          chatType!.members![index].role!,
+                          style: TextStyle(fontSize: 12),
+                        ),
                       );
-                    }, separatorBuilder: (context, index) {
-                  return Divider(
-                    thickness: 0.5,
-                    indent: 15,
-                    endIndent: 15,
-                  );
-                }),
+                    },
+                    separatorBuilder: (context, index) {
+                      return Divider(
+                        thickness: 0.5,
+                        indent: 15,
+                        endIndent: 15,
+                      );
+                    }),
               ),
               CustomTile(
                 title: "Notification",

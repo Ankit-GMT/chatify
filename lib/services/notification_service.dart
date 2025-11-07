@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:chatify/Screens/group_video_screen.dart';
+import 'package:chatify/Screens/group_voice_screen.dart';
 import 'package:chatify/Screens/video_call_screen.dart';
 import 'package:chatify/Screens/voice_call_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -8,10 +10,11 @@ import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
+
   factory NotificationService() => _instance;
+
   NotificationService._internal();
 
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -21,7 +24,6 @@ class NotificationService {
   Future<void> initialize() async {
     await _requestPermissions();
     await _initFirebaseListeners();
-
   }
 
   ///  Ask for notification permission (Android 13+, iOS)
@@ -29,10 +31,10 @@ class NotificationService {
     if (await Permission.notification.isDenied) {
       await Permission.notification.request();
     }
-    if(await Permission.microphone.isDenied){
+    if (await Permission.microphone.isDenied) {
       await Permission.microphone.request();
     }
-    if(await Permission.camera.isDenied){
+    if (await Permission.camera.isDenied) {
       await Permission.camera.request();
     }
 
@@ -67,10 +69,14 @@ class NotificationService {
   Future<void> _handleMessage(RemoteMessage message) async {
     if (message.data['type'] == 'call_invite') {
       await _showIncomingCall(message.data);
-    }
-    else if (message.data['type'] == 'call_end') {
+    } else if (message.data['type'] == 'call_end') {
       await FlutterCallkitIncoming.endAllCalls();
       // navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    } else if (message.data['type'] == "group_call_invite") {
+      await _showIncomingCall(message.data);
+    }
+    else if(message.data['type'] == "group_call_end"){
+      await FlutterCallkitIncoming.endAllCalls();
     }
   }
 
@@ -82,11 +88,25 @@ class NotificationService {
       final callData = message.data;
       final callType = callData['callType'];
       final params = CallKitParams(
-        id: callData['channelId'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id: callData['channelId'] ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         nameCaller: callData['callerName'] ?? 'Unknown',
         appName: 'MyApp',
         handle: callType == 'video' ? 'Video Call' : 'Voice Call',
         type: callType == 'video' ? 1 : 0,
+        extra: callData,
+      );
+      await FlutterCallkitIncoming.showCallkitIncoming(params);
+    } else if (message.data['type'] == "group_call_invite") {
+      final callData = message.data;
+      final callType = callData['callType'];
+      final params = CallKitParams(
+        id: callData['channelId'] ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
+        nameCaller: callData['callerName'] ?? 'Unknown',
+        appName: 'MyApp',
+        handle: callType == 'groupVideo' ? 'Group Video Call From ${callData['callerName']}' : 'Group Voice Call From ${callData['callerName']}',
+        type: callType == 'groupVideo' ? 1 : 0,
         extra: callData,
       );
       await FlutterCallkitIncoming.showCallkitIncoming(params);
@@ -95,17 +115,16 @@ class NotificationService {
 
   /// 🔹 Show CallKit screen
   Future<void> _showIncomingCall(Map<String, dynamic> callData) async {
-
     final callType = callData['callType'];
 
     final params = CallKitParams(
-      id: callData['channelId'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: callData['channelId'] ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       nameCaller: callData['callerName'] ?? 'Unknown',
       appName: 'MyApp',
-      handle: callType == 'video' ? 'Video Call' : 'Voice Call',
-      type: callType == 'video' ? 1 : 0,
+      handle: (callType == 'video' || callType == 'groupVideo') ? 'Video Call' : 'Voice Call',
+      type: (callType == 'video' || callType == 'groupVideo') ? 1 : 0,
       extra: callData,
-
     );
     await FlutterCallkitIncoming.showCallkitIncoming(params);
   }
@@ -117,33 +136,62 @@ class NotificationService {
     switch (event.event) {
       case Event.actionCallAccept:
         final callData = event.body['extra'];
-        print("CALL DATA :- $callData");
-        if (callData['callType'] == 'voice') {
-          Navigator.push(navigatorKey.currentContext!, MaterialPageRoute(
-            builder: (_) => VoiceCallScreen(
-              channelId: callData['channelId'],
-              token: callData['token'],
-              callerId: callData['callerId'],
-              receiverId: callData['receiverId'],
-            ),
-          ));
-        } else {
-          Navigator.push(navigatorKey.currentContext!, MaterialPageRoute(
-            builder: (_) => VideoCallScreen(
-              channelId: callData['channelId'],
-              token: callData['token'],
-              callerId: callData['callerId'],
-              receiverId: callData['receiverId'],
-            ),
-          ));
+        List<String> ids = [];
+        if (callData['receiverIds'] != null) {
+           ids = callData['receiverIds']
+              .toString()
+              .split(',')
+              .map((e) => e.trim())
+              .toList()
+              .cast<String>();
+
         }
 
-        // Navigator.push(
-        //   navigatorKey.currentContext!,
-        //   MaterialPageRoute(
-        //     builder: (_) => VoiceCallScreen(channelId: callData['channelId'],token: callData['token'],),
-        //   ),
-        // );
+        print("CALL DATA :- $callData");
+        if (callData['callType'] == 'voice') {
+          Navigator.push(
+              navigatorKey.currentContext!,
+              MaterialPageRoute(
+                builder: (_) => VoiceCallScreen(
+                  channelId: callData['channelId'],
+                  token: callData['token'],
+                  callerId: callData['callerId'],
+                  receiverId: callData['receiverId'],
+                ),
+              ));
+        } else if (callData['callType'] == 'video') {
+          Navigator.push(
+              navigatorKey.currentContext!,
+              MaterialPageRoute(
+                builder: (_) => VideoCallScreen(
+                  channelId: callData['channelId'],
+                  token: callData['token'],
+                  callerId: callData['callerId'],
+                  receiverId: callData['receiverId'],
+                ),
+              ));
+        } else if (callData['callType'] == 'groupVideo') {
+          Navigator.push(
+              navigatorKey.currentContext!,
+              MaterialPageRoute(
+                builder: (_) => GroupVideoCallScreen(
+                    channelId: callData['channelId'],
+                    token: callData['token'],
+                    callerId: callData['callerId'],
+                    receiverIds: ids),
+              ));
+        }
+        else if (callData['callType'] == 'groupVoice'){
+          Navigator.push(
+              navigatorKey.currentContext!,
+              MaterialPageRoute(
+                builder: (_) => GroupVoiceCallScreen(
+                    channelId: callData['channelId'],
+                    token: callData['token'],
+                    callerId: callData['callerId'],
+                    receiverIds: ids),
+              ));
+        }
         break;
 
       case Event.actionCallDecline:

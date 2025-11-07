@@ -5,8 +5,7 @@ import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_callkit_incoming/entities/call_event.dart';
-import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
+
 import 'package:get/get.dart';
 
 import '../constants/apis.dart';
@@ -45,17 +44,6 @@ class _MainScreenScreenState extends State<VoiceCallScreen> {
   void initState() {
     super.initState();
     _startVoiceCalling();
-
-    // for end call for both
-    // FlutterCallkitIncoming.onEvent.listen((event) async {
-    //   print('📞 CallKit Event received in call screen: ${event?.event}');
-    //   final type = event?.event;
-    //   if (type == Event.actionCallEnded ||
-    //       type == Event.actionCallTimeout ||
-    //       type == Event.actionCallDecline) {
-    //     _endCallForBoth();
-    //   }
-    // });
   }
 
   // Initializes Agora SDK
@@ -66,10 +54,6 @@ class _MainScreenScreenState extends State<VoiceCallScreen> {
     await _joinChannel();
   }
 
-  // Requests microphone permission
-  // Future<void> _requestPermissions() async {
-  //   await [Permission.microphone].request();
-  // }
 
   // Set up the Agora RTC engine instance
   Future<void> _initializeAgoraVoiceSDK() async {

@@ -10,14 +10,14 @@ class GroupVideoCallScreen extends StatefulWidget {
   final String channelId;
   final String token;
   final String callerId;
-  final String receiverId;
+  final List<String> receiverIds;
 
   const GroupVideoCallScreen(
       {super.key,
       required this.channelId,
       required this.token,
       required this.callerId,
-      required this.receiverId});
+      required this.receiverIds});
 
   @override
   _MainScreenScreenState createState() => _MainScreenScreenState();
@@ -37,7 +37,7 @@ class _MainScreenScreenState extends State<GroupVideoCallScreen> {
 
   final Set<int> _remoteUids = {}; // Stores remote user ID
   bool _localUserJoined =
-      false; // Indicates if local user has joined the channel
+      false; // local user has joined or not
   late RtcEngine _engine; // Stores Agora RTC Engine instance
 
   final messageController = Get.put(MessageController());
@@ -52,16 +52,11 @@ class _MainScreenScreenState extends State<GroupVideoCallScreen> {
   // Initializes Agora SDK
   Future<void> _startVideoCalling() async {
     await _initializeAgoraVideoSDK();
-    // await _requestPermissions();
     await _setupLocalVideo();
     _setupEventHandlers();
     await _joinChannel();
   }
 
-  // Requests microphone and camera permissions
-  // Future<void> _requestPermissions() async {
-  //   await [Permission.microphone, Permission.camera].request();
-  // }
 
   // Set up the Agora RTC engine instance
   Future<void> _initializeAgoraVideoSDK() async {
@@ -183,10 +178,11 @@ class _MainScreenScreenState extends State<GroupVideoCallScreen> {
     if (!_isCallActive) return; // Prevent double pop
     _isCallActive = false;
 
-    await messageController.endCall(
+    await messageController.endGroupCall(
         channelId: widget.channelId,
         callerId: widget.callerId,
-        receiverId: widget.receiverId);
+        receiverIds: widget.receiverIds);
+
     _timer?.cancel();
     await _cleanupAgoraEngine();
 
