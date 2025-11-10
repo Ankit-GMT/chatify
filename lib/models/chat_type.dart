@@ -62,7 +62,7 @@ class Members {
   String? username;
   String? profileImageUrl;
   String? role;
-  Null? isOnline;
+  bool? isOnline;
   String? joinedAt;
 
   Members(

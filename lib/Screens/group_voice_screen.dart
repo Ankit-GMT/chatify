@@ -146,6 +146,7 @@ class _MainScreenScreenState extends State<GroupVoiceCallScreen> {
     setState(() => _isMuted = !_isMuted);
     await _engine.muteLocalAudioStream(_isMuted);
   }
+
   void _toggleSpeaker() async {
     setState(() => _isSpeakerOn = !_isSpeakerOn);
     await _engine.setEnableSpeakerphone(_isSpeakerOn);
@@ -191,111 +192,112 @@ class _MainScreenScreenState extends State<GroupVoiceCallScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white70,
-      body:
-          Column(
-            children: [
-              SizedBox(height: size.height*0.07,),
-              Text(
-                "Group Name",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                ),
+      body: Column(
+        children: [
+          SizedBox(
+            height: size.height * 0.07,
+          ),
+          Text(
+            "Group Name",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _isConnected ? _formatDuration(_callDuration) : "Calling…",
+            style: TextStyle(
+              color: _isConnected ? Colors.greenAccent : Colors.grey.shade400,
+              fontSize: 16,
+            ),
+          ),
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 0.8,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
               ),
-              const SizedBox(height: 8),
-              Text(
-                _isConnected ? _formatDuration(_callDuration) : "Calling…",
-                style: TextStyle(
-                  color: _isConnected
-                      ? Colors.greenAccent
-                      : Colors.grey.shade400,
-                  fontSize: 16,
-                ),
-              ),
-              Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 0.8,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemCount: allUsers.length,
-                  itemBuilder: (context, index) {
-                    final name = allUsers[index];
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Colors.blueGrey.shade700,
-                          child: Icon(Icons.person, color: Colors.white, size: 30),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          name,
-                          style: const TextStyle(color: Colors.white, fontSize: 14),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              !_localUserJoined
-                  ? SizedBox()
-                  : Center(
-                child: Container(
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      spacing: 5,
-                      // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _controlButton(
-                          icon: _isMuted ? Icons.mic_off : Icons.mic,
-                          onPressed: _toggleMute,
-                        ),
-                        VerticalDivider(
-                          color: Colors.white38,
-                          thickness: 1,
-                          indent: 15,
-                          endIndent: 15,
-                        ),
-                        _controlButton(
-                          icon:
-                          _isSpeakerOn ? Icons.volume_up : Icons.volume_off,
-                          onPressed: _toggleSpeaker,
-                        ),
-                        VerticalDivider(
-                          color: Colors.white38,
-                          thickness: 1,
-                          indent: 15,
-                          endIndent: 15,
-                        ),
-                        _controlButton(
-                          icon: Icons.call_end,
-                          color: Colors.redAccent,
-                          onPressed: _endCallForBoth,
-                        ),
-                      ],
+              itemCount: allUsers.length,
+              itemBuilder: (context, index) {
+                final name = allUsers[index];
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Colors.blueGrey.shade700,
+                      child: Icon(Icons.person, color: Colors.white, size: 30),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      name,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          !_localUserJoined
+              ? SizedBox()
+              : Center(
+                  child: Container(
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 5,
+                        // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _controlButton(
+                            icon: _isMuted ? Icons.mic_off : Icons.mic,
+                            onPressed: _toggleMute,
+                          ),
+                          VerticalDivider(
+                            color: Colors.white38,
+                            thickness: 1,
+                            indent: 15,
+                            endIndent: 15,
+                          ),
+                          _controlButton(
+                            icon: _isSpeakerOn
+                                ? Icons.volume_up
+                                : Icons.volume_off,
+                            onPressed: _toggleSpeaker,
+                          ),
+                          VerticalDivider(
+                            color: Colors.white38,
+                            thickness: 1,
+                            indent: 15,
+                            endIndent: 15,
+                          ),
+                          _controlButton(
+                            icon: Icons.call_end,
+                            color: Colors.redAccent,
+                            onPressed: _endCallForBoth,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(height: size.height*0.05,),
-            ],
+          SizedBox(
+            height: size.height * 0.05,
           ),
-
+        ],
+      ),
     );
   }
 

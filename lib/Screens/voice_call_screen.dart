@@ -149,12 +149,6 @@ class _MainScreenScreenState extends State<VoiceCallScreen> {
     await _engine.setEnableSpeakerphone(_isSpeakerOn);
   }
 
-  // for call end
-  // void _endCall() async {
-  //   await _engine.leaveChannel();
-  //   // await _engine.release();
-  //   if (mounted) Navigator.pop(context);
-  // }
   void _endCallForBoth() async {
     if (!_isCallActive) return; // Prevent double pop
     _isCallActive = false;

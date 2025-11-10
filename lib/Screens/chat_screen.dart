@@ -318,18 +318,25 @@ class _ChatScreenState extends State<ChatScreen> {
                 EdgeInsets.symmetric(horizontal: Get.width * 0.05, vertical: 5),
             child: SizedBox(
               width: double.infinity,
-              height: 44,
+              // height: 44,
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
                     child: TextField(
+
                       style: TextStyle(color: AppColors.white),
                       focusNode: messageController.focusNode,
                       controller: msgController,
+                      maxLines: 5,
+                      minLines: 1,
                       decoration: InputDecoration(
+
+                        isDense: true,
                           filled: true,
                           fillColor: AppColors.primary,
                           prefixIcon: IconButton(
+                            padding: EdgeInsets.only(bottom: 0),
                             onPressed: messageController.toggleEmojiPicker,
                             icon: Icon(
                               Icons.emoji_emotions_outlined,
@@ -349,7 +356,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     width: Get.width * 0.02,
                   ),
                   Container(
-                    height: 44,
+                    height: Get.height * 0.045,
                     width: Get.width * 0.18,
                     decoration: BoxDecoration(
                       color: AppColors.primary,

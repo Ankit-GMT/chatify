@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'package:chatify/Screens/group_video_screen.dart';
 import 'package:chatify/Screens/group_voice_screen.dart';
 import 'package:chatify/Screens/video_call_screen.dart';
-import 'package:chatify/Screens/voice_call_screen.dart';
+import 'package:chatify/Screens/video_call_screen1.dart';
+import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/message.dart';
@@ -192,7 +193,8 @@ class MessageController extends GetxController {
         "callType": callType,
       }),
     );
-
+    print(
+        "resquested:-  $channelId - $receiverId - ${profileController.user.value!.id.toString()}");
     final data = jsonDecode(response.body);
     print('scSDcsDcSD$data');
 
@@ -202,7 +204,7 @@ class MessageController extends GetxController {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => VideoCallScreen(
+            builder: (_) => VideoCallScreen1(
               channelId: data['channelId'],
               token: data['agoraToken'],
               callerId: profileController.user.value!.id.toString(),
@@ -214,7 +216,7 @@ class MessageController extends GetxController {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => VoiceCallScreen(
+            builder: (_) => VoiceCallScreen1(
               channelId: data['channelId'],
               token: data['agoraToken'],
               callerId: profileController.user.value!.id.toString(),
@@ -313,7 +315,7 @@ class MessageController extends GetxController {
                   receiverIds: receiverIds),
             ),
           );
-        } else if (callType == "groupVoice"){
+        } else if (callType == "groupVoice") {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -332,7 +334,8 @@ class MessageController extends GetxController {
       print("❌ Error starting group call: $e");
     }
   }
- // for end group call
+
+  // for end group call
   Future<Map<String, dynamic>> endGroupCall({
     required String channelId,
     required String callerId,

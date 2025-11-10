@@ -142,7 +142,9 @@ class LoginScreen extends StatelessWidget {
               SizedBox(
                 height: Get.height * 0.04,
               ),
-              Padding(
+              Obx(() =>  authController.isLoading.value ?  CircularProgressIndicator(
+                color: AppColors.primary,
+              ) : Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: GestureDetector(
                   onTap: () {
@@ -153,7 +155,7 @@ class LoginScreen extends StatelessWidget {
                   },
                   child: Container(
                     height: Get.height * 0.06,
-          
+
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         gradient: LinearGradient(
@@ -179,12 +181,12 @@ class LoginScreen extends StatelessWidget {
                       )
                           : Text(
                         "Continue",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500,color: Colors.white),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500,color: Colors.white),
                       ),
                     ),
                   ),
                 ),
-              ),
+              ),),
               SizedBox(
                 height: Get.height * 0.04,
               ),
