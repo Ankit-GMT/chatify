@@ -33,6 +33,10 @@ class VideoCallController extends GetxController {
   var isConnected = false.obs;
   var callDuration = Duration.zero.obs;
   var showControls = true.obs;
+  var isLocalMain = false.obs;
+  RxDouble localVideoX = 20.0.obs;
+  RxDouble localVideoY = 50.0.obs;
+
 
   Timer? _timer;
   Timer? _hideTimer;
@@ -92,6 +96,10 @@ class VideoCallController extends GetxController {
       ),
       uid: profileController.user.value!.id!,
     );
+  }
+
+  void swapVideos() {
+      isLocalMain.value = !isLocalMain.value;
   }
 
   void toggleMute() async {

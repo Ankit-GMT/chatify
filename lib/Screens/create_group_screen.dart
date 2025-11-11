@@ -1,5 +1,6 @@
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/group_controller.dart';
+import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/controllers/user_controller.dart';
 import 'package:chatify/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   final groupController = Get.put(GroupController());
   final userController = Get.find<UserController>();
+  final tabController = Get.find<TabBarController>();
 
   void _onTap(int id) {
     setState(() {
@@ -110,9 +112,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: userController.registeredUsers.length,
+              itemCount: tabController.registeredUsers.length,
               itemBuilder: (context, index) {
-                final contact = userController.registeredUsers[index];
+                final contact = tabController.registeredUsers[index];
                 final isSelected = selectedContacts.contains(contact.userId);
 
                 return ListTile(
@@ -140,7 +142,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   memberIds: selectedContacts.toList(), // selected member IDs
                   currentUserId: widget.currentUserId,
                 ).then((value) {
-                  userController.getAllChats();
+                  tabController.getAllChats();
 
                 },);
                 print("created group ${nameController.text}");

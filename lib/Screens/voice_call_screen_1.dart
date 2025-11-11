@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/voice_call_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,6 +9,7 @@ class VoiceCallScreen1 extends StatelessWidget {
   final String token;
   final String callerId;
   final String receiverId;
+  final String name;
 
   const VoiceCallScreen1({
     super.key,
@@ -15,6 +17,7 @@ class VoiceCallScreen1 extends StatelessWidget {
     required this.token,
     required this.callerId,
     required this.receiverId,
+    required this.name,
   });
 
   @override
@@ -32,27 +35,68 @@ class VoiceCallScreen1 extends StatelessWidget {
 
     return Scaffold(
       body: Stack(
+        fit: StackFit.expand,
         alignment: Alignment.center,
         children: [
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Color(0xff2a2a2a),
+                // gradient:
+              ),
+            ),
+          ),
           // Background Blur Effects
-          _buildBlurCircle(size, Alignment.topLeft, const Color(0xFFC35E31)),
-          _buildBlurCircle(size, Alignment.topRight, const Color(0xFFC35E31)),
+          Positioned(
+            left: size.width * 0.7,
+            top: size.height * 0.2,
+            child: ImageFiltered(
+              imageFilter: ImageFilter.blur(
+                  sigmaX: 228.4, sigmaY: 228.4, tileMode: TileMode.decal),
+              child: Container(
+                width: size.width * 0.67,
+                height: size.width * 0.67,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC35E31).withAlpha(140),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: size.width * 0.7,
+            top: size.height * 0.2,
+            child: ImageFiltered(
+              imageFilter: ImageFilter.blur(
+                  sigmaX: 228.4, sigmaY: 228.4, tileMode: TileMode.decal),
+              child: Container(
+                width: size.width * 0.67,
+                height: size.width * 0.67,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC35E31).withAlpha(140),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
 
           // Caller Info
           Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              SizedBox(
+                height: size.height * 0.27,
+              ),
               CircleAvatar(
                 radius: size.width * 0.25,
                 backgroundColor: Colors.grey.shade800,
                 child: const Icon(Icons.person, size: 60, color: Colors.white70),
               ),
               const SizedBox(height: 24),
-              const Text(
-                "John Doe",
+               Text(
+                name,
                 style: TextStyle(
-                  color: Colors.white,
                   fontSize: 22,
+                  color: AppColors.white,
                   fontWeight: FontWeight.w600,
                 ),
               ),

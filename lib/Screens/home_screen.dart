@@ -1,5 +1,4 @@
 import 'package:chatify/Screens/create_group_screen.dart';
-import 'package:chatify/Screens/search_user_screen.dart';
 import 'package:chatify/TabView%20Screens/all_chats.dart';
 import 'package:chatify/TabView%20Screens/contacts_screen.dart';
 import 'package:chatify/TabView%20Screens/group_chats.dart';
@@ -11,12 +10,10 @@ import 'package:chatify/widgets/tab_box.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatelessWidget {
   final tabController = Get.put(TabBarController());
   final profileController = Get.put(ProfileController());
-  final userController = Get.put(UserController());
 
   HomeScreen({super.key});
 
@@ -49,7 +46,7 @@ class HomeScreen extends StatelessWidget {
               SizedBox(
                 height: Get.height * 0.05,
               ),
-              userController.isSelectionMode.value
+              tabController.isSelectionMode.value
                   ? Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -57,10 +54,10 @@ class HomeScreen extends StatelessWidget {
                           children: [
                             IconButton(
                               icon: const Icon(Icons.close),
-                              onPressed: userController.clearSelection,
+                              onPressed: tabController.clearSelection,
                             ),
                             Text(
-                              "${userController.selectedChats.length} selected",
+                              "${tabController.selectedChats.length} selected",
                               style: TextStyle(
                                   fontSize: 24, fontWeight: FontWeight.w600),
                             ),
@@ -69,10 +66,12 @@ class HomeScreen extends StatelessWidget {
                         Wrap(
                           children: [
                             IconButton(
-                              icon: Icon(userController.areAllSelectedPinned
-                                  ? Icons.push_pin_outlined
-                                  : Icons.push_pin,),
-                              onPressed: userController.togglePinSelected,
+                              icon: Icon(
+                                tabController.areAllSelectedPinned
+                                    ? Icons.push_pin_outlined
+                                    : Icons.push_pin,
+                              ),
+                              onPressed: tabController.togglePinSelected,
                             ),
                             IconButton(
                               icon: const Icon(Icons.volume_off_outlined),
@@ -87,42 +86,41 @@ class HomeScreen extends StatelessWidget {
                       ],
                     )
                   : Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Text(
                           "Messages",
                           style: TextStyle(
                               fontSize: 24, fontWeight: FontWeight.w600),
                         ),
-                        IconButton(
-                          color: AppColors.iconGrey,
-                          style: ButtonStyle(
-                            backgroundColor:
-                                WidgetStatePropertyAll(AppColors.white),
-                            shape: WidgetStatePropertyAll(
-                              RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  side:
-                                      BorderSide(color: Colors.grey.shade200)),
-                            ),
-                          ),
-                          onPressed: () {
-                            // Get.to(()=> );
-                          },
-                          icon: Image.asset(
-                            "assets/images/notification_logo.png",
-                            scale: 4,
-                          ),
-                        ),
+                        // IconButton(
+                        //   color: AppColors.iconGrey,
+                        //   style: ButtonStyle(
+                        //     backgroundColor:
+                        //         WidgetStatePropertyAll(AppColors.white),
+                        //     shape: WidgetStatePropertyAll(
+                        //       RoundedRectangleBorder(
+                        //           borderRadius: BorderRadius.circular(20),
+                        //           side:
+                        //               BorderSide(color: Colors.grey.shade200)),
+                        //     ),
+                        //   ),
+                        //   onPressed: () {
+                        //     // Get.to(()=> );
+                        //   },
+                        //   icon: Image.asset(
+                        //     "assets/images/notification_logo.png",
+                        //     scale: 4,
+                        //   ),
+                        // ),
                       ],
                     ),
               SizedBox(
                 height: Get.height * 0.02,
               ),
               SearchBar(
-                onTap: () {
-                  Get.to(() => SearchUserScreen());
-                },
+                controller: tabController.searchController,
+                onChanged: tabController.updateSearch,
                 backgroundColor: WidgetStatePropertyAll(Color(0xfff4f4f4)),
                 padding: WidgetStatePropertyAll(
                   EdgeInsets.symmetric(horizontal: 10),
@@ -134,6 +132,17 @@ class HomeScreen extends StatelessWidget {
                   CupertinoIcons.search,
                   color: Colors.grey.shade500,
                 ),
+                trailing: tabController.searchQuery.value.isNotEmpty
+                    ? [
+                        IconButton(
+                          onPressed: () {
+                            tabController.searchController.clear();
+                            tabController.updateSearch('');
+                          },
+                          icon: Icon(Icons.clear),
+                        ),
+                      ]
+                    : null,
                 hintText: "Search",
                 hintStyle: WidgetStatePropertyAll(TextStyle(
                     // color: Colors.grey.shade500,

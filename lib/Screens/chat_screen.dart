@@ -210,9 +210,13 @@ class _ChatScreenState extends State<ChatScreen> {
                             (myId == widget.chatType?.members?[0].userId)
                                 ? (widget.chatType?.members?[1].userId!)
                                 : (widget.chatType?.members?[0].userId!);
+                        final receiverName = myId == widget.chatType?.members?[0].userId
+                            ? ("${widget.chatType?.members?[1].firstName} ${widget.chatType?.members?[1].lastName}") ??
+                            ''
+                            : ("${widget.chatType?.members?[0].firstName} ${widget.chatType?.members?[0].lastName}") ??
+                            '';
 
-
-                        messageController.startCall(receiverId.toString(),
+                        messageController.startCall(receiverName,receiverId.toString(),
                             channelId.toString(), false, context);
 
                       },
@@ -234,9 +238,13 @@ class _ChatScreenState extends State<ChatScreen> {
                         (myId == widget.chatType?.members?[0].userId)
                             ? (widget.chatType?.members?[1].userId!)
                             : (widget.chatType?.members?[0].userId!);
+                        final receiverName = myId == widget.chatType?.members?[0].userId
+                            ? ("${widget.chatType?.members?[1].firstName} ${widget.chatType?.members?[1].lastName}") ??
+                            ''
+                            : ("${widget.chatType?.members?[0].firstName} ${widget.chatType?.members?[0].lastName}") ??
+                            '';
 
-
-                        messageController.startCall(receiverId.toString(),
+                        messageController.startCall(receiverName,receiverId.toString(),
                             channelId.toString(), true, context);
                       },
                       child: CircleAvatar(

@@ -178,7 +178,7 @@ class MessageController extends GetxController {
 
   // for call start
 
-  Future<void> startCall(String receiverId, String channelId, bool isVideo,
+  Future<void> startCall(String name,String receiverId, String channelId, bool isVideo,
       BuildContext context) async {
     final callType = isVideo ? "video" : "voice";
 
@@ -209,6 +209,7 @@ class MessageController extends GetxController {
               token: data['agoraToken'],
               callerId: profileController.user.value!.id.toString(),
               receiverId: receiverId,
+              name: name,
             ),
           ),
         );
@@ -221,6 +222,7 @@ class MessageController extends GetxController {
               token: data['agoraToken'],
               callerId: profileController.user.value!.id.toString(),
               receiverId: receiverId,
+              name: name,
             ),
           ),
         );

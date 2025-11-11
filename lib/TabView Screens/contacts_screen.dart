@@ -1,5 +1,6 @@
 import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/controllers/user_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,38 +10,44 @@ class ContactsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userController = Get.find<UserController>();
+    final tabController = Get.put(TabBarController());
+    final userController = Get.put(UserController());
 
     return Obx(
-      () => userController.isLoading.value
+      () => tabController.isLoading.value
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 spacing: 5,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
                     height: 5,
                   ),
-                  Text("Contacts on Chatify",style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold),),
+                  Text(
+                    "Contacts on Chatify",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   ListView.builder(
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
                     physics: NeverScrollableScrollPhysics(),
-                    itemCount: userController.registeredUsers.length,
+                    itemCount: tabController.filteredRegisteredList.length,
                     itemBuilder: (context, index) {
-                      final user = userController.registeredUsers[index];
+                      final user = tabController.filteredRegisteredList[index];
                       return ListTile(
-                        onTap: () async{
-                          if(user.chat == null){
-                           final chatType = await userController.createChat(user.userId!);
-                           Get.to(()=> ChatScreen(chatUser: null, chatType: chatType));
-                          }else{
-                            Get.to(()=> ChatScreen(chatUser: null, chatType: user.chat));
+                        onTap: () async {
+                          if (user.chat == null) {
+                            final chatType =
+                                await userController.createChat(user.userId!);
+                            Get.to(() =>
+                                ChatScreen(chatUser: null, chatType: chatType));
+                          } else {
+                            Get.to(() => ChatScreen(
+                                chatUser: null, chatType: user.chat));
                           }
-
                         },
                         leading: CircleAvatar(
                           backgroundImage: user.profileImageUrl != null
@@ -66,14 +73,17 @@ class ContactsScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  Text("Invite to Chatify",style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold),),
+                  Text(
+                    "Invite to Chatify",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   ListView.builder(
                     shrinkWrap: true,
                     padding: const EdgeInsets.only(bottom: 80),
                     physics: NeverScrollableScrollPhysics(),
-                    itemCount: userController.notRegisteredUsers.length,
+                    itemCount: tabController.filteredNotRegisteredList.length,
                     itemBuilder: (context, index) {
-                      final user = userController.notRegisteredUsers[index];
+                      final user = tabController.filteredNotRegisteredList[index];
                       return ListTile(
                         leading: CircleAvatar(
                           backgroundImage: user.profileImageUrl != null
@@ -98,7 +108,7 @@ class ContactsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-          ),
+            ),
     );
   }
 }

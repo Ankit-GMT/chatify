@@ -1,11 +1,12 @@
 import 'package:chatify/Screens/chat_screen.dart';
+import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/controllers/user_controller.dart';
 import 'package:chatify/widgets/chat_user_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class GroupChats extends StatelessWidget {
-  final userController = Get.put(UserController());
+  final tabController = Get.put(TabBarController());
 
   GroupChats({super.key});
 
@@ -16,26 +17,26 @@ class GroupChats extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 80),
         physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
-          final chat = userController.groupChats[index];
-          final isSelected = userController.selectedChats.contains(chat);
+          final chat = tabController.filteredGroupsList[index];
+          final isSelected = tabController.selectedChats.contains(chat);
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onLongPress: () => userController.toggleSelection(chat),
+            onLongPress: () => tabController.toggleSelection(chat),
             child: ChatUserCard(
               index: index,
               onTap: () {
-                if (userController.isSelectionMode.value) {
-                  userController.toggleSelection(chat);
+                if (tabController.isSelectionMode.value) {
+                  tabController.toggleSelection(chat);
                 } else {
                   Get.to(() => ChatScreen(
                     chatUser: null,
-                    chatType: userController.groupChats.elementAt(index),
+                    chatType: tabController.filteredGroupsList.elementAt(index),
                   ));
                 }
 
               },
               chatUser: null,
-              chatType: userController.groupChats.elementAt(index),
+              chatType: tabController.filteredGroupsList.elementAt(index),
               isSelected: isSelected,
             ),
           );
@@ -47,7 +48,7 @@ class GroupChats extends StatelessWidget {
             endIndent: 15,
           );
         },
-        itemCount: userController.groupChats.length,
+        itemCount: tabController.filteredGroupsList.length,
       ),
     );
   }

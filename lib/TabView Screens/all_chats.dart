@@ -1,44 +1,45 @@
 import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/controllers/profile_controller.dart';
+import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/controllers/user_controller.dart';
 import 'package:chatify/widgets/chat_user_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class AllChats extends StatelessWidget {
-  final userController = Get.put(UserController());
-  final profileController = Get.put(ProfileController());
+  final tabController = Get.put(TabBarController());
 
   AllChats({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Obx(
-      () =>
+      () => tabController.isLoading.value ?
+          const Center(child: CircularProgressIndicator()) :
           ListView.separated(
-            padding: const EdgeInsets.only(bottom: 80),
-            physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 80),
+        physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
-          final chat = userController.allChats[index];
-          final isSelected = userController.selectedChats.contains(chat);
+          final chat = tabController.filteredChatsList[index];
+          final isSelected = tabController.selectedChats.contains(chat);
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onLongPress: () => userController.toggleSelection(chat),
+            onLongPress: () => tabController.toggleSelection(chat),
             child: ChatUserCard(
               index: index,
               onTap: () {
-                if (userController.isSelectionMode.value) {
-                  userController.toggleSelection(chat);
+                if (tabController.isSelectionMode.value) {
+                  tabController.toggleSelection(chat);
                 } else {
                   Get.to(() => ChatScreen(
-                    chatUser: null,
-                    chatType: userController.allChats.elementAt(index),
-                  ));
+                        chatUser: null,
+                        chatType:
+                            tabController.filteredChatsList.elementAt(index),
+                      ));
                 }
-
               },
               chatUser: null,
-              chatType: userController.allChats.elementAt(index),
+              chatType: tabController.filteredChatsList.elementAt(index),
               isSelected: isSelected,
             ),
           );
@@ -50,7 +51,7 @@ class AllChats extends StatelessWidget {
             endIndent: 15,
           );
         },
-        itemCount: userController.allChats.length,
+        itemCount: tabController.filteredChatsList.length,
       ),
     );
   }

@@ -69,7 +69,7 @@ class NotificationService {
     FirebaseMessaging.onMessage.listen(_handleMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
     FirebaseMessaging.onBackgroundMessage(_backgroundHandler);
-
+    FirebaseMessaging.onBackgroundMessage(_backgroundHandlerforMessage);
     FlutterCallkitIncoming.onEvent.listen(_handleCallkitEvent);
   }
 
@@ -122,90 +122,14 @@ class NotificationService {
       );
       await FlutterCallkitIncoming.showCallkitIncoming(params);
     }
-    else if (message.data['type'] == 'chat_message'){
-      try {
-        final data = message.data;
+    else if (message.data['type'] == 'chat_message') {
 
-        // ✅ Initialize notification plugin (needed in background isolate)
-        final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-        FlutterLocalNotificationsPlugin();
-
-        const AndroidInitializationSettings initSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-        const InitializationSettings initSettings =
-        InitializationSettings(android: initSettingsAndroid);
-
-        await flutterLocalNotificationsPlugin.initialize(initSettings);
-
-        // ✅ Create a notification channel (important for Android 8+)
-        const AndroidNotificationChannel channel = AndroidNotificationChannel(
-          'chat_channel', // unique id
-          'Chat Messages', // human-readable name
-          description: 'Notifications for new chat messages',
-          importance: Importance.high,
-        );
-
-        await flutterLocalNotificationsPlugin
-            .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-            ?.createNotificationChannel(channel);
-
-        // ✅ Extract message data
-        final String senderName = data['name'] ?? 'Unknown';
-        final String messageText = data['message'] ?? '';
-        final String chatType = data['chatType'] ?? 'PRIVATE';
-        final String groupName = data['groupName'] ?? '';
-        final String chatId = data['chatId'] ?? '';
-        final String? profilePicUrl = data['profilePic'];
-
-        // ✅ (Optional) Download profile image if available
-        // AndroidBitmap<Object>? largeIcon;
-        // if (profilePicUrl != null && profilePicUrl.isNotEmpty) {
-        //   try {
-        //     final httpClient = HttpClient();
-        //     final request = await httpClient.getUrl(Uri.parse(profilePicUrl));
-        //     final response = await request.close();
-        //     final bytes = await consolidateHttpClientResponseBytes(response);
-        //     final filePath = '${(await getTemporaryDirectory()).path}/profile.jpg';
-        //     final file = File(filePath);
-        //     await file.writeAsBytes(bytes);
-        //     largeIcon = FilePathAndroidBitmap(filePath);
-        //   } catch (e) {
-        //     print('⚠️ Failed to load profile picture: $e');
-        //   }
-        // }
-
-        // ✅ Prepare notification details
-        final androidDetails = AndroidNotificationDetails(
-          channel.id,
-          channel.name,
-          channelDescription: channel.description,
-          importance: Importance.max,
-          priority: Priority.high,
-          // largeIcon: largeIcon,
-          styleInformation: const DefaultStyleInformation(true, true),
-          category: AndroidNotificationCategory.message,
-        );
-
-        final notificationDetails = NotificationDetails(android: androidDetails);
-
-        // ✅ Title based on chat type
-        final String title =
-        chatType == 'GROUP' ? '$groupName - $senderName' : senderName;
-
-        // ✅ Show the notification
-        await flutterLocalNotificationsPlugin.show(
-          DateTime.now().millisecondsSinceEpoch ~/ 1000, // unique id
-          title,
-          messageText,
-          notificationDetails,
-          payload: chatId, // pass chatId for navigation when tapped
-        );
-
-        print('✅ Chat message notification shown for $senderName');
-      } catch (e) {
-        print('❌ Error showing chat message notification: $e');
-      }
+    }
+  }
+  Future<void> _backgroundHandlerforMessage(RemoteMessage message) async {
+    await Firebase.initializeApp();
+     if (message.data['type'] == 'chat_message') {
+       _showMessageNotification(message.data);
     }
   }
 
@@ -249,6 +173,7 @@ class NotificationService {
               navigatorKey.currentContext!,
               MaterialPageRoute(
                 builder: (_) => VoiceCallScreen1(
+                  name: callData['callerName'],
                   channelId: callData['channelId'],
                   token: callData['token'],
                   callerId: callData['callerId'],
@@ -260,6 +185,7 @@ class NotificationService {
               navigatorKey.currentContext!,
               MaterialPageRoute(
                 builder: (_) => VideoCallScreen1(
+                  name: callData['callerName'],
                   channelId: callData['channelId'],
                   token: callData['token'],
                   callerId: callData['callerId'],

@@ -6,7 +6,7 @@ class ChatType {
   String? name;
   String? groupImageUrl;
   String? createdAt;
-  Null? lastMessage;
+  String? lastMessage;
   int? unreadCount;
   List<Members>? members;
 
