@@ -225,6 +225,9 @@ class AuthController extends GetxController {
         // Clear tokens
         await box.remove("accessToken");
         await box.remove("refreshToken");
+        await box.remove(registeredKey);
+        await box.remove(notRegisteredKey);
+
 
         Get.snackbar("Logged out", "You have been logged out successfully.");
 

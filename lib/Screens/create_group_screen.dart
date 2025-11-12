@@ -1,42 +1,23 @@
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/group_controller.dart';
 import 'package:chatify/controllers/tabBar_controller.dart';
-import 'package:chatify/controllers/user_controller.dart';
 import 'package:chatify/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class CreateGroupScreen extends StatefulWidget {
+class CreateGroupScreen extends StatelessWidget {
   final int currentUserId;
 
-  const CreateGroupScreen({Key? key, required this.currentUserId})
-      : super(key: key);
-
-  @override
-  _CreateGroupScreenState createState() => _CreateGroupScreenState();
-}
-
-class _CreateGroupScreenState extends State<CreateGroupScreen> {
-  Set<int> selectedContacts = {};
-
-  final nameController = TextEditingController();
-
-  final groupController = Get.put(GroupController());
-  final userController = Get.find<UserController>();
-  final tabController = Get.find<TabBarController>();
-
-  void _onTap(int id) {
-    setState(() {
-      if (selectedContacts.contains(id)) {
-        selectedContacts.remove(id);
-      } else {
-        selectedContacts.add(id);
-      }
-    });
-  }
+  const CreateGroupScreen({super.key, required this.currentUserId});
 
   @override
   Widget build(BuildContext context) {
+    final nameController = TextEditingController();
+
+    final groupController = Get.put(GroupController());
+
+    final tabController = Get.find<TabBarController>();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -100,13 +81,15 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             ),
           ),
           CustomTextfield(controller: nameController, hintText: "My Group"),
-          SizedBox(height: Get.height *0.02,),
+          SizedBox(
+            height: Get.height * 0.02,
+          ),
           Align(
             alignment: Alignment.bottomLeft,
             child: Text(
-              selectedContacts.isEmpty
+              groupController.selectedContacts.isEmpty
                   ? "Select Members"
-                  : "${selectedContacts.length} selected",
+                  : "${groupController.selectedContacts.length} selected",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
             ),
           ),
@@ -115,41 +98,57 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               itemCount: tabController.registeredUsers.length,
               itemBuilder: (context, index) {
                 final contact = tabController.registeredUsers[index];
-                final isSelected = selectedContacts.contains(contact.userId);
 
-                return ListTile(
-                  onTap: () => _onTap(contact.userId!),
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage(contact.profileImageUrl!),
-                  ),
-                  title: Text("${contact.firstName} ${contact.lastName}"),
-                  trailing: isSelected
-                      ? Icon(Icons.check_circle, color: Colors.green)
-                      : Icon(Icons.radio_button_unchecked, color: Colors.grey),
-                  tileColor: isSelected ? Colors.green.withOpacity(0.1) : null,
+                return Obx(
+                  () {
+                    final isSelected = groupController.selectedContacts
+                        .contains(contact.userId);
+                    return ListTile(
+                      onTap: () => groupController.onTap(contact.userId!),
+                      leading: CircleAvatar(
+                        backgroundImage: NetworkImage(contact.profileImageUrl!),
+                      ),
+                      title: Text("${contact.firstName} ${contact.lastName}"),
+                      trailing: isSelected
+                          ? Icon(Icons.check_circle, color: Colors.green)
+                          : Icon(Icons.radio_button_unchecked,
+                              color: Colors.grey),
+                      tileColor:
+                          isSelected ? Colors.green.withOpacity(0.1) : null,
+                    );
+                  },
                 );
               },
             ),
           ),
         ]),
       ),
-      floatingActionButton:
-           FloatingActionButton(
-              onPressed: selectedContacts.isNotEmpty && nameController.text.isNotEmpty ? () {
-                groupController.createGroup(
-                  name: nameController.text.trim(),
-                  groupImageUrl: "https://cdn.example.com/work.png",
-                  memberIds: selectedContacts.toList(), // selected member IDs
-                  currentUserId: widget.currentUserId,
-                ).then((value) {
-                  tabController.getAllChats();
+      floatingActionButton: Obx(
+        () => groupController.isLoading.value
+            ? const Center(child: CircularProgressIndicator())
+            : FloatingActionButton(
+                backgroundColor: AppColors.primary,
+                onPressed: (groupController.selectedContacts.isNotEmpty &&
+                        nameController.text.isNotEmpty)
+                    ? () async {
+                        await groupController.createGroup(
+                          name: nameController.text.trim(),
+                          groupImageUrl: "https://picsum.photos/200/300",
+                          memberIds: groupController.selectedContacts.toList(),
+                          // selected member IDs
+                          currentUserId: currentUserId,
+                        );
+                        await tabController.getAllChats();
 
-                },);
-                print("created group ${nameController.text}");
-                Navigator.pop(context);
-              } : null,
-              child: Icon(Icons.arrow_forward,color: AppColors.white,),
-            ),
+                        print("created group ${nameController.text}");
+                      }
+                    : null,
+                child: Icon(
+                  Icons.arrow_forward,
+                  color: AppColors.white,
+                ),
+              ),
+      ),
     );
   }
 }

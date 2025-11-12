@@ -14,7 +14,7 @@ class ContactsScreen extends StatelessWidget {
     final userController = Get.put(UserController());
 
     return Obx(
-      () => tabController.isLoading.value
+      () => tabController.isLoading2.value
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),

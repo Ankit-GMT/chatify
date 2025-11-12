@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:chatify/api_service.dart';
+import 'package:chatify/services/api_service.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/chat_type.dart';
@@ -11,9 +11,40 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 class TabBarController extends GetxController {
+
   final String baseUrl = APIs.url;
-  var isLoading = false.obs;
+
+  var isLoading1 = false.obs;
+  var isLoading2 = false.obs;
+
   final box = GetStorage();
+
+  // for local storing
+  void saveContactsToLocal() {
+    box.write(registeredKey, registeredUsers.map((e) => e.toJson()).toList());
+    box.write(notRegisteredKey, notRegisteredUsers.map((e) => e.toJson()).toList());
+  }
+
+  void loadContactsFromLocal() {
+    final registeredData = box.read(registeredKey);
+    final notRegisteredData = box.read(notRegisteredKey);
+
+    if (registeredData != null) {
+      registeredUsers.value = List<ContactModel>.from(
+        registeredData.map((e) => ContactModel.fromJson(e)),
+      );
+    }
+    if (notRegisteredData != null) {
+      notRegisteredUsers.value = List<ContactModel>.from(
+        notRegisteredData.map((e) => ContactModel.fromJson(e)),
+      );
+    }
+
+    // immediately reflect in filtered lists
+    filterContacts();
+    print("Print 1 loadContactsFromLocal");
+  }
+
 
   var searchQuery = ''.obs;
   RxInt currentIndex = 0.obs;
@@ -38,32 +69,24 @@ class TabBarController extends GetxController {
     // Listen to search query changes
     await getAllChats();
     await _loadContacts();
-    filterChats();
-    filterContacts();
-    ever(searchQuery, (_) {
-      filterChats();
-      filterContacts();
-    });
+    // filterChats();
+    // print("Print 2 on in it");
+    // filterContacts();
+    // ever(searchQuery, (_) {
+    //   filterChats();
+    //   filterContacts();
+    // });
   }
 
   var allChats = <ChatType>[].obs;
   var groupChats = <ChatType>[].obs;
 
+  RxList<ContactModel> registeredUsers = <ContactModel>[].obs;
+  RxList<ContactModel> notRegisteredUsers = <ContactModel>[].obs;
+
   Future<void> getAllChats() async {
     try {
-      isLoading.value = true;
-
-      final token = box.read("accessToken");
-
-      print('Token: $token'); // Get stored JWT
-
-      // final res = await http.get(
-      //   Uri.parse("$baseUrl/api/chats"),
-      //   headers: {
-      //     "Authorization": "Bearer $token",
-      //     "Content-Type": "application/json",
-      //   },
-      // );
+      isLoading1.value = true;
 
       final res =
           await ApiService.request(url: "$baseUrl/api/chats", method: "GET");
@@ -78,13 +101,16 @@ class TabBarController extends GetxController {
             allChats.where((chat) => chat.type == "GROUP").toList();
         print(
             "Group chats: ${groupChats().map((chat) => chat.members!.map((d) => d.userId).toList()).toList()}");
+
+        filterChats();
+
       } else {
         Get.snackbar("Error", data['error'] ?? "No chats found");
       }
     } catch (e) {
       Get.snackbar("Error--", e.toString());
     } finally {
-      isLoading.value = false;
+      isLoading1.value = false;
     }
   }
 
@@ -229,25 +255,85 @@ class TabBarController extends GetxController {
     }
   }
 
-  RxList<ContactModel> registeredUsers = <ContactModel>[].obs;
-  RxList<ContactModel> notRegisteredUsers = <ContactModel>[].obs;
+  Future<void> _loadContacts({bool forceRefresh = false}) async {
 
-  Future<void> _loadContacts() async {
-    isLoading.value = true;
-    final phoneNumbers = await getPhoneContacts();
-    final users = await checkUsersOnApp(phoneNumbers);
-    // for registered users
-    registeredUsers.value = users.where((user) => user.registered!).toList();
-    // for not registered users
-    notRegisteredUsers.value =
-        users.where((user) => !user.registered!).toList();
-    final contacts = await FlutterContacts.getContacts(withProperties: true);
-    //
-    mergeNotRegisteredWithContacts(notRegisteredUsers, contacts);
-    isLoading.value = false;
-    // print("users: $users");
-    // print("App users: $registeredUsers");
+    print(DateTime.now());
+    
+    // Show cached instantly
+    final cachedRegistered = box.read(registeredKey);
+    final cachedNotRegistered = box.read(notRegisteredKey);
+
+    if (cachedRegistered != null || cachedNotRegistered != null) {
+      loadContactsFromLocal();
+    }
+
+    // Only show loader if user explicitly refreshes
+    if (forceRefresh) isLoading2.value = true;
+
+    try {
+      // Run in background
+      final phoneNumbers = await getPhoneContacts();
+
+      if (phoneNumbers.isEmpty) {
+        debugPrint("No contacts found or permission denied");
+        return;
+      }
+
+      final users = await checkUsersOnApp(phoneNumbers);
+
+      // update reactive lists
+      registeredUsers.value = users.where((u) => u.registered!).toList();
+      notRegisteredUsers.value = users.where((u) => !u.registered!).toList();
+
+      final contacts = await FlutterContacts.getContacts(withProperties: true);
+      mergeNotRegisteredWithContacts(notRegisteredUsers, contacts);
+
+      // save new cache
+      saveContactsToLocal();
+
+      // refresh UI
+      filterContacts();
+    } catch (e) {
+      debugPrint("Error refreshing contacts: $e");
+    } finally {
+      isLoading2.value = false;
+    }
+    print(DateTime.now());
   }
+
+
+  // Future<void> _loadContacts({bool forceRefresh = false}) async {
+  //   print(DateTime.now());
+  //   isLoading2.value = true;
+  //
+  //   if (!forceRefresh) {
+  //     loadContactsFromLocal(); // Load cached contacts first
+  //   }
+  //
+  //   try {
+  //     final phoneNumbers = await getPhoneContacts();
+  //     final users = await checkUsersOnApp(phoneNumbers);
+  //
+  //     registeredUsers.value = users.where((user) => user.registered!).toList();
+  //     notRegisteredUsers.value = users.where((user) => !user.registered!).toList();
+  //
+  //     final contacts = await FlutterContacts.getContacts(withProperties: true);
+  //     mergeNotRegisteredWithContacts(notRegisteredUsers, contacts);
+  //
+  //     // save to local
+  //     saveContactsToLocal();
+  //
+  //     filterContacts();
+  //   } catch (e) {
+  //     debugPrint("Error loading contacts: $e");
+  //   } finally {
+  //     isLoading2.value = false;
+  //   }
+  //   print(DateTime.now());
+  //
+  //   // print("users: $users");
+  //   // print("App users: $registeredUsers");
+  // }
 
   String normalizePhone(String number) {
     String cleaned = number.replaceAll(RegExp(r'[^0-9]'), '');
@@ -284,7 +370,7 @@ class TabBarController extends GetxController {
     if (query.isEmpty) {
       filteredRegisteredList.assignAll(registeredUsers);
       filteredNotRegisteredList.assignAll(notRegisteredUsers);
-      print("filtered not registered: ${filteredNotRegisteredList.length}");
+      print("filtered not-registered: ${filteredNotRegisteredList.length}");
       print("filtered registered: ${filteredRegisteredList.length}");
       return;
     }

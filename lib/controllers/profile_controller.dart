@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/models/chat_user.dart';
-import 'package:chatify/api_service.dart';
+import 'package:chatify/services/api_service.dart';
 import 'package:chatify/widgets/zego_initializer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

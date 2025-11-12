@@ -1,19 +1,55 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:chatify/Screens/group_video_screen.dart';
 import 'package:chatify/Screens/group_voice_screen.dart';
-import 'package:chatify/Screens/video_call_screen.dart';
+import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/Screens/video_call_screen1.dart';
-import 'package:chatify/Screens/voice_call_screen.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_callkit_incoming/entities/entities.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+// for background / terminated
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+
+  if (message.data['type'] == 'call_invite') {
+    final callData = message.data;
+    final callType = callData['callType'];
+    final params = CallKitParams(
+      id: callData['channelId'] ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
+      nameCaller: callData['callerName'] ?? 'Unknown',
+      appName: 'MyApp',
+      handle: callType == 'video' ? 'Video Call' : 'Voice Call',
+      type: callType == 'video' ? 1 : 0,
+      extra: callData,
+    );
+    await FlutterCallkitIncoming.showCallkitIncoming(params);
+  } else if (message.data['type'] == 'group_call_invite') {
+    final callData = message.data;
+    final callType = callData['callType'];
+    final params = CallKitParams(
+      id: callData['channelId'] ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
+      nameCaller: callData['callerName'] ?? 'Unknown',
+      appName: 'MyApp',
+      handle: callType == 'groupVideo'
+          ? 'Group Video Call From ${callData['callerName']}'
+          : 'Group Voice Call From ${callData['callerName']}',
+      type: callType == 'groupVideo' ? 1 : 0,
+      extra: callData,
+    );
+    await FlutterCallkitIncoming.showCallkitIncoming(params);
+  } else if (message.data['type'] == 'chat_message') {
+    await NotificationService.showBackgroundMessageNotification(message.data);
+  }
+}
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -25,7 +61,7 @@ class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   final FlutterLocalNotificationsPlugin _localNotifications =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   /// 🔹 Initialize Firebase + FCM listeners
   Future<void> initialize() async {
@@ -68,8 +104,7 @@ class NotificationService {
   Future<void> _initFirebaseListeners() async {
     FirebaseMessaging.onMessage.listen(_handleMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
-    FirebaseMessaging.onBackgroundMessage(_backgroundHandler);
-    FirebaseMessaging.onBackgroundMessage(_backgroundHandlerforMessage);
+    // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     FlutterCallkitIncoming.onEvent.listen(_handleCallkitEvent);
   }
 
@@ -82,54 +117,10 @@ class NotificationService {
       // navigatorKey.currentState?.popUntil((route) => route.isFirst);
     } else if (message.data['type'] == "group_call_invite") {
       await _showIncomingCall(message.data);
-    }
-    else if(message.data['type'] == "group_call_end"){
+    } else if (message.data['type'] == "group_call_end") {
       await FlutterCallkitIncoming.endAllCalls();
-    }
-    else if(message.data['type'] == "chat_message"){
-      await _showMessageNotification(message.data);
-    }
-  }
-
-  /// 🔹 Background handler (required to be static)
-  @pragma('vm:entry-point')
-  static Future<void> _backgroundHandler(RemoteMessage message) async {
-    await Firebase.initializeApp();
-    if (message.data['type'] == 'call_invite') {
-      final callData = message.data;
-      final callType = callData['callType'];
-      final params = CallKitParams(
-        id: callData['channelId'] ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
-        nameCaller: callData['callerName'] ?? 'Unknown',
-        appName: 'MyApp',
-        handle: callType == 'video' ? 'Video Call' : 'Voice Call',
-        type: callType == 'video' ? 1 : 0,
-        extra: callData,
-      );
-      await FlutterCallkitIncoming.showCallkitIncoming(params);
-    } else if (message.data['type'] == "group_call_invite") {
-      final callData = message.data;
-      final callType = callData['callType'];
-      final params = CallKitParams(
-        id: callData['channelId'] ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
-        nameCaller: callData['callerName'] ?? 'Unknown',
-        appName: 'MyApp',
-        handle: callType == 'groupVideo' ? 'Group Video Call From ${callData['callerName']}' : 'Group Voice Call From ${callData['callerName']}',
-        type: callType == 'groupVideo' ? 1 : 0,
-        extra: callData,
-      );
-      await FlutterCallkitIncoming.showCallkitIncoming(params);
-    }
-    else if (message.data['type'] == 'chat_message') {
-
-    }
-  }
-  Future<void> _backgroundHandlerforMessage(RemoteMessage message) async {
-    await Firebase.initializeApp();
-     if (message.data['type'] == 'chat_message') {
-       _showMessageNotification(message.data);
+    } else if (message.data['type'] == "chat_message") {
+      await showBackgroundMessageNotification(message.data);
     }
   }
 
@@ -142,7 +133,9 @@ class NotificationService {
           DateTime.now().millisecondsSinceEpoch.toString(),
       nameCaller: callData['callerName'] ?? 'Unknown',
       appName: 'MyApp',
-      handle: (callType == 'video' || callType == 'groupVideo') ? 'Video Call' : 'Voice Call',
+      handle: (callType == 'video' || callType == 'groupVideo')
+          ? 'Video Call'
+          : 'Voice Call',
       type: (callType == 'video' || callType == 'groupVideo') ? 1 : 0,
       extra: callData,
     );
@@ -158,16 +151,22 @@ class NotificationService {
         final callData = event.body['extra'];
         List<String> ids = [];
         if (callData['receiverIds'] != null) {
-           ids = callData['receiverIds']
+          ids = callData['receiverIds']
               .toString()
               .split(',')
               .map((e) => e.trim())
               .toList()
               .cast<String>();
-
         }
-
         print("CALL DATA :- $callData");
+        Future.delayed(const Duration(seconds: 1), () async {
+          if (navigatorKey.currentContext == null) {
+            print(" Waiting for navigator context...");
+            await Future.delayed(const Duration(seconds: 1));
+          }
+        });
+
+        if (navigatorKey.currentContext != null) {
         if (callData['callType'] == 'voice') {
           Navigator.push(
               navigatorKey.currentContext!,
@@ -202,8 +201,7 @@ class NotificationService {
                     callerId: callData['callerId'],
                     receiverIds: ids),
               ));
-        }
-        else if (callData['callType'] == 'groupVoice'){
+        } else if (callData['callType'] == 'groupVoice') {
           Navigator.push(
               navigatorKey.currentContext!,
               MaterialPageRoute(
@@ -213,6 +211,7 @@ class NotificationService {
                     callerId: callData['callerId'],
                     receiverIds: ids),
               ));
+        }
         }
         break;
 
@@ -233,28 +232,44 @@ class NotificationService {
   /// 🔹 Initialize local notifications
   Future<void> _initLocalNotifications() async {
     const AndroidInitializationSettings initSettingsAndroid =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const InitializationSettings initSettings =
-    InitializationSettings(android: initSettingsAndroid);
+        InitializationSettings(android: initSettingsAndroid);
 
     await _localNotifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         final chatId = response.payload;
         if (chatId != null && chatId.isNotEmpty) {
-          navigatorKey.currentState?.pushNamed(
-            '/chat',
-            arguments: {'chatId': chatId},
-          );
+          // navigatorKey.currentState?.pushAndRemoveUntil(
+          // '/chat',
+          // arguments: {'chatId': chatId},
+          // );
+          Get.offAll(() => MainScreen());
         }
       },
     );
   }
 
   ///  Show message notification (for chat messages)
+  static Future<void> showBackgroundMessageNotification(
+      Map<String, dynamic> data) async {
+    final FlutterLocalNotificationsPlugin localNotifications =
+        FlutterLocalNotificationsPlugin();
 
-  Future<void> _showMessageNotification(Map<String, dynamic> data) async {
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'chat_messages_channel',
+      'Chat Messages',
+      channelDescription: 'Notifications for chat messages',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    final NotificationDetails platformDetails =
+        NotificationDetails(android: androidDetails);
+
     final chatType = data['chatType'] ?? 'PRIVATE';
     final chatId = data['chatId'] ?? '';
     final senderName = data['name'] ?? 'Someone';
@@ -264,46 +279,15 @@ class NotificationService {
     String body;
 
     if (chatType == 'GROUP') {
-      // Example: "Developers Team" → "Yashraj Deshmukh: Hey everyone!"
       final groupName = data['groupName'] ?? 'Group Chat';
       title = groupName;
       body = '$senderName: $message';
     } else {
-      // Example: "Yashraj Deshmukh" → "Hey!"
       title = senderName;
       body = message;
     }
-    // final profilePicUrl = 'https://picsum.photos/200/300';
-    //
-    // final person = Person(
-    //   name: senderName,
-    //   icon: profilePicUrl.isNotEmpty
-    //       ? BitmapFilePathAndroidIcon(profilePicUrl) // Needs local file
-    //       : const BitmapFilePathAndroidIcon('@mipmap/ic_launcher'),
-    // );
-    //
-    // final messagingStyle = MessagingStyleInformation(
-    //   person,
-    //   messages: [Message(message, DateTime.now(), person)],
-    //   conversationTitle:
-    //   chatType == 'GROUP' ? (data['groupName'] ?? 'Group Chat') : null,
-    // );
 
-    final AndroidNotificationDetails androidDetails =
-    AndroidNotificationDetails(
-      'chat_messages_channel',
-      'Chat Messages',
-      channelDescription: 'Notifications for chat messages',
-      importance: Importance.high,
-      priority: Priority.high,
-      // styleInformation: messagingStyle,
-      // styleInformation: messagingStyle,
-    );
-
-    final NotificationDetails platformDetails =
-    NotificationDetails(android: androidDetails);
-
-    await _localNotifications.show(
+    await localNotifications.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title,
       body,

@@ -38,6 +38,8 @@
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <!--for bring app to foreground from background in Android 10 -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 

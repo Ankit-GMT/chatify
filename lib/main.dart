@@ -5,6 +5,7 @@ import 'package:chatify/firebase_options.dart';
 import 'package:chatify/services/notification_service.dart';
 import 'package:chatify/theme.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -14,6 +15,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   // SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   if (!await Permission.contacts.isGranted) {
     await Permission.contacts.request();
@@ -51,18 +54,6 @@ class _MyAppState extends State<MyApp> {
       themeMode:
           themeController.isDarkMode.value ? ThemeMode.dark : ThemeMode.light,
       home: SplashScreen(),
-      // builder: (context, child) {
-      //   return Stack(
-      //     children: [
-      //       child!,
-      //       ZegoUIKitPrebuiltCallMiniOverlayPage(
-      //         contextQuery: () {
-      //           return navigatorKey.currentState!.context;
-      //         },
-      //       ),
-      //     ],
-      //   );
-      // },
     );
   }
 }

@@ -14,7 +14,7 @@ class AllChats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(
-      () => tabController.isLoading.value ?
+      () => tabController.isLoading1.value ?
           const Center(child: CircularProgressIndicator()) :
           ListView.separated(
         padding: const EdgeInsets.only(bottom: 80),

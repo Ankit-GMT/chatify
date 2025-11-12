@@ -8,7 +8,7 @@ import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/message.dart';
-import 'package:chatify/api_service.dart';
+import 'package:chatify/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';

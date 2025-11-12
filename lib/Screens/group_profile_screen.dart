@@ -1,6 +1,9 @@
+import 'package:chatify/Screens/add_group_members_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/controllers/group_controller.dart';
 import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
+import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/widgets/custom_box.dart';
 import 'package:chatify/widgets/custom_tile.dart';
@@ -17,6 +20,8 @@ class GroupProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final profileController = Get.find<ProfileController>();
     final messageController = Get.find<MessageController>();
+    final groupController = Get.put(GroupController());
+    final tabController = Get.find<TabBarController>();
 
     final myId = profileController.user.value?.id;
     return Scaffold(
@@ -116,7 +121,13 @@ class GroupProfileScreen extends StatelessWidget {
                   CustomBox(
                     title: "Add ",
                     image: "assets/images/profile_addUser.png",
-                    onTap: () {},
+                    onTap: () {
+                      Get.to(() => AddGroupMembersScreen(
+                            groupId: chatType!.id!,
+                          ));
+                      groupController.loadCurrentMembers(
+                          chatType!.members!.map((e) => e.userId!).toList());
+                    },
                   ),
                 ],
               ),
@@ -204,12 +215,39 @@ class GroupProfileScreen extends StatelessWidget {
               CustomTile(
                 title: "Exit Group",
                 image: "assets/images/profile_exit.png",
-                onTap: () {},
+                onTap: () async {
+                  await groupController.exitGroup(groupId: chatType!.id!);
+                  await tabController.getAllChats();
+                },
               ),
-              CustomTile(
-                title: "Report Group",
-                image: "assets/images/profile_report.png",
-                onTap: () {},
+              // CustomTile(
+              //   title: "Report Group",
+              //   image: "assets/images/profile_report.png",
+              //   onTap: () {},
+              // ),
+              ListTile(
+                onTap: () async {
+                  await groupController.deleteGroup(groupId: chatType!.id!);
+                  await tabController.getAllChats();
+                },
+                minTileHeight: 60,
+                tileColor: AppColors.settingTile.withAlpha(45),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                leading: SizedBox(
+                    height: 25,
+                    width: 25,
+                    child: Icon(
+                      Icons.delete_forever,
+                      color: AppColors.primary,
+                    )),
+                title: Text(
+                  "Delete Group",
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+                ),
+                trailing: Icon(Icons.arrow_forward_ios_rounded,
+                    color: AppColors.primary, size: 15),
               ),
               Text(
                 "Version 1.0.0",

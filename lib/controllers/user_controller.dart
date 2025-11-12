@@ -5,7 +5,7 @@ import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/chat_user.dart';
 import 'package:chatify/models/contact_model.dart';
-import 'package:chatify/api_service.dart';
+import 'package:chatify/services/api_service.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';

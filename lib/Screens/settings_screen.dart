@@ -48,11 +48,11 @@ class SettingsScreen extends StatelessWidget {
             SizedBox(
               height: Get.height * 0.02,
             ),
-            CustomTile(
-              title: "Edit Profile",
-              image: "assets/images/setting_profile.png",
-              onTap: () {},
-            ),
+            // CustomTile(
+            //   title: "Edit Profile",
+            //   image: "assets/images/setting_profile.png",
+            //   onTap: () {},
+            // ),
             CustomTile(
               title: "Dark Theme",
               image: "assets/images/setting_theme.png",

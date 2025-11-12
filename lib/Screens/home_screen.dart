@@ -33,7 +33,7 @@ class HomeScreen extends StatelessWidget {
                     Get.to(() => CreateGroupScreen(
                         currentUserId: profileController.user.value!.id!));
                   },
-                  child: Icon(Icons.add),
+                  child: Icon(Icons.add,color: AppColors.white,),
                 )
               : null,
         ),
