@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/Screens/group_video_screen.dart';
 import 'package:chatify/Screens/group_voice_screen.dart';
-import 'package:chatify/Screens/main_screen.dart';
+import 'package:chatify/Screens/settings_screen.dart';
 import 'package:chatify/Screens/video_call_screen1.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -11,7 +13,9 @@ import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // for background / terminated
 @pragma('vm:entry-point')
@@ -103,9 +107,9 @@ class NotificationService {
   /// 🔹 Configure FCM listeners for foreground & background messages
   Future<void> _initFirebaseListeners() async {
     FirebaseMessaging.onMessage.listen(_handleMessage);
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+    // FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
     // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    FlutterCallkitIncoming.onEvent.listen(_handleCallkitEvent);
+    // FlutterCallkitIncoming.onEvent.listen(_handleCallkitEvent);
   }
 
   /// 🔹 Foreground/Background message handler
@@ -246,7 +250,7 @@ class NotificationService {
           // '/chat',
           // arguments: {'chatId': chatId},
           // );
-          Get.offAll(() => MainScreen());
+          Get.offAll(() => ChatScreen(chatUser: null, chatType: null));
         }
       },
     );
@@ -295,4 +299,96 @@ class NotificationService {
       payload: chatId,
     );
   }
+
+  Future<void> checkForPendingCall() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedData = prefs.getString('pending_call');
+    if (savedData == null) return;
+
+    final callData = jsonDecode(savedData);
+    print("🚀 Launching pending call: $callData");
+    // await prefs.remove('pending_call');
+
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (navigatorKey.currentContext == null) {
+      print("⏳ Waiting for navigator context...");
+      await Future.delayed(const Duration(seconds: 1));
+    }
+
+    if (navigatorKey.currentContext == null) return;
+
+    List<String> ids = [];
+    if (callData['receiverIds'] != null) {
+      ids = callData['receiverIds']
+          .toString()
+          .split(',')
+          .map((e) => e.trim())
+          .toList();
+    }
+
+    switch (callData['callType']) {
+      case 'voice':
+        Navigator.push(
+          navigatorKey.currentContext!,
+          MaterialPageRoute(
+            builder: (_) => VoiceCallScreen1(
+              name: callData['callerName'],
+              channelId: callData['channelId'],
+              token: callData['token'],
+              callerId: callData['callerId'],
+              receiverId: callData['receiverId'],
+            ),
+          ),
+        );
+        break;
+      case 'video':
+        Navigator.push(
+          navigatorKey.currentContext!,
+          MaterialPageRoute(
+            builder: (_) => VideoCallScreen1(
+              name: callData['callerName'],
+              channelId: callData['channelId'],
+              token: callData['token'],
+              callerId: callData['callerId'],
+              receiverId: callData['receiverId'],
+            ),
+          ),
+        );
+        break;
+      case 'groupVoice':
+        Navigator.push(
+          navigatorKey.currentContext!,
+          MaterialPageRoute(
+            builder: (_) => GroupVoiceCallScreen(
+              channelId: callData['channelId'],
+              token: callData['token'],
+              callerId: callData['callerId'],
+              receiverIds: ids,
+            ),
+          ),
+        );
+        break;
+      case 'groupVideo':
+        Navigator.push(
+          navigatorKey.currentContext!,
+          MaterialPageRoute(
+            builder: (_) => GroupVideoCallScreen(
+              channelId: callData['channelId'],
+              token: callData['token'],
+              callerId: callData['callerId'],
+              receiverIds: ids,
+            ),
+          ),
+        );
+        break;
+    }
+  }
+
+
+  // for testing
+  Future<NotificationAppLaunchDetails?> getLaunchDetails() async {
+    return await _localNotifications.getNotificationAppLaunchDetails();
+  }
+
 }

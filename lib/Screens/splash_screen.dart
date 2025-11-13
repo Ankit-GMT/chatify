@@ -2,7 +2,6 @@ import 'package:chatify/Screens/login_screen.dart';
 import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/Screens/welcome_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
-import 'package:chatify/controllers/profile_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -31,6 +30,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Future.delayed(Duration(seconds: 3),(){
       Get.off(()=> token!= null ? MainScreen() : WelcomeScreen());
     });
+
   }
 
   @override
