@@ -1,6 +1,5 @@
 import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/controllers/tabBar_controller.dart';
-import 'package:chatify/controllers/user_controller.dart';
 import 'package:chatify/widgets/chat_user_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,9 +28,8 @@ class GroupChats extends StatelessWidget {
                   tabController.toggleSelection(chat);
                 } else {
                   Get.to(() => ChatScreen(
-                    chatUser: null,
-                    chatType: tabController.filteredGroupsList.elementAt(index),
-                  ));
+                    chatId: tabController.filteredGroupsList.elementAt(index).id,
+                  ),arguments: tabController.filteredGroupsList.elementAt(index).id);
                 }
 
               },

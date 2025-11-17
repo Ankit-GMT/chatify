@@ -16,15 +16,15 @@ class OtpScreen extends StatelessWidget {
     String otpCode = "";
 
     return Scaffold(
-      body:
-      Container(
+      body: Container(
         height: double.infinity,
         width: double.infinity,
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage(Get.isDarkMode?"assets/images/dark_background.jpg":"assets/images/background.jpg"),
-              fit: BoxFit.cover
-          ),
+              image: AssetImage(Get.isDarkMode
+                  ? "assets/images/dark_background.jpg"
+                  : "assets/images/background.jpg"),
+              fit: BoxFit.cover),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -53,18 +53,20 @@ class OtpScreen extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 15,top: 15),
+                    padding: const EdgeInsets.only(left: 15, top: 15),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         IconButton(
                           color: AppColors.iconGrey,
                           style: ButtonStyle(
-                            backgroundColor: WidgetStatePropertyAll(AppColors.white),
+                            backgroundColor:
+                                WidgetStatePropertyAll(AppColors.white),
                             shape: WidgetStatePropertyAll(
                               RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
-                                  side: BorderSide(color: Colors.grey.shade200)),
+                                  side:
+                                      BorderSide(color: Colors.grey.shade200)),
                             ),
                           ),
                           onPressed: () {
@@ -78,9 +80,8 @@ class OtpScreen extends StatelessWidget {
                 ],
               ),
               SizedBox(
-                height: Get.height*0.04,
+                height: Get.height * 0.04,
               ),
-          
               Text(
                 "OTP Verification",
                 style: GoogleFonts.poppins(
@@ -95,40 +96,46 @@ class OtpScreen extends StatelessWidget {
                     fontSize: 16, fontWeight: FontWeight.w400),
               ),
               Obx(
-                    () => authController.timer.value > 0
-                    ? Text("Time Remaining : ${authController.timer.value}",style: TextStyle(color: AppColors.primary),)
+                () => authController.timer.value > 0
+                    ? Text(
+                        "Time Remaining : ${authController.timer.value}",
+                        style: TextStyle(color: AppColors.primary),
+                      )
                     : RichText(
-                  text: TextSpan(
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: "Didn't receive code ?  ",
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w400,
+                        text: TextSpan(
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: "Didn't receive code ?  ",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            TextSpan(
+                              text: "Resend Code",
+                              style: GoogleFonts.poppins(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  authController.reSendOtp(
+                                      authController.phoneNumber.value);
+                                },
+                            ),
+                          ],
                         ),
                       ),
-                      TextSpan(
-                        text: "Resend Code",
-                        style: GoogleFonts.poppins(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            authController.reSendOtp(authController.phoneNumber.value);
-                          },
-                      ),
-                    ],
-                  ),
-                ),
               ),
               SizedBox(
                 height: Get.height * 0.06,
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 45,),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 45,
+                ),
                 child: PinCodeTextField(
                   appContext: context,
                   length: 4,
@@ -171,47 +178,55 @@ class OtpScreen extends StatelessWidget {
               SizedBox(
                 height: Get.height * 0.03,
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: GestureDetector(
-                  onTap: () {
-                    authController.verifyOtp(otpCode);
-                  },
-                  child: Container(
-                    height: Get.height * 0.06,
-                    width: Get.width * 0.8,
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            AppColors.primary.withAlpha(150),
-                            AppColors.primary
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.black.withAlpha(70),
-                            blurRadius: 8,
-                            offset: Offset(0, 3),
+              Obx(
+                () => authController.isLoading.value
+                    ? CircularProgressIndicator(
+                        color: AppColors.primary,
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        child: GestureDetector(
+                          onTap: () {
+                            authController.verifyOtp(otpCode);
+                          },
+                          child: Container(
+                            height: Get.height * 0.06,
+                            width: Get.width * 0.8,
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    AppColors.primary.withAlpha(150),
+                                    AppColors.primary
+                                  ],
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.black.withAlpha(70),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 3),
+                                  ),
+                                ]),
+                            child: Center(
+                              child: Text(
+                                "Verify",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white),
+                              ),
+                            ),
                           ),
-                        ]
-                    ),
-                    child: Center(
-                      child: Text(
-                        "Verify",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500,color: Colors.white),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
               ),
               SizedBox(
                 height: Get.height * 0.1,
               ),
               Obx(
-                    () => Text(
+                () => Text(
                   "${authController.otp}",
                   style: TextStyle(fontSize: 18, color: AppColors.primary),
                 ),

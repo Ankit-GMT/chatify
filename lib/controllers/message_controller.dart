@@ -2,35 +2,65 @@ import 'dart:convert';
 
 import 'package:chatify/Screens/group_video_screen.dart';
 import 'package:chatify/Screens/group_voice_screen.dart';
-import 'package:chatify/Screens/video_call_screen.dart';
 import 'package:chatify/Screens/video_call_screen1.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/profile_controller.dart';
+import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/message.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
 class MessageController extends GetxController {
+
   final String baseUrl = APIs.url;
   final box = GetStorage();
   final profileController = Get.find<ProfileController>();
 
+  var chatType = Rxn<ChatType>();
+  RxList<Message> messages = <Message>[].obs;
+
+  var isLoading = true.obs;
+
+  Future<void> loadMessages(int id) async {
+    final data = await fetchMessages(id);
+      messages.value = data;
+  }
+
+
+  void fetchChatType(int id) async {
+      final data = await fetchChatTypeDetails(id);
+      chatType.value = data;
+  }
+
+  Future<ChatType?> fetchChatTypeDetails(int chatId) async {
+    try {
+      isLoading.value = true;
+      final res = await ApiService.request(
+          url: "$baseUrl/api/chats/$chatId", method: "GET");
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        return ChatType.fromJson(data);
+      } else {
+        print("Failed to load: ${res.statusCode} ${res.body}");
+        return null;
+      }
+    } catch (e) {
+      print("Error: $e");
+      return null;
+    }
+    finally{
+      isLoading.value = false;
+    }
+  }
+
   // for load messages
   Future<List<Message>> fetchMessages(int chatId) async {
     try {
-      final token = box.read("accessToken");
-
-      // final res = await http.get(
-      //   Uri.parse("$baseUrl/api/chats/$chatId/messages"),
-      //   headers: {
-      //     "Authorization": "Bearer $token",
-      //   },
-      // );
 
       final res = await ApiService.request(
           url: "$baseUrl/api/chats/$chatId/messages", method: "GET");
@@ -164,17 +194,6 @@ class MessageController extends GetxController {
 
   var isEmojiVisible = false.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-
-    // When keyboard opens, hide emoji picker
-    focusNode.addListener(() {
-      if (focusNode.hasFocus) {
-        isEmojiVisible.value = false;
-      }
-    });
-  }
 
   // for call start
 
@@ -255,17 +274,6 @@ class MessageController extends GetxController {
         print("⚠️ Failed to end call: ${response.body}");
       }
 
-      // 2️⃣ End local Agora session
-      // await AgoraRtcEngine.instance.leaveChannel();
-      // await AgoraRtcEngine.instance.release();
-      //
-      // // 3️⃣ Close CallKit UI
-      // await FlutterCallkitIncoming.endAllCalls();
-      //
-      // // 4️⃣ Navigate back to chat or home screen
-      // if (navigatorKey.currentState != null) {
-      //   navigatorKey.currentState!.popUntil((route) => route.isFirst);
-      // }
     } catch (e) {
       print("❌ Error ending call: $e");
     }
@@ -382,5 +390,21 @@ class MessageController extends GetxController {
       focusNode.unfocus();
     }
     isEmojiVisible.toggle();
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    int chatId = Get.arguments ?? 10;
+    fetchChatType(chatId);
+    loadMessages(chatId);
+
+    // When keyboard opens, hide emoji picker
+    focusNode.addListener(() {
+      if (focusNode.hasFocus) {
+        isEmojiVisible.value = false;
+      }
+    });
   }
 }

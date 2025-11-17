@@ -175,11 +175,7 @@ class LoginScreen extends StatelessWidget {
                         ]
                     ),
                     child: Center(
-                      child: authController.isLoading.value
-                          ? CircularProgressIndicator(
-                        color: AppColors.primary,
-                      )
-                          : Text(
+                      child: Text(
                         "Continue",
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500,color: Colors.white),
                       ),

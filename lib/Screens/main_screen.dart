@@ -1,6 +1,8 @@
+import 'package:chatify/Screens/video_call_history_screen.dart';
 import 'package:chatify/Screens/video_call_screen.dart';
 import 'package:chatify/Screens/edit_profile_screen.dart';
 import 'package:chatify/Screens/home_screen.dart';
+import 'package:chatify/Screens/voice%20_call_history_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/bottom_controller.dart';
 import 'package:flutter/material.dart';
@@ -21,9 +23,8 @@ class MainScreen extends StatelessWidget {
         index: bottomController.currentIndex.value,
         children: [
           HomeScreen(),
-          // CallScreen(userId: box.read("userId"), userName: box.read("userName")),
-          Center(child: Text("Calls")),
-          Center(child: Text("Video Calls")),
+          VoiceCallHistoryScreen(),
+          VideoCallHistoryScreen(),
           EditProfileScreen(),
         ],
       ),),

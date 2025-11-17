@@ -43,10 +43,10 @@ class ContactsScreen extends StatelessWidget {
                             final chatType =
                                 await userController.createChat(user.userId!);
                             Get.to(() =>
-                                ChatScreen(chatUser: null, chatType: chatType));
+                                ChatScreen(chatId: chatType.id));
                           } else {
                             Get.to(() => ChatScreen(
-                                chatUser: null, chatType: user.chat));
+                                chatId: user.chat?.id));
                           }
                         },
                         leading: CircleAvatar(

@@ -69,13 +69,13 @@ class TabBarController extends GetxController {
     // Listen to search query changes
     await getAllChats();
     await _loadContacts();
-    // filterChats();
-    // print("Print 2 on in it");
-    // filterContacts();
-    // ever(searchQuery, (_) {
-    //   filterChats();
-    //   filterContacts();
-    // });
+    filterChats();
+    print("Print 2 on in it");
+    filterContacts();
+    ever(searchQuery, (_) {
+      filterChats();
+      filterContacts();
+    });
   }
 
   var allChats = <ChatType>[].obs;

@@ -3,6 +3,7 @@ import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:get/get.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 
@@ -149,6 +150,7 @@ class VideoCallController extends GetxController {
     );
     await _engine.leaveChannel();
     await _engine.release();
+    FlutterCallkitIncoming.endAllCalls();
 
     // for reset everything
     Get.delete<VideoCallController>();

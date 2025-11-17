@@ -88,6 +88,7 @@ class AuthController extends GetxController {
         // Save tokens locally
         await box.write("accessToken", data['accessToken']);
         await box.write("refreshToken", data['refreshToken']);
+        await box.write("userId", data['userId']);
 
         Get.snackbar("Success", "Login successful!");
         Get.offAll(() => MainScreen());
@@ -227,6 +228,8 @@ class AuthController extends GetxController {
         await box.remove("refreshToken");
         await box.remove(registeredKey);
         await box.remove(notRegisteredKey);
+        await box.remove("userId");
+        await box.remove("userName");
 
 
         Get.snackbar("Logged out", "You have been logged out successfully.");
@@ -251,6 +254,5 @@ class AuthController extends GetxController {
     // TODO: implement onInit
     super.onInit();
     fcmToken = (await _fcm.getToken())!;
-    print("FCM:- $fcmToken");
   }
 }

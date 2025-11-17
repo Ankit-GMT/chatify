@@ -4,12 +4,10 @@ import 'package:chatify/constants/apis.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/models/chat_user.dart';
 import 'package:chatify/services/api_service.dart';
-import 'package:chatify/widgets/zego_initializer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 
 class ProfileController extends GetxController {
 
@@ -93,8 +91,6 @@ class ProfileController extends GetxController {
   // fetch user profile
   Future<void> fetchUserProfile() async {
     user.value = await getProfile();
-    await box.write("userId", user.value?.id.toString());
-    await box.write("userName", user.value?.firstName);
   }
 
   Future<void> pickImage(ImageSource source) async {
@@ -109,7 +105,6 @@ class ProfileController extends GetxController {
   @override
   void onInit() async {
     await fetchUserProfile();
-
     // TODO: implement onInit
     super.onInit();
   }
