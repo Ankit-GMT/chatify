@@ -1,6 +1,7 @@
 import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/widgets/chat_user_card.dart';
+import 'package:chatify/widgets/empty_message_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -13,7 +14,10 @@ class AllChats extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(
       () => tabController.isLoading1.value ?
-          const Center(child: CircularProgressIndicator()) :
+          const Center(child: CircularProgressIndicator()) : tabController.filteredChatsList.isEmpty ?
+          EmptyMessagesWidget(onTap: () {
+            tabController.currentIndex.value = 2;
+          },) :
           ListView.separated(
         padding: const EdgeInsets.only(bottom: 80),
         physics: const BouncingScrollPhysics(),

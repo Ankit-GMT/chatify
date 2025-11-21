@@ -10,7 +10,7 @@ class GroupVoiceCallScreen extends StatefulWidget {
   final String channelId;
   final String token;
   final String callerId;
-  final List<String> receiverIds;
+  final List<dynamic> receiverIds;
 
   const GroupVoiceCallScreen(
       {super.key,
@@ -26,20 +26,16 @@ class GroupVoiceCallScreen extends StatefulWidget {
 class _MainScreenScreenState extends State<GroupVoiceCallScreen> {
   bool _isMuted = false;
 
-  // bool _isVideoOff = false;
   bool _isSpeakerOn = false;
   bool _isConnected = false;
   bool _isCallActive = true;
 
-  // final Map<int, bool> _remoteVideoStates = {};
-  bool _isLocalMain = false;
-
-  // double _localVideoX = 20;
-  // double _localVideoY = 50;
   Duration _callDuration = Duration.zero;
   Timer? _timer;
 
   final Set<int> _remoteUids = {}; // Stores remote user ID
+  final Map<int, String> _userNames = {};
+
   bool _localUserJoined = false; // local user has joined or not
   late RtcEngine _engine; // Stores Agora RTC Engine instance
 
@@ -55,7 +51,6 @@ class _MainScreenScreenState extends State<GroupVoiceCallScreen> {
   // Initializes Agora SDK
   Future<void> _startVoiceCalling() async {
     await _initializeAgoraVoiceSDK();
-    // await _setupLocalVideo();
     _setupEventHandlers();
     await _joinChannel();
   }
@@ -79,6 +74,18 @@ class _MainScreenScreenState extends State<GroupVoiceCallScreen> {
         },
         onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
           debugPrint("👤 Remote user $remoteUid joined");
+
+          final matchUser = widget.receiverIds.firstWhere(
+                (u) => u['id'] == remoteUid,
+            orElse: () => {},
+          );
+
+          if (matchUser.isNotEmpty) {
+            _userNames[remoteUid] = "${matchUser['firstName']!} ${matchUser['lastName']!}";
+          } else {
+            _userNames[remoteUid] = "User $remoteUid";
+          }
+
           setState(() {
             _remoteUids.add(remoteUid);
             _isConnected = true;
@@ -159,7 +166,7 @@ class _MainScreenScreenState extends State<GroupVoiceCallScreen> {
     await messageController.endGroupCall(
         channelId: widget.channelId,
         callerId: widget.callerId,
-        receiverIds: widget.receiverIds);
+        receiverIds: widget.receiverIds.map((e) => e['id'].toString()).toList());
 
     _timer?.cancel();
     await _cleanupAgoraEngine();
@@ -188,7 +195,7 @@ class _MainScreenScreenState extends State<GroupVoiceCallScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final allUsers = ["You", ..._remoteUids.map((e) => "User $e")];
+    final allUsers = ["You", ..._userNames.values];
 
     return Scaffold(
       backgroundColor: Colors.white70,
@@ -198,7 +205,7 @@ class _MainScreenScreenState extends State<GroupVoiceCallScreen> {
             height: size.height * 0.07,
           ),
           Text(
-            "Group Name",
+            "Group Voice Call",
             style: const TextStyle(
               color: Colors.white,
               fontSize: 22,

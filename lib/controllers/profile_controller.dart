@@ -8,10 +8,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+
 
 class ProfileController extends GetxController {
 
   final String baseUrl = APIs.url;
+  var isLoading = false.obs;
 
   var pickedImage = Rx<File?>(null);
 
@@ -58,16 +61,6 @@ class ProfileController extends GetxController {
   // Edit Profile
   Future<bool> editProfile(ChatUser user) async {
     try {
-      final token = box.read("accessToken");
-
-      // final res = await http.patch(
-      //   Uri.parse("$baseUrl/api/user/me"),
-      //   headers: {
-      //     "Authorization": "Bearer $token",
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: jsonEncode(user.toJson()),
-      // );
 
       final res = await ApiService.request(
         url: "$baseUrl/api/user/me",
@@ -91,15 +84,57 @@ class ProfileController extends GetxController {
   // fetch user profile
   Future<void> fetchUserProfile() async {
     user.value = await getProfile();
+    await box.write("userId", user.value?.id);
   }
+
+  // for profile image update
+  Future<void> updateUserProfileImage(File imageFile) async {
+    try {
+      isLoading.value = true;
+
+      final url = Uri.parse("$baseUrl/api/user/me");
+
+      var request = http.MultipartRequest("PATCH", url);
+
+      // Add authorization header
+      request.headers["Authorization"] = "Bearer ${box.read("accessToken")}";
+
+      // Attach image
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          "profileImage",
+          imageFile.path,
+        ),
+      );
+
+      // Send request
+      final streamedRes = await request.send();
+      final response = await http.Response.fromStream(streamedRes);
+
+      final data = jsonDecode(response.body);
+      print(data);
+
+      if (response.statusCode == 200) {
+        Get.snackbar("Success", "Profile image updated!");
+      } else {
+        Get.snackbar("Error", data["message"] ?? "Could not update image");
+      }
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
 
   Future<void> pickImage(ImageSource source) async {
     final XFile? image =
-        await _picker.pickImage(source: source);
+        await _picker.pickImage(source: source,imageQuality: 20);
 
     if (image != null) {
       pickedImage.value = File(image.path);
     }
+    await updateUserProfileImage(pickedImage.value!);
   }
 
   @override

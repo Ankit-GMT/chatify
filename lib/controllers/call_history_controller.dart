@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:chatify/constants/apis.dart';
-import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/call_history.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:get/get.dart';
@@ -13,7 +12,6 @@ class CallHistoryController extends GetxController {
   RxList<CallHistory> voiceCallHistoryList = <CallHistory>[].obs;
   RxList<CallHistory> videoCallHistoryList = <CallHistory>[].obs;
 
-  final profileController = Get.find<ProfileController>();
   final box = GetStorage();
 
   final String baseUrl = APIs.url;

@@ -10,7 +10,7 @@ class GroupVideoCallScreen extends StatefulWidget {
   final String channelId;
   final String token;
   final String callerId;
-  final List<String> receiverIds;
+  final List<dynamic> receiverIds;
 
   const GroupVideoCallScreen(
       {super.key,
@@ -36,6 +36,9 @@ class _MainScreenScreenState extends State<GroupVideoCallScreen> {
   Timer? _timer;
 
   final Set<int> _remoteUids = {}; // Stores remote user ID
+  late Map<int, String> participantNames = {};
+
+
   bool _localUserJoined =
       false; // local user has joined or not
   late RtcEngine _engine; // Stores Agora RTC Engine instance
@@ -46,6 +49,10 @@ class _MainScreenScreenState extends State<GroupVideoCallScreen> {
   @override
   void initState() {
     super.initState();
+    for (var user in widget.receiverIds) {
+      participantNames[user['id']] = "${user['firstName']} ${user['lastName']}";
+    }
+
     _startVideoCalling();
   }
 
@@ -85,6 +92,7 @@ class _MainScreenScreenState extends State<GroupVideoCallScreen> {
         },
         onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
           debugPrint("👤 Remote user $remoteUid joined");
+
           setState(() {
             _remoteUids.add(remoteUid);
             _isConnected = true;
@@ -181,7 +189,7 @@ class _MainScreenScreenState extends State<GroupVideoCallScreen> {
     await messageController.endGroupCall(
         channelId: widget.channelId,
         callerId: widget.callerId,
-        receiverIds: widget.receiverIds);
+        receiverIds: widget.receiverIds.map((e) => e['id'].toString()).toList());
 
     _timer?.cancel();
     await _cleanupAgoraEngine();
@@ -244,12 +252,10 @@ class _MainScreenScreenState extends State<GroupVideoCallScreen> {
 
     final size = MediaQuery.sizeOf(context);
 
+
     return Scaffold(
       backgroundColor: Colors.white70,
-      // appBar: AppBar(
-      //   title: const Text('Agora Video Calling'),
-      //   automaticallyImplyLeading: false,
-      // ),
+
       body: GestureDetector(
         onTap: _toggleControls,
         child: Stack(
@@ -315,7 +321,7 @@ class _MainScreenScreenState extends State<GroupVideoCallScreen> {
                 child: Column(
                   children: [
                     Text(
-                      "John Doe",
+                      "Group Video Call",
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w600,
@@ -440,6 +446,8 @@ class _MainScreenScreenState extends State<GroupVideoCallScreen> {
 
     final remoteViews = _remoteUids.map((uid) {
       final isMuted = _remoteVideoStates[uid] ?? false;
+      final name = participantNames[uid] ?? "User $uid";
+
       return Container(
         decoration: BoxDecoration(
           border: Border.all(color: Colors.white10),
@@ -449,7 +457,7 @@ class _MainScreenScreenState extends State<GroupVideoCallScreen> {
         child: isMuted
             ? Center(
                 child: Text(
-                  'User $uid',
+                  name,
                   style: const TextStyle(color: Colors.white54, fontSize: 16),
                 ),
               )

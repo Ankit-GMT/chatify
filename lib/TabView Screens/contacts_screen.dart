@@ -60,16 +60,18 @@ class ContactsScreen extends StatelessWidget {
                         title: Text(
                             "${user.firstName ?? ''} ${user.lastName ?? ''}"),
                         subtitle: Text("${user.phoneNumber}"),
-                        trailing: IconButton(
-                          icon: Icon(
+                        trailing:
+                        // IconButton(
+                        //   icon:
+                          Icon(
                             Icons.message,
                             color: AppColors.primary,
                           ),
-                          onPressed: () {
-                            // open chat with this user
-                            // Get.toNamed('/chat', arguments: {'chatWithId': user.id});
-                          },
-                        ),
+                        //   onPressed: () {
+                        //     // open chat with this user
+                        //     // Get.toNamed('/chat', arguments: {'chatWithId': user.id});
+                        //   },
+                        // ),
                       );
                     },
                   ),

@@ -57,7 +57,21 @@ class EditProfileScreen extends StatelessWidget {
                       ),
                       PopupMenuItem(
                         onTap: () {
-                          authController.logoutUser();
+                          Get.defaultDialog(
+                            title: "Logout",
+                            middleText: "Are you sure you want to logout?",
+                            textCancel: "No",
+                            textConfirm: "Yes",
+                            confirmTextColor: Colors.white,
+                            buttonColor: AppColors.primary,
+                            titlePadding: EdgeInsets.only(top: 20,bottom: 10),
+                            contentPadding: EdgeInsets.only(bottom: 20),
+                            onConfirm: () {
+                              // Your logout function
+                              Get.back(); // close dialog
+                              authController.logoutUser();
+                            },
+                          );
                         },
                         child: Text("Logout"),
                       ),

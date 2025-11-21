@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:get/get.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:get_storage/get_storage.dart';
 
 class VoiceCallController extends GetxController {
   final String channelId;
@@ -21,7 +23,6 @@ class VoiceCallController extends GetxController {
   });
 
   final messageController = Get.put(MessageController());
-  final profileController = Get.find<ProfileController>();
 
   late RtcEngine _engine;
   Timer? _timer;
@@ -33,6 +34,8 @@ class VoiceCallController extends GetxController {
   final localUserJoined = false.obs;
   final callDuration = Duration.zero.obs;
   final remoteUid = RxnInt();
+
+  final box = GetStorage();
 
   bool _isCallActive = true;
 
@@ -69,7 +72,7 @@ class VoiceCallController extends GetxController {
     await _engine.joinChannel(
       token: token,
       channelId: channelId,
-      uid: profileController.user.value!.id!,
+      uid: box.read("userId"),
       options: const ChannelMediaOptions(
         clientRoleType: ClientRoleType.clientRoleBroadcaster,
         publishMicrophoneTrack: true,
@@ -120,7 +123,12 @@ class VoiceCallController extends GetxController {
     Get.delete<VoiceCallController>();
 
     // if (Get.isOverlaysOpen) Get.back();
+    if (Navigator.canPop(Get.context!)) {
       Navigator.pop(Get.context!);
+    }
+    else{
+      Get.offAll(()=> MainScreen());
+    }
   }
 
 

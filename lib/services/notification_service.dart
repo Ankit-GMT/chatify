@@ -321,6 +321,7 @@
 // /// Optimized Code
 //
 import 'dart:async';
+import 'dart:convert';
 import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/Screens/group_video_screen.dart';
 import 'package:chatify/Screens/group_voice_screen.dart';
@@ -367,10 +368,10 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       id: data['channelId'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
       nameCaller: data['callerName'] ?? 'Unknown',
       appName: 'Chatify',
-      handle: data['callType'] == 'groupVideo'
+      handle: data['callType'] == 'VIDEO'
           ? 'Group Video Call'
           : 'Group Voice Call',
-      type: data['callType'] == 'groupVideo' ? 1 : 0,
+      type: data['callType'] == 'VIDEO' ? 1 : 0,
       extra: data,
     );
 
@@ -385,13 +386,15 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
+
   factory NotificationService() => _instance;
+
   NotificationService._internal();
 
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   final FlutterLocalNotificationsPlugin localNotifications =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   /// INITIALIZE NOTIFICATION SYSTEM
   Future<void> initialize() async {
@@ -452,14 +455,13 @@ class NotificationService {
 
   Future<void> _showIncomingCall(Map<String, dynamic> data) async {
     final params = CallKitParams(
-      id: data['channelId'] ??
-          DateTime.now().millisecondsSinceEpoch.toString(),
+      id: data['channelId'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
       nameCaller: data['callerName'] ?? 'Unknown',
       appName: 'Chatify',
-      handle: (data['callType'] == 'video' || data['callType'] == 'groupVideo')
+      handle: (data['callType'] == 'video' || data['callType'] == 'VIDEO')
           ? 'Video Call'
           : 'Voice Call',
-      type: (data['callType'] == 'video' || data['callType'] == 'groupVideo')
+      type: (data['callType'] == 'video' || data['callType'] == 'VIDEO')
           ? 1
           : 0,
       extra: data,
@@ -480,7 +482,7 @@ class NotificationService {
 
     final raw = event.body['extra'];
     Map<String, dynamic> data =
-    raw is Map ? raw.map((k, v) => MapEntry(k.toString(), v)) : {};
+        raw is Map ? raw.map((k, v) => MapEntry(k.toString(), v)) : {};
 
     switch (event.event) {
       case Event.actionCallIncoming:
@@ -506,7 +508,6 @@ class NotificationService {
         await FlutterCallkitIncoming.endAllCalls();
         break;
       case Event.actionCallTimeout:
-
         print("❌ Call ended/declined");
         await FlutterCallkitIncoming.endAllCalls();
         break;
@@ -525,14 +526,17 @@ class NotificationService {
     final ctx = navigatorKey.currentContext;
     if (ctx == null) return;
 
-    List<String> ids = [];
-    if (callData['receiverIds'] != null) {
-      ids = callData['receiverIds']
-          .toString()
-          .split(',')
-          .map((e) => e.trim())
-          .toList();
-    }
+    // List<String> ids = [];
+    // if (callData['receiverIds'] != null) {
+    //   ids = callData['receiverIds']
+    //       .toString()
+    //       .split(',')
+    //       .map((e) => e.trim())
+    //       .toList();
+    // }
+    final participantsJson = callData['participants'];
+
+    final List<dynamic> participantsList = jsonDecode(participantsJson);
 
     if (callData['callType'] == 'voice') {
       Navigator.push(
@@ -560,7 +564,7 @@ class NotificationService {
           ),
         ),
       );
-    } else if (callData['callType'] == 'groupVideo') {
+    } else if (callData['callType'] == 'VIDEO') {
       Navigator.push(
         ctx,
         MaterialPageRoute(
@@ -568,11 +572,11 @@ class NotificationService {
             channelId: callData['channelId'],
             token: callData['token'],
             callerId: callData['callerId'],
-            receiverIds: ids,
+            receiverIds: participantsList,
           ),
         ),
       );
-    } else if (callData['callType'] == 'groupVoice') {
+    } else if (callData['callType'] == 'VOICE') {
       Navigator.push(
         ctx,
         MaterialPageRoute(
@@ -580,7 +584,7 @@ class NotificationService {
             channelId: callData['channelId'],
             token: callData['token'],
             callerId: callData['callerId'],
-            receiverIds: ids,
+            receiverIds: participantsList,
           ),
         ),
       );
@@ -607,20 +611,29 @@ class NotificationService {
 
     print("📨 Notification tapped. Payload = $payload");
 
-    // navigatorKey.currentState?.push(
-    //   MaterialPageRoute(
-    //     builder: (_) => ChatScreen(chatId: int.parse(payload)),
-    //   ),
-    // );
-    Get.to(() => ChatScreen(chatId: int.parse(payload),),arguments: int.parse(payload),);
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(chatId: int.parse(payload)),
+      ),
+    );
+    // Get.to(() => ChatScreen(
+    //       chatId: int.parse(payload),
+    //     ));
   }
+
   void navigateToChat(String chatId) {
-    // navigatorKey.currentState?.push(
-    //   MaterialPageRoute(
-    //     builder: (_) => ChatScreen( chatId: null,),
-    //   ),
-    // );
-    Get.to(() => ChatScreen(chatId: int.parse(chatId),),arguments: int.parse(chatId),);
+
+    print("navigate to chat :- $chatId");
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(
+          chatId: int.parse(chatId),
+        ),
+      ),
+    );
+    // Get.to(() => ChatScreen(
+    //       chatId: int.parse(chatId),
+    //     ));
   }
 
   // ----------------------------------------------------
@@ -640,7 +653,7 @@ class NotificationService {
     final details = NotificationDetails(android: androidDetails);
 
     final title =
-    data['chatType'] == 'GROUP' ? data['groupName'] : data['name'];
+        data['chatType'] == 'GROUP' ? data['groupName'] : data['name'];
 
     final body = data['chatType'] == 'GROUP'
         ? "${data['name']}: ${data['message']}"

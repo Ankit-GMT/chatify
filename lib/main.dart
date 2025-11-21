@@ -112,6 +112,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _checkLaunchFromNotification() async {
+    await Future.delayed(Duration(seconds: 1));
+
     final details = await NotificationService()
         .localNotifications
         .getNotificationAppLaunchDetails();

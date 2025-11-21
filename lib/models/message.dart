@@ -1,24 +1,62 @@
+
 class Message {
   final int id;
   final int roomId;
   final int senderId;
-  final String content;
-  final String type;
-  final DateTime sentAt;
   final String senderFirstName;
   final String senderLastName;
   final String senderProfileImageUrl;
 
-   Message({
+  final String content;
+  final String type;
+
+  // File fields (for IMAGE, VIDEO, AUDIO, DOCUMENT)
+  final String? fileUrl;
+  final String? fileName;
+  final int? fileSize;
+  final String? fileMimeType;
+  final String? thumbnailUrl;
+  final int? duration;
+
+  final DateTime sentAt;
+
+  // Message state
+  final bool deleted;
+  final bool edited;
+  final DateTime? editedAt;
+
+  // ===== Local States (not coming from API) =====
+  String? localPath; // where file is stored locally
+  double downloadProgress; // 0 - 1 value
+
+  bool get isDownloaded => localPath != null;
+
+  Message({
     required this.id,
     required this.roomId,
     required this.senderId,
+    required this.senderFirstName,
+    required this.senderLastName,
+    required this.senderProfileImageUrl,
     required this.content,
     required this.type,
     required this.sentAt,
-     required this.senderFirstName,
-     required this.senderLastName,
-     required this.senderProfileImageUrl,
+
+    this.fileUrl,
+    this.fileName,
+    this.fileSize,
+    this.fileMimeType,
+    this.thumbnailUrl,
+    this.duration,
+
+    required this.deleted,
+    required this.edited,
+    this.editedAt,
+
+    // default values
+    this.localPath,
+    this.downloadProgress = 0.0,
+
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -26,13 +64,27 @@ class Message {
       id: json['id'],
       roomId: json['roomId'],
       senderId: json['senderId'],
-      content: json['content'],
-      type: json['type'],
-      sentAt: DateTime.parse(json['sentAt']),
+
       senderFirstName: json['senderFirstName'],
       senderLastName: json['senderLastName'],
       senderProfileImageUrl: json['senderProfileImageUrl'],
 
+      content: json['content'] ?? "",
+      type: json['type'] ?? "TEXT",
+
+      // File fields
+      fileUrl: json['fileUrl'],
+      fileName: json['fileName'],
+      fileSize: json['fileSize'],
+      fileMimeType: json['fileMimeType'],
+      thumbnailUrl: json['thumbnailUrl'],
+      duration: json['duration'],
+
+      sentAt: DateTime.parse(json['sentAt']),
+
+      deleted: json['deleted'] ?? false,
+      edited: json['edited'] ?? false,
+      editedAt: json['editedAt'] != null ? DateTime.parse(json['editedAt']) : null,
     );
   }
 }
@@ -43,108 +95,41 @@ class Message {
 
 
 
-
-
 // class Message {
-//   final String id;
-//   final String text;
-//   final String sender;
-//   final DateTime time;
-//   final bool isMe;
+//   final int id;
+//   final int roomId;
+//   final int senderId;
+//   final String content;
+//   final String type;
+//   final DateTime sentAt;
+//   final String senderFirstName;
+//   final String senderLastName;
+//   final String senderProfileImageUrl;
 //
-//   Message({
+//    Message({
 //     required this.id,
-//     required this.text,
-//     required this.sender,
-//     required this.time,
-//     required this.isMe,
+//     required this.roomId,
+//     required this.senderId,
+//     required this.content,
+//     required this.type,
+//     required this.sentAt,
+//      required this.senderFirstName,
+//      required this.senderLastName,
+//      required this.senderProfileImageUrl,
 //   });
-// }
-
-// List<Message> messages = [
-//   Message(
-//     id: "1",
-//     text: "Hey! How are you?",
-//     sender: "Alice",
-//     time: DateTime.now().subtract(Duration(minutes: 5)),
-//     isMe: false,
-//   ),
-//   Message(
-//     id: "2",
-//     text: "I'm good, thanks! How about you?",
-//     sender: "Me",
-//     time: DateTime.now().subtract(Duration(minutes: 4)),
-//     isMe: true,
-//   ),
-//   Message(
-//     id: "3",
-//     text: "Doing well, just working on a Flutter app 😃",
-//     sender: "Alice",
-//     time: DateTime.now().subtract(Duration(minutes: 3)),
-//     isMe: false,
-//   ),
-//   Message(
-//     id: "4",
-//     text: "That’s awesome! 🚀",
-//     sender: "Me",
-//     time: DateTime.now().subtract(Duration(minutes: 2)),
-//     isMe: true,
-//   ),
-//   Message(
-//     id: "5",
-//     text: "Hey! How are you?",
-//     sender: "Alice",
-//     time: DateTime.now().subtract(Duration(minutes: 5)),
-//     isMe: false,
-//   ),
-//   Message(
-//     id: "6",
-//     text: "I'm good, thanks! How about you?",
-//     sender: "Me",
-//     time: DateTime.now().subtract(Duration(minutes: 4)),
-//     isMe: true,
-//   ),
-//   Message(
-//     id: "7",
-//     text: "Doing well, just working on a Flutter app 😃",
-//     sender: "Alice",
-//     time: DateTime.now().subtract(Duration(minutes: 3)),
-//     isMe: false,
-//   ),
-//   Message(
-//     id: "8",
-//     text: "That’s awesome! 🚀",
-//     sender: "Me",
-//     time: DateTime.now().subtract(Duration(minutes: 2)),
-//     isMe: true,
-//   ),
-//   Message(
-//     id: "9",
-//     text: "Hey! How are you?",
-//     sender: "Alice",
-//     time: DateTime.now().subtract(Duration(minutes: 5)),
-//     isMe: false,
-//   ),
-//   Message(
-//     id: "10",
-//     text: "I'm good, thanks! How about you?",
-//     sender: "Me",
-//     time: DateTime.now().subtract(Duration(minutes: 4)),
-//     isMe: true,
-//   ),
-//   Message(
-//     id: "11",
-//     text: "Doing well, just working on a Flutter app 😃",
-//     sender: "Alice",
-//     time: DateTime.now().subtract(Duration(minutes: 3)),
-//     isMe: false,
-//   ),
-//   Message(
-//     id: "12",
-//     text: "That’s awesome! 🚀",
-//     sender: "Me",
-//     time: DateTime.now().subtract(Duration(minutes: 2)),
-//     isMe: true,
-//   ),
 //
-// ];
+//   factory Message.fromJson(Map<String, dynamic> json) {
+//     return Message(
+//       id: json['id'],
+//       roomId: json['roomId'],
+//       senderId: json['senderId'],
+//       content: json['content'],
+//       type: json['type'],
+//       sentAt: DateTime.parse(json['sentAt']),
+//       senderFirstName: json['senderFirstName'],
+//       senderLastName: json['senderLastName'],
+//       senderProfileImageUrl: json['senderProfileImageUrl'],
+//
+//     );
+//   }
+// }

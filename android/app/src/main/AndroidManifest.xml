@@ -71,7 +71,6 @@
         </receiver>
 
 
-
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -90,6 +89,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="fullSensor"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            tools:ignore="MissingClass" />
+
 
         <!-- Don't delete this -->
         <meta-data

@@ -1,9 +1,10 @@
 import 'package:chatify/Screens/group_profile_screen.dart';
 import 'package:chatify/Screens/profile_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/controllers/chat_screen_controller.dart';
 import 'package:chatify/controllers/message_controller.dart';
-import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/message.dart';
+import 'package:chatify/services/notification_service.dart';
 import 'package:chatify/widgets/dialog_textfield.dart';
 import 'package:chatify/widgets/message_card.dart';
 import 'package:chatify/widgets/profile_avatar.dart';
@@ -11,7 +12,11 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shimmer/shimmer.dart';
+
+final GlobalKey attachKey = GlobalKey();
 
 class ChatScreen extends StatelessWidget {
   int? chatId;
@@ -20,11 +25,49 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final profileController = Get.put(ProfileController());
-
+    final chatController = Get.put(ChatScreenController(chatId: chatId!));
     final messageController = Get.put(MessageController());
 
     TextEditingController msgController = TextEditingController();
+
+    void showAttachmentMenu(BuildContext context, GlobalKey key) {
+      final RenderBox renderBox =
+          key.currentContext!.findRenderObject() as RenderBox;
+      final Offset offset = renderBox.localToGlobal(Offset.zero);
+      final Size size = renderBox.size;
+
+      showMenu(
+        color: AppColors.primary.withAlpha(200),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        context: context,
+
+        // Position the popup ABOVE the button
+        position: RelativeRect.fromLTRB(offset.dx, offset.dy + size.height + 30,
+            offset.dx + size.width + 50, offset.dy),
+
+        items: [
+          _popupItem(Icons.image, "Image", () async {
+            await messageController.pickImage(ImageSource.gallery, chatId!);
+            print("Pick Image");
+            // open image picker
+          }),
+          _popupItem(Icons.video_collection, "Video", () async {
+            await messageController.pickVideo(chatId!);
+            print("Pick Video");
+          }),
+          _popupItem(Icons.mic, "Audio", () async {
+            await messageController.pickAudio(chatId!);
+            print("Pick Audio");
+          }),
+          _popupItem(Icons.file_copy, "Document", () async {
+            await messageController.pickDocument(chatId!);
+            print("Pick Document");
+          }),
+        ],
+      );
+    }
 
     Future<void> sendMessage() async {
       if (msgController.text.trim().isEmpty) return;
@@ -36,15 +79,15 @@ class ChatScreen extends StatelessWidget {
 
       if (ok) {
         msgController.clear();
-        messageController.loadMessages(chatId!); // reload after sending
+        chatController.loadMessages(chatId!); // reload after sending
       }
     }
 
     Future<void> deleteMessage(int index) async {
       bool ok = await messageController.deleteMessage(
-          chatId!, messageController.messages[index].id);
+          chatId!, chatController.messages[index].id);
       if (ok) {
-        messageController.loadMessages(chatId!); // reload after delete
+        chatController.loadMessages(chatId!); // reload after delete
       }
     }
 
@@ -63,14 +106,16 @@ class ChatScreen extends StatelessWidget {
           );
           if (ok) {
             Get.back();
-            messageController.loadMessages(chatId!); // reload messages
+            chatController.loadMessages(chatId!); // reload messages
           }
         },
       );
     }
 
-    final type = messageController.chatType.value?.type ?? '';
-    final myId = profileController.user.value?.id;
+    final box = GetStorage();
+    final myId = box.read("userId");
+
+    // final myId = profileController.user.value?.id;
 
     return Scaffold(
       appBar: AppBar(
@@ -106,46 +151,54 @@ class ChatScreen extends StatelessWidget {
                         icon: Icon(Icons.arrow_back),
                         color: AppColors.white,
                       ),
-                      messageController.isLoading.value
+                      chatController.isLoading.value
                           ? shimmerHeader()
                           : InkWell(
                               onTap: () {
-                                Get.to(() => type == "GROUP"
-                                    ? GroupProfileScreen(
-                                        chatType:
-                                            messageController.chatType.value,
-                                      )
-                                    : ProfileScreen(
-                                        id: myId ==
-                                                messageController.chatType.value
-                                                    ?.members?[0].userId
-                                            ? (messageController.chatType.value
-                                                ?.members?[1].userId!)
-                                            : (messageController.chatType.value
-                                                ?.members?[0].userId!),
-                                      ));
+                                Get.to(
+                                    () => chatController.type.value == "GROUP"
+                                        ? GroupProfileScreen(
+                                            chatType:
+                                                chatController.chatType.value,
+                                          )
+                                        : ProfileScreen(
+                                            id: myId ==
+                                                    chatController
+                                                        .chatType
+                                                        .value
+                                                        ?.members?[0]
+                                                        .userId
+                                                ? (chatController.chatType.value
+                                                    ?.members?[1].userId!)
+                                                : (chatController.chatType.value
+                                                    ?.members?[0].userId!),
+                                          ));
                               },
                               child: Row(spacing: Get.width * 0.04, children: [
                                 ProfileAvatar(
-                                    imageUrl: type == "GROUP"
-                                        ? messageController.chatType.value
-                                                ?.groupImageUrl ??
-                                            ''
-                                        : myId ==
-                                                messageController.chatType.value
-                                                    ?.members?[0].userId
-                                            ? (messageController
-                                                    .chatType
-                                                    .value
-                                                    ?.members?[1]
-                                                    .profileImageUrl) ??
+                                    imageUrl:
+                                        chatController.type.value == "GROUP"
+                                            ? chatController.chatType.value
+                                                    ?.groupImageUrl ??
                                                 ''
-                                            : messageController
-                                                    .chatType
-                                                    .value
-                                                    ?.members?[0]
-                                                    .profileImageUrl ??
-                                                '',
+                                            : myId ==
+                                                    chatController
+                                                        .chatType
+                                                        .value
+                                                        ?.members?[0]
+                                                        .userId
+                                                ? (chatController
+                                                        .chatType
+                                                        .value
+                                                        ?.members?[1]
+                                                        .profileImageUrl) ??
+                                                    ''
+                                                : chatController
+                                                        .chatType
+                                                        .value
+                                                        ?.members?[0]
+                                                        .profileImageUrl ??
+                                                    '',
                                     radius: 25),
                                 // SizedBox(
                                 //   width: Get.width * 0.04,
@@ -156,9 +209,10 @@ class ChatScreen extends StatelessWidget {
                                   children: [
                                     SizedBox(
                                       width: Get.width * 0.25,
-                                      child: type == "GROUP"
+                                      child: chatController.type.value ==
+                                              "GROUP"
                                           ? Text(
-                                              messageController
+                                              chatController
                                                       .chatType.value?.name ??
                                                   '',
                                               maxLines: 1,
@@ -171,14 +225,14 @@ class ChatScreen extends StatelessWidget {
                                             )
                                           : Text(
                                               myId ==
-                                                      messageController
+                                                      chatController
                                                           .chatType
                                                           .value
                                                           ?.members?[0]
                                                           .userId
-                                                  ? ("${messageController.chatType.value?.members?[1].firstName} ${messageController.chatType.value?.members?[1].lastName}") ??
+                                                  ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
                                                       ''
-                                                  : ("${messageController.chatType.value?.members?[0].firstName} ${messageController.chatType.value?.members?[0].lastName}") ??
+                                                  : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
                                                       '',
                                               maxLines: 1,
                                               style: TextStyle(
@@ -203,7 +257,7 @@ class ChatScreen extends StatelessWidget {
                             ),
                     ],
                   ),
-                  type == "GROUP"
+                  chatController.type.value == "GROUP"
                       ? SizedBox()
                       : Row(
                           children: [
@@ -212,18 +266,18 @@ class ChatScreen extends StatelessWidget {
                                 final channelId = chatId;
                                 print('StartCAll :-   $channelId');
                                 final receiverId = (myId ==
-                                        messageController
+                                        chatController
                                             .chatType.value?.members?[0].userId)
-                                    ? (messageController
+                                    ? (chatController
                                         .chatType.value?.members?[1].userId!)
-                                    : (messageController
+                                    : (chatController
                                         .chatType.value?.members?[0].userId!);
                                 final receiverName = myId ==
-                                        messageController
+                                        chatController
                                             .chatType.value?.members?[0].userId
-                                    ? ("${messageController.chatType.value?.members?[1].firstName} ${messageController.chatType.value?.members?[1].lastName}") ??
+                                    ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
                                         ''
-                                    : ("${messageController.chatType.value?.members?[0].firstName} ${messageController.chatType.value?.members?[0].lastName}") ??
+                                    : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
                                         '';
 
                                 messageController.startCall(
@@ -249,18 +303,18 @@ class ChatScreen extends StatelessWidget {
                                 final channelId = chatId;
                                 print('StartCAll :-   $channelId');
                                 final receiverId = (myId ==
-                                        messageController
+                                        chatController
                                             .chatType.value?.members?[0].userId)
-                                    ? (messageController
+                                    ? (chatController
                                         .chatType.value?.members?[1].userId!)
-                                    : (messageController
+                                    : (chatController
                                         .chatType.value?.members?[0].userId!);
                                 final receiverName = myId ==
-                                        messageController
+                                        chatController
                                             .chatType.value?.members?[0].userId
-                                    ? ("${messageController.chatType.value?.members?[1].firstName} ${messageController.chatType.value?.members?[1].lastName}") ??
+                                    ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
                                         ''
-                                    : ("${messageController.chatType.value?.members?[0].firstName} ${messageController.chatType.value?.members?[0].lastName}") ??
+                                    : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
                                         '';
 
                                 messageController.startCall(
@@ -288,7 +342,7 @@ class ChatScreen extends StatelessWidget {
           Expanded(
             child: Obx(
               () => ListView.builder(
-                itemCount: messageController.messages.length,
+                itemCount: chatController.messages.length,
                 reverse: true,
                 padding: EdgeInsets.only(
                     top: Get.height * .01,
@@ -298,8 +352,8 @@ class ChatScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onDoubleTap: () {
-                      editMessage(messageController.messages[
-                          messageController.messages.length - index - 1]);
+                      editMessage(chatController.messages[
+                          chatController.messages.length - index - 1]);
                     },
                     onLongPress: () {
                       showCupertinoModalPopup(
@@ -317,10 +371,9 @@ class ChatScreen extends StatelessWidget {
                                   style: TextStyle(color: Colors.red),
                                 ),
                                 onPressed: () {
-                                  deleteMessage(
-                                      messageController.messages.length -
-                                          index -
-                                          1);
+                                  deleteMessage(chatController.messages.length -
+                                      index -
+                                      1);
                                   Navigator.pop(context);
                                 },
                               ),
@@ -336,26 +389,15 @@ class ChatScreen extends StatelessWidget {
                       );
                     },
                     child: MessageCard(
-                      text: messageController
-                          .messages[
-                              messageController.messages.length - index - 1]
-                          .content,
-                      isMe: messageController
+                      message: chatController
+                          .messages[chatController.messages.length - index - 1],
+                      isMe: chatController
                               .messages[
-                                  messageController.messages.length - index - 1]
+                                  chatController.messages.length - index - 1]
                               .senderId ==
                           myId,
-                      time: messageController
-                          .messages[
-                              messageController.messages.length - index - 1]
-                          .sentAt
-                          .toString(),
-                      imageUrl: messageController
-                          .messages[
-                              messageController.messages.length - index - 1]
-                          .senderProfileImageUrl,
-                      name:
-                          "${messageController.messages[messageController.messages.length - index - 1].senderFirstName} ${messageController.messages[messageController.messages.length - index - 1].senderLastName}",
+                      onDownload: () => chatController.downloadMedia(chatController
+                          .messages[chatController.messages.length - index - 1]),
                     ),
                   );
                 },
@@ -390,6 +432,17 @@ class ChatScreen extends StatelessWidget {
                               color: AppColors.white.withAlpha(200),
                             ),
                           ),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              // messageController.pickImage(
+                              //     ImageSource.gallery, chatId!);
+                              showAttachmentMenu(context, attachKey);
+                            },
+                            icon: Icon(
+                              Icons.attach_file,
+                              color: AppColors.white,
+                            ),
+                          ),
                           hintText: "Type a message . . .",
                           hintStyle:
                               TextStyle(color: AppColors.white.withAlpha(155)),
@@ -404,12 +457,13 @@ class ChatScreen extends StatelessWidget {
                   ),
                   Container(
                     height: Get.height * 0.045,
-                    width: Get.width * 0.18,
+                    width: Get.width * 0.14,
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: InkWell(
+                        key: attachKey,
                         onTap: sendMessage,
                         child: Icon(
                           Icons.send,
@@ -464,6 +518,23 @@ class ChatScreen extends StatelessWidget {
                   ),
                 ),
               )),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem _popupItem(IconData icon, String title, VoidCallback onTap) {
+    return PopupMenuItem(
+      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.white),
+          SizedBox(width: 12),
+          Text(
+            title,
+            style: TextStyle(color: Colors.white, fontSize: 14),
+          )
         ],
       ),
     );

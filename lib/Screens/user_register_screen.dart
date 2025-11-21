@@ -3,12 +3,14 @@ import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 class UserRegisterScreen extends StatelessWidget {
   const UserRegisterScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+
     final authController = Get.find<AuthController>();
 
     TextEditingController firstNameController = TextEditingController();
@@ -55,26 +57,26 @@ class UserRegisterScreen extends StatelessWidget {
               SizedBox(height: Get.height * 0.01),
               Stack(
                 children: [
-                  // Obx(
-                  //   () => profileController.pickedImage.value != null
-                  //       ? CircleAvatar(
-                  //           radius: 56,
-                  //           backgroundImage:
-                  //               FileImage(profileController.pickedImage.value!),
-                  //         )
-                  //       :
-                    CircleAvatar(
+                  Obx(
+                    () => authController.pickedImage.value != null
+                        ? CircleAvatar(
                             radius: 56,
                             backgroundImage:
-                                NetworkImage("https://i.sstatic.net/l60Hf.png"),
-                          ),
-                  // ),
+                                FileImage(authController.pickedImage.value!),
+                          )
+                        :
+                  CircleAvatar(
+                    radius: 56,
+                    backgroundImage:
+                        NetworkImage("https://i.sstatic.net/l60Hf.png"),
+                  ),
+                  ),
                   Positioned(
                     bottom: 0,
                     right: 0,
                     child: GestureDetector(
-                      onTap: () {
-                        // profileController.showPickerBottomSheet();
+                      onTap: () async {
+                        await authController.pickImage(ImageSource.gallery);
                       },
                       child: CircleAvatar(
                         radius: 13,
@@ -111,7 +113,8 @@ class UserRegisterScreen extends StatelessWidget {
                     "First Name",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
                   )),
-              CustomTextfield(controller: firstNameController, hintText: "Ankit"),
+              CustomTextfield(
+                  controller: firstNameController, hintText: "Ankit"),
               SizedBox(
                 height: Get.height * 0.005,
               ),
@@ -121,7 +124,8 @@ class UserRegisterScreen extends StatelessWidget {
                     "Last Name",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
                   )),
-              CustomTextfield(controller: lastNameController, hintText: "Patel"),
+              CustomTextfield(
+                  controller: lastNameController, hintText: "Patel"),
               SizedBox(
                 height: Get.height * 0.005,
               ),
@@ -153,13 +157,13 @@ class UserRegisterScreen extends StatelessWidget {
                     firstDate: DateTime(1900),
                     lastDate: DateTime.now(),
                   );
-        
+
                   if (pickedDate != null) {
                     // format date as DD/MM/YYYY
                     String formattedDate = "${pickedDate.year}-"
                         "${pickedDate.month.toString().padLeft(2, '0')}-"
                         "${pickedDate.day.toString().padLeft(2, '0')}";
-        
+
                     dobController.text = formattedDate; // save to controller
                   }
                 },
@@ -187,6 +191,17 @@ class UserRegisterScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
+                    //email validation
+                    String email = emailController.text.trim();
+                    final emailRegex =
+                        RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+
+                    if (email.isNotEmpty && !emailRegex.hasMatch(email)) {
+                      Get.snackbar("Invalid Email",
+                          "Please enter a valid email address");
+                      return;
+                    }
+
                     if (firstNameController.text.isNotEmpty &&
                         lastNameController.text.isNotEmpty &&
                         dobController.text.isNotEmpty) {
@@ -194,8 +209,10 @@ class UserRegisterScreen extends StatelessWidget {
                           firstName: firstNameController.text,
                           lastName: lastNameController.text,
                           phoneNumber: authController.phoneNumber.value,
+                          email: email,
                           dateOfBirth: dobController.text,
-                          profileImageUrl: "https://i.sstatic.net/l60Hf.png");
+                          profileImageFile: authController.pickedImage.value!
+                      );
                     } else {
                       Get.snackbar(
                           "Error", "Please fill all the required fields");

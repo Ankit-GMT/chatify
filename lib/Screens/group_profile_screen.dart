@@ -24,6 +24,8 @@ class GroupProfileScreen extends StatelessWidget {
     final tabController = Get.find<TabBarController>();
 
     final myId = profileController.user.value?.id;
+
+
     return Scaffold(
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
@@ -91,7 +93,7 @@ class GroupProfileScreen extends StatelessWidget {
                           callerId: profileController.user.value!.id.toString(),
                           callerName: profileController.user.value!.firstName
                               .toString(),
-                          callType: "groupVoice",
+                          isVideo: false,
                           receiverIds: receiverIds);
                     },
                   ),
@@ -114,7 +116,7 @@ class GroupProfileScreen extends StatelessWidget {
                           callerId: profileController.user.value!.id.toString(),
                           callerName: profileController.user.value!.firstName
                               .toString(),
-                          callType: "groupVideo",
+                          isVideo: true,
                           receiverIds: receiverIds);
                     },
                   ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:chatify/Screens/login_screen.dart';
 import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/Screens/otp_screen.dart';
@@ -11,6 +12,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 import 'bottom_controller.dart';
 
@@ -152,47 +154,118 @@ class AuthController extends GetxController {
     super.onClose();
   }
 
+  // Future<void> registerUser({
+  //   required String firstName,
+  //   required String lastName,
+  //   String? email, //  optional
+  //   required String phoneNumber,
+    // required String dateOfBirth,
+  //   required String profileImageUrl,
+  // }) async {
+  //   try {
+  //     isLoading.value = true;
+  //
+  //     final body = {
+  //       "firstName": firstName,
+  //       "lastName": lastName,
+  //       "phoneNumber": phoneNumber,
+  //       "dateOfBirth": dateOfBirth,
+  //       "profileImageUrl": profileImageUrl,
+  //     };
+  //
+  //     // only add email if user entered it
+  //     if (email != null && email.isNotEmpty) {
+  //       body["email"] = email;
+  //     }
+  //
+  //     final res = await http.post(
+  //       Uri.parse("$baseUrl/api/auth/register"),
+  //       headers: {"Content-Type": "application/json"},
+  //       body: jsonEncode(body),
+  //     );
+  //
+  //     final data = jsonDecode(res.body);
+  //     print(data);
+  //     if (data['accessToken'] != null) {
+  //       // Save tokens locally
+  //       await box.write("accessToken", data['accessToken']);
+  //       await box.write("refreshToken", data['refreshToken']);
+  //
+  //       Get.snackbar("Success", "Registration successful!");
+  //       Get.offAll(() => MainScreen());
+  //     } else {
+  //       Get.snackbar("Error", data['error'] ?? "Something went wrong");
+  //     }
+  //   } catch (e) {
+  //     Get.snackbar("Error", e.toString());
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
+
+  var pickedImage = Rx<File?>(null);
+
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> pickImage(ImageSource source) async {
+    final XFile? image =
+    await _picker.pickImage(source: source,imageQuality: 20);
+
+    if (image != null) {
+      pickedImage.value = File(image.path);
+    }
+  }
+
+
   Future<void> registerUser({
     required String firstName,
     required String lastName,
-    String? email, //  optional
+    String? email,
     required String phoneNumber,
     required String dateOfBirth,
-    required String profileImageUrl,
+    required File profileImageFile,   // <<<<< IMPORTANT: pass a File now
   }) async {
     try {
       isLoading.value = true;
 
-      final body = {
-        "firstName": firstName,
-        "lastName": lastName,
-        "phoneNumber": phoneNumber,
-        "dateOfBirth": dateOfBirth,
-        "profileImageUrl": profileImageUrl,
-      };
-
-      // only add email if user entered it
-      if (email != null && email.isNotEmpty) {
-        body["email"] = email;
-      }
-
-      final res = await http.post(
+      var request = http.MultipartRequest(
+        "POST",
         Uri.parse("$baseUrl/api/auth/register"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(body),
       );
 
-      final data = jsonDecode(res.body);
+      // text fields
+      request.fields['firstName'] = firstName;
+      request.fields['lastName'] = lastName;
+      request.fields['phoneNumber'] = phoneNumber;
+      request.fields['dateOfBirth'] = dateOfBirth;
+
+      if (email != null && email.isNotEmpty) {
+        request.fields['email'] = email;
+      }
+
+      // image file (multipart)
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'profileImage',
+          profileImageFile.path,
+        ),
+      );
+
+      // Send request
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      final data = jsonDecode(response.body);
       print(data);
-      if (data['accessToken'] != null) {
-        // Save tokens locally
+
+      if (response.statusCode == 200 && data['accessToken'] != null) {
         await box.write("accessToken", data['accessToken']);
         await box.write("refreshToken", data['refreshToken']);
 
         Get.snackbar("Success", "Registration successful!");
         Get.offAll(() => MainScreen());
       } else {
-        Get.snackbar("Error", data['error'] ?? "Something went wrong");
+        Get.snackbar("Error", data['message'] ?? "Something went wrong");
       }
     } catch (e) {
       Get.snackbar("Error", e.toString());
@@ -200,6 +273,7 @@ class AuthController extends GetxController {
       isLoading.value = false;
     }
   }
+
 
   // Logout user
 

@@ -1,82 +1,84 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:chatify/Screens/group_video_screen.dart';
 import 'package:chatify/Screens/group_voice_screen.dart';
+import 'package:chatify/Screens/image_preview_screen.dart';
+import 'package:chatify/Screens/media_preview_screen.dart';
 import 'package:chatify/Screens/video_call_screen1.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/profile_controller.dart';
-import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/message.dart';
 import 'package:chatify/services/api_service.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 class MessageController extends GetxController {
-
   final String baseUrl = APIs.url;
   final box = GetStorage();
   final profileController = Get.find<ProfileController>();
 
-  var chatType = Rxn<ChatType>();
-  RxList<Message> messages = <Message>[].obs;
+  // var chatType = Rxn<ChatType>();
+  // RxList<Message> messages = <Message>[].obs;
 
-  var isLoading = true.obs;
+  // var isLoading = true.obs;
 
-  Future<void> loadMessages(int id) async {
-    final data = await fetchMessages(id);
-      messages.value = data;
-  }
+  // Future<void> loadMessages(int id) async {
+  //   final data = await fetchMessages(id);
+  //     messages.value = data;
+  // }
 
+  // void fetchChatType(int id) async {
+  //     final data = await fetchChatTypeDetails(id);
+  //     chatType.value = data;
+  // }
 
-  void fetchChatType(int id) async {
-      final data = await fetchChatTypeDetails(id);
-      chatType.value = data;
-  }
-
-  Future<ChatType?> fetchChatTypeDetails(int chatId) async {
-    try {
-      isLoading.value = true;
-      final res = await ApiService.request(
-          url: "$baseUrl/api/chats/$chatId", method: "GET");
-
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        return ChatType.fromJson(data);
-      } else {
-        print("Failed to load: ${res.statusCode} ${res.body}");
-        return null;
-      }
-    } catch (e) {
-      print("Error: $e");
-      return null;
-    }
-    finally{
-      isLoading.value = false;
-    }
-  }
+  // Future<ChatType?> fetchChatTypeDetails(int chatId) async {
+  //   try {
+  //     isLoading.value = true;
+  //     final res = await ApiService.request(
+  //         url: "$baseUrl/api/chats/$chatId", method: "GET");
+  //
+  //     if (res.statusCode == 200) {
+  //       final data = jsonDecode(res.body);
+  //       return ChatType.fromJson(data);
+  //     } else {
+  //       print("Failed to load: ${res.statusCode} ${res.body}");
+  //       return null;
+  //     }
+  //   } catch (e) {
+  //     print("Error: $e");
+  //     return null;
+  //   }
+  //   finally{
+  //     isLoading.value = false;
+  //   }
+  // }
 
   // for load messages
-  Future<List<Message>> fetchMessages(int chatId) async {
-    try {
-
-      final res = await ApiService.request(
-          url: "$baseUrl/api/chats/$chatId/messages", method: "GET");
-
-      if (res.statusCode == 200) {
-        final List data = jsonDecode(res.body);
-        return data.map((e) => Message.fromJson(e)).toList();
-      } else {
-        print("Failed to load: ${res.statusCode} ${res.body}");
-        return [];
-      }
-    } catch (e) {
-      print("Error: $e");
-      return [];
-    }
-  }
+  // Future<List<Message>> fetchMessages(int chatId) async {
+  //   try {
+  //
+  //     final res = await ApiService.request(
+  //         url: "$baseUrl/api/chats/$chatId/messages", method: "GET");
+  //
+  //     if (res.statusCode == 200) {
+  //       final List data = jsonDecode(res.body);
+  //       return data.map((e) => Message.fromJson(e)).toList();
+  //     } else {
+  //       print("Failed to load: ${res.statusCode} ${res.body}");
+  //       return [];
+  //     }
+  //   } catch (e) {
+  //     print("Error: $e");
+  //     return [];
+  //   }
+  // }
 
   // for send message
   Future<bool> sendMessage({
@@ -85,20 +87,6 @@ class MessageController extends GetxController {
     String type = "TEXT",
   }) async {
     try {
-      final token = box.read("accessToken");
-
-      // final res = await http.post(
-      //   Uri.parse("$baseUrl/api/chats/$chatId/messages"),
-      //   headers: {
-      //     "Authorization": "Bearer $token",
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: jsonEncode({
-      //     "content": content,
-      //     "type": type,
-      //   }),
-      // );
-
       final res = await ApiService.request(
           url: "$baseUrl/api/chats/$chatId/messages",
           method: "POST",
@@ -194,11 +182,10 @@ class MessageController extends GetxController {
 
   var isEmojiVisible = false.obs;
 
-
   // for call start
 
-  Future<void> startCall(String name,String receiverId, String channelId, bool isVideo,
-      BuildContext context) async {
+  Future<void> startCall(String name, String receiverId, String channelId,
+      bool isVideo, BuildContext context) async {
     final callType = isVideo ? "video" : "voice";
 
     final response = await http.post(
@@ -273,7 +260,6 @@ class MessageController extends GetxController {
       } else {
         print("⚠️ Failed to end call: ${response.body}");
       }
-
     } catch (e) {
       print("❌ Error ending call: $e");
     }
@@ -286,9 +272,10 @@ class MessageController extends GetxController {
     required String channelId,
     required String callerId,
     required String callerName,
-    required String callType, // "groupvoice" or "groupvideo"
+    required bool isVideo,
     required List<String> receiverIds,
   }) async {
+    final callType = isVideo ? "VIDEO" : "VOICE";
     try {
       final url = Uri.parse("$baseUrl/api/call/group/invite");
 
@@ -314,7 +301,7 @@ class MessageController extends GetxController {
         final channel = data["channelId"];
 
         // Navigate to call screen
-        if (callType == "groupVideo") {
+        if (callType == "VIDEO") {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -322,10 +309,10 @@ class MessageController extends GetxController {
                   channelId: channel,
                   token: agoraToken,
                   callerId: callerId,
-                  receiverIds: receiverIds),
+                  receiverIds: data["participants"]),
             ),
           );
-        } else if (callType == "groupVoice") {
+        } else if (callType == "VOICE") {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -333,7 +320,7 @@ class MessageController extends GetxController {
                   channelId: channel,
                   token: agoraToken,
                   callerId: callerId,
-                  receiverIds: receiverIds),
+                  receiverIds: data["participants"]),
             ),
           );
         }
@@ -392,13 +379,119 @@ class MessageController extends GetxController {
     isEmojiVisible.toggle();
   }
 
+  // for send image
+
+  var isSending = false.obs;
+
+  Future<void> sendMedia(
+    String chatId,
+    File file, {
+    required String type, // "IMAGE", "VIDEO", "AUDIO", "DOCUMENT"
+    String? caption,
+  }) async {
+    try {
+      isSending.value = true;
+
+      final res = await ApiService.sendMediaMessage(
+        chatId: chatId,
+        file: file,
+        type: type,
+        caption: caption ?? "",
+      );
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        print("$type SEND SUCCESS: $data");
+
+        // Optionally update chat messages list
+      } else {
+        print("$type SEND FAILED: ${res.body}");
+        Get.snackbar("Error", "Failed to send $type");
+      }
+    } catch (e) {
+      print("SEND $type ERROR: $e");
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isSending.value = false;
+    }
+  }
+
+  // For Image Picker
+
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> pickImage(ImageSource source, int chatId) async {
+    final XFile? image =
+        await _picker.pickImage(source: source, imageQuality: 20);
+
+    if (image != null) {
+      Navigator.push(
+          Get.context!,
+          MaterialPageRoute(
+            builder: (context) => MediaPreviewScreen(
+              filePath: image.path,
+              chatId: chatId,
+              type: "IMAGE",
+            ),
+          ));
+    }
+  }
+
+  // For Video Picker
+
+  Future<void> pickVideo(int chatId) async {
+    final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
+
+    if (video != null) {
+      Get.to(() => MediaPreviewScreen(
+            filePath: video.path,
+            chatId: chatId,
+            type: "VIDEO",
+          ));
+    }
+  }
+
+  // For Audio Pick
+
+  Future<void> pickAudio(int chatId) async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.audio,
+    );
+
+    if (result != null) {
+      Get.to(() => MediaPreviewScreen(
+            filePath: result.files.single.path!,
+            chatId: chatId,
+            type: "AUDIO",
+          ));
+    }
+  }
+
+  // For Document Pick
+
+  Future<void> pickDocument(int chatId) async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'zip'],
+    );
+
+    if (result != null) {
+      Get.to(() => MediaPreviewScreen(
+            filePath: result.files.single.path!,
+            chatId: chatId,
+            type: "DOCUMENT",
+          ));
+    }
+  }
+
+
   @override
   void onInit() {
     super.onInit();
 
-    int chatId = Get.arguments ?? 10;
-    fetchChatType(chatId);
-    loadMessages(chatId);
+    // int chatId = Get.arguments ?? 10;
+    // fetchChatType(chatId);
+    // loadMessages(chatId);
 
     // When keyboard opens, hide emoji picker
     focusNode.addListener(() {

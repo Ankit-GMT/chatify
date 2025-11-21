@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:chatify/Screens/login_screen.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:get_storage/get_storage.dart';
@@ -91,6 +92,38 @@ class ApiService {
       return false;
     }
   }
+
+  static Future<http.Response> sendMediaMessage({
+    required String chatId,
+    required File file,
+    required String type, // IMAGE / VIDEO / AUDIO / DOCUMENT
+    String? caption,
+    int? duration,       // for audio/video
+  }) async {
+    final accessToken = box.read("accessToken");
+
+    var uri = Uri.parse("$baseUrl/api/chats/$chatId/messages/media");
+
+    var request = http.MultipartRequest("POST", uri);
+
+    // AUTH HEADER
+    request.headers["Authorization"] = "Bearer $accessToken";
+
+    // ADD TEXT FIELDS
+    request.fields["type"] = type;
+    if (caption != null) request.fields["caption"] = caption;
+    if (duration != null) request.fields["duration"] = duration.toString();
+
+    // ADD FILE
+    request.files.add(
+      await http.MultipartFile.fromPath("file", file.path),
+    );
+
+    // SEND REQUEST
+    final streamed = await request.send();
+    return await http.Response.fromStream(streamed);
+  }
+
 
   static void _logoutUser() {
     box.erase();

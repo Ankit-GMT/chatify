@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
@@ -6,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:get/get.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
-
 
 class VideoCallController extends GetxController {
   final String channelId;
@@ -37,7 +37,6 @@ class VideoCallController extends GetxController {
   var isLocalMain = false.obs;
   RxDouble localVideoX = 20.0.obs;
   RxDouble localVideoY = 50.0.obs;
-
 
   Timer? _timer;
   Timer? _hideTimer;
@@ -70,7 +69,8 @@ class VideoCallController extends GetxController {
           isConnected.value = true;
           _startTimer();
         },
-        onUserOffline: (RtcConnection connection, int remoteUid, UserOfflineReasonType reason) {
+        onUserOffline: (RtcConnection connection, int remoteUid,
+            UserOfflineReasonType reason) {
           if (this.remoteUid == remoteUid) {
             this.remoteUid = null;
             isRemoteVideoOff.value = false;
@@ -100,7 +100,7 @@ class VideoCallController extends GetxController {
   }
 
   void swapVideos() {
-      isLocalMain.value = !isLocalMain.value;
+    isLocalMain.value = !isLocalMain.value;
   }
 
   void toggleMute() async {
@@ -155,7 +155,12 @@ class VideoCallController extends GetxController {
     // for reset everything
     Get.delete<VideoCallController>();
 
-    Navigator.pop(Get.context!);
+    if (Navigator.canPop(Get.context!)) {
+      Navigator.pop(Get.context!);
+    }
+    else{
+      Get.offAll(()=> MainScreen());
+    }
   }
 
   @override

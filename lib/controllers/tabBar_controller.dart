@@ -302,38 +302,7 @@ class TabBarController extends GetxController {
   }
 
 
-  // Future<void> _loadContacts({bool forceRefresh = false}) async {
-  //   print(DateTime.now());
-  //   isLoading2.value = true;
-  //
-  //   if (!forceRefresh) {
-  //     loadContactsFromLocal(); // Load cached contacts first
-  //   }
-  //
-  //   try {
-  //     final phoneNumbers = await getPhoneContacts();
-  //     final users = await checkUsersOnApp(phoneNumbers);
-  //
-  //     registeredUsers.value = users.where((user) => user.registered!).toList();
-  //     notRegisteredUsers.value = users.where((user) => !user.registered!).toList();
-  //
-  //     final contacts = await FlutterContacts.getContacts(withProperties: true);
-  //     mergeNotRegisteredWithContacts(notRegisteredUsers, contacts);
-  //
-  //     // save to local
-  //     saveContactsToLocal();
-  //
-  //     filterContacts();
-  //   } catch (e) {
-  //     debugPrint("Error loading contacts: $e");
-  //   } finally {
-  //     isLoading2.value = false;
-  //   }
-  //   print(DateTime.now());
-  //
-  //   // print("users: $users");
-  //   // print("App users: $registeredUsers");
-  // }
+
 
   String normalizePhone(String number) {
     String cleaned = number.replaceAll(RegExp(r'[^0-9]'), '');
