@@ -3,13 +3,11 @@ import 'dart:io';
 
 import 'package:chatify/Screens/group_video_screen.dart';
 import 'package:chatify/Screens/group_voice_screen.dart';
-import 'package:chatify/Screens/image_preview_screen.dart';
 import 'package:chatify/Screens/media_preview_screen.dart';
 import 'package:chatify/Screens/video_call_screen1.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/profile_controller.dart';
-import 'package:chatify/models/message.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -23,62 +21,6 @@ class MessageController extends GetxController {
   final box = GetStorage();
   final profileController = Get.find<ProfileController>();
 
-  // var chatType = Rxn<ChatType>();
-  // RxList<Message> messages = <Message>[].obs;
-
-  // var isLoading = true.obs;
-
-  // Future<void> loadMessages(int id) async {
-  //   final data = await fetchMessages(id);
-  //     messages.value = data;
-  // }
-
-  // void fetchChatType(int id) async {
-  //     final data = await fetchChatTypeDetails(id);
-  //     chatType.value = data;
-  // }
-
-  // Future<ChatType?> fetchChatTypeDetails(int chatId) async {
-  //   try {
-  //     isLoading.value = true;
-  //     final res = await ApiService.request(
-  //         url: "$baseUrl/api/chats/$chatId", method: "GET");
-  //
-  //     if (res.statusCode == 200) {
-  //       final data = jsonDecode(res.body);
-  //       return ChatType.fromJson(data);
-  //     } else {
-  //       print("Failed to load: ${res.statusCode} ${res.body}");
-  //       return null;
-  //     }
-  //   } catch (e) {
-  //     print("Error: $e");
-  //     return null;
-  //   }
-  //   finally{
-  //     isLoading.value = false;
-  //   }
-  // }
-
-  // for load messages
-  // Future<List<Message>> fetchMessages(int chatId) async {
-  //   try {
-  //
-  //     final res = await ApiService.request(
-  //         url: "$baseUrl/api/chats/$chatId/messages", method: "GET");
-  //
-  //     if (res.statusCode == 200) {
-  //       final List data = jsonDecode(res.body);
-  //       return data.map((e) => Message.fromJson(e)).toList();
-  //     } else {
-  //       print("Failed to load: ${res.statusCode} ${res.body}");
-  //       return [];
-  //     }
-  //   } catch (e) {
-  //     print("Error: $e");
-  //     return [];
-  //   }
-  // }
 
   // for send message
   Future<bool> sendMessage({
@@ -110,14 +52,6 @@ class MessageController extends GetxController {
 
   Future<bool> deleteMessage(int chatId, int messageId) async {
     try {
-      final token = box.read("accessToken");
-
-      // final res = await http.delete(
-      //   Uri.parse("$baseUrl/api/chats/$chatId/messages/$messageId"),
-      //   headers: {
-      //     "Authorization": "Bearer $token",
-      //   },
-      // );
 
       final res = await ApiService.request(
           url: "$baseUrl/api/chats/$chatId/messages/$messageId",
@@ -144,18 +78,7 @@ class MessageController extends GetxController {
     required String newContent,
   }) async {
     try {
-      final token = box.read("accessToken");
 
-      // final res = await http.patch(
-      //   Uri.parse("$baseUrl/api/chats/$chatId/messages/$messageId"),
-      //   headers: {
-      //     "Authorization": "Bearer $token",
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: jsonEncode({
-      //     "content": newContent,
-      //   }),
-      // );
       final res = await ApiService.request(
           url: "$baseUrl/api/chats/$chatId/messages/$messageId",
           method: "PATCH",

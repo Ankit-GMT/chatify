@@ -10,6 +10,7 @@ import 'package:chatify/widgets/custom_tile.dart';
 import 'package:chatify/widgets/profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 class GroupProfileScreen extends StatelessWidget {
   final ChatType? chatType;
@@ -25,6 +26,8 @@ class GroupProfileScreen extends StatelessWidget {
 
     final myId = profileController.user.value?.id;
 
+    final isAdmin = chatType?.members
+        ?.any((m) => m.id == myId && m.role == "ADMIN") ?? false;
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -55,7 +58,11 @@ class GroupProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              ProfileAvatar(imageUrl: chatType!.groupImageUrl!, radius: 50),
+              GestureDetector(
+                onTap: () {
+                  groupController.editImage(ImageSource.gallery, chatType!.id!);
+                },
+                  child: ProfileAvatar(imageUrl: chatType!.groupImageUrl!, radius: 50)),
               Column(
                 children: [
                   Text(
@@ -214,7 +221,8 @@ class GroupProfileScreen extends StatelessWidget {
                 image: "assets/images/profile_notification.png",
                 onTap: () {},
               ),
-              CustomTile(
+               isAdmin ? SizedBox():
+               CustomTile(
                 title: "Exit Group",
                 image: "assets/images/profile_exit.png",
                 onTap: () async {
@@ -227,6 +235,7 @@ class GroupProfileScreen extends StatelessWidget {
               //   image: "assets/images/profile_report.png",
               //   onTap: () {},
               // ),
+              isAdmin ?
               ListTile(
                 onTap: () async {
                   await groupController.deleteGroup(groupId: chatType!.id!);
@@ -250,7 +259,7 @@ class GroupProfileScreen extends StatelessWidget {
                 ),
                 trailing: Icon(Icons.arrow_forward_ios_rounded,
                     color: AppColors.primary, size: 15),
-              ),
+              ): SizedBox(),
               Text(
                 "Version 1.0.0",
                 style: TextStyle(

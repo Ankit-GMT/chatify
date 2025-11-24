@@ -4,6 +4,7 @@ import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CreateGroupScreen extends StatelessWidget {
   final int currentUserId;
@@ -33,17 +34,25 @@ class CreateGroupScreen extends StatelessWidget {
           ),
           Stack(
             children: [
-              CircleAvatar(
-                radius: 56,
-                backgroundImage:
-                    NetworkImage("https://i.sstatic.net/l60Hf.png"),
+              Obx(
+                () => groupController.pickedImage.value != null
+                    ? CircleAvatar(
+                        radius: 56,
+                        backgroundImage:
+                            FileImage(groupController.pickedImage.value!),
+                      )
+                    : CircleAvatar(
+                        radius: 56,
+                        backgroundImage:
+                            NetworkImage("https://i.sstatic.net/l60Hf.png"),
+                      ),
               ),
               Positioned(
                 bottom: 0,
                 right: 0,
                 child: GestureDetector(
                   onTap: () {
-                    // profileController.pickImage();
+                    groupController.pickImage(ImageSource.gallery);
                   },
                   child: CircleAvatar(
                     radius: 13,
@@ -133,7 +142,7 @@ class CreateGroupScreen extends StatelessWidget {
                     ? () async {
                         await groupController.createGroup(
                           name: nameController.text.trim(),
-                          groupImageUrl: "https://picsum.photos/200/300",
+                          groupImageFile: groupController.pickedImage.value,
                           memberIds: groupController.selectedContacts.toList(),
                           // selected member IDs
                           currentUserId: currentUserId,

@@ -69,10 +69,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await GetStorage.init();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -87,6 +89,8 @@ void main() async {
   final notificationService = NotificationService();
   await notificationService.initialize();
   await notificationService.printFcmToken();
+  final box = GetStorage();
+  print("accessToken: ${box.read("accessToken")}");
   runApp(MyApp(
     notificationService: notificationService,
   ));

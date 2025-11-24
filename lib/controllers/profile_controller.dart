@@ -28,15 +28,6 @@ class ProfileController extends GetxController {
 
   Future<ChatUser?> getProfile() async {
     try {
-      final token = box.read("accessToken");
-
-      // final res = await http.get(
-      //   Uri.parse("$baseUrl/api/user/me"),
-      //   headers: {
-      //     "Authorization": "Bearer $token",
-      //     "Content-Type": "application/json",
-      //   },
-      // );
       final res =
           await ApiService.request(url: "$baseUrl/api/user/me", method: "GET");
 

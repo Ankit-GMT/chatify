@@ -26,7 +26,7 @@ void openAudioPlayerSheet(BuildContext context, String audioUrl) {
             Row(
               children: [
                 Text(
-                  "Audio",
+                  audioUrl,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

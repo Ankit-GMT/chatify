@@ -1,133 +1,3 @@
-// import 'dart:io';
-//
-// import 'package:chatify/constants/app_colors.dart';
-// import 'package:chatify/controllers/chat_screen_controller.dart';
-// import 'package:chatify/controllers/image_preview_controller.dart';
-// import 'package:chatify/controllers/message_controller.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-
-// class MediaPreviewScreen extends StatelessWidget {
-//   final String filePath;
-//   final int chatId;
-//   final String type;
-//
-//   MediaPreviewScreen({
-//     super.key,
-//     required this.filePath,
-//     required this.chatId,
-//     required this.type,
-//   });
-//
-//   final controller = Get.put(ImagePreviewController());
-//   final messageController = Get.put(MessageController());
-//   late final chatController = Get.put(ChatScreenController(chatId: chatId));
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     controller.setImage(filePath);
-//
-//     return Scaffold(
-//       backgroundColor: Colors.black,
-//       body: Stack(
-//         children: [
-//           // MEDIA VIEW
-//           Positioned.fill(
-//             child: Center(
-//               child: buildPreview(),
-//             ),
-//           ),
-//           // TOP BAR
-//           Positioned(
-//             top: 40,
-//             left: 10,
-//             right: 10,
-//             child: Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//               children: [
-//                 CircleAvatar(
-//                   backgroundColor: Colors.black54,
-//                   child: IconButton(
-//                     icon: Icon(Icons.close, color: Colors.white),
-//                     onPressed: () => Get.back(),
-//                   ),
-//                 ),
-//                 SizedBox(
-//                   width: 40,
-//                 ),
-//               ],
-//             ),
-//           ),
-//
-//           // CAPTION + SEND
-//           Positioned(
-//             bottom: 0,
-//             left: 0,
-//             right: 0,
-//             child: Container(
-//               padding: EdgeInsets.all(10),
-//               color: Colors.black54,
-//               child: Row(
-//                 children: [
-//                   Expanded(
-//                     child: TextField(
-//                       onChanged: (v) => controller.caption.value = v,
-//                       style: TextStyle(color: Colors.white),
-//                       decoration: InputDecoration(
-//                         hintText: "Add a caption...",
-//                         hintStyle: TextStyle(color: Colors.white70),
-//                         border: InputBorder.none,
-//                       ),
-//                     ),
-//                   ),
-//                   Obx(
-//                     () => messageController.isSending.value
-//                         ? CircularProgressIndicator(
-//                             color: AppColors.white,
-//                           )
-//                         : CircleAvatar(
-//                             radius: 25,
-//                             backgroundColor: AppColors.primary,
-//                             child: IconButton(
-//                               icon: Icon(Icons.send, color: Colors.white),
-//                               onPressed: () async {
-//                                 await messageController.sendMedia(
-//                                   chatId.toString(),
-//                                   File(filePath),
-//                                   type: type,
-//                                   caption: controller.caption.value,
-//                                 );
-//                                 await chatController.loadMessages(chatId);
-//
-//                                 if (context.mounted) Navigator.pop(context);
-//                               },
-//                             ),
-//                           ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-//
-//   Widget buildPreview() {
-//     if (type == "VIDEO") {
-//       return Icon(Icons.videocam, color: Colors.white, size: 80);
-//     }
-//     if (type == "AUDIO") {
-//       return Icon(Icons.audiotrack, color: Colors.white, size: 80);
-//     }
-//     if (type == "DOCUMENT") {
-//       return Icon(Icons.insert_drive_file, color: Colors.white, size: 80);
-//     }
-//
-//     // fallback
-//     return Icon(Icons.file_copy, color: Colors.white, size: 80);
-//   }
-// }
 
 import 'dart:io';
 import 'package:chatify/constants/app_colors.dart';
@@ -175,9 +45,9 @@ class MediaPreviewScreen extends StatelessWidget {
 
           // TOP BAR
           Positioned(
-            top: 40,
-            left: 10,
-            right: 10,
+            top: 100,
+            left: 20,
+            right: 20,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -246,6 +116,7 @@ class MediaPreviewScreen extends StatelessWidget {
                           );
 
                           await chatController.loadMessages(chatId);
+                          chatController.initializeDownloads();
                           if (context.mounted) Navigator.pop(context);
                         },
                       ),
