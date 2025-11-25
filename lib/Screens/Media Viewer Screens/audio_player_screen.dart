@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 
-void openAudioPlayerSheet(BuildContext context, String audioUrl) {
+void openAudioPlayerSheet(BuildContext context, String audioUrl, String fileName) {
   final controller = Get.put(AudioPlayerController());
 
   controller.init(audioUrl);
@@ -25,12 +25,16 @@ void openAudioPlayerSheet(BuildContext context, String audioUrl) {
             // Header
             Row(
               children: [
-                Text(
-                  audioUrl,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white
+                SizedBox(
+                  width: Get.width * 0.7,
+                  child: Text(
+                    fileName,
+                    overflow: TextOverflow.fade,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.white
+                    ),
                   ),
                 ),
                 Spacer(),

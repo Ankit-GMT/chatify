@@ -302,8 +302,6 @@ class TabBarController extends GetxController {
   }
 
 
-
-
   String normalizePhone(String number) {
     String cleaned = number.replaceAll(RegExp(r'[^0-9]'), '');
     if (cleaned.length >= 10) {
@@ -357,4 +355,115 @@ class TabBarController extends GetxController {
     filteredRegisteredList.assignAll(resultRegistered);
     filteredNotRegisteredList.assignAll(resultNotRegistered);
   }
+
+
+  // For Mute users
+
+  Future<bool> muteUser({
+    required int mutedUserId,
+    required int durationHours,
+  }) async {
+    try {
+
+      final body = {
+        "mutedUserId": mutedUserId,
+        "durationHours": durationHours,
+      };
+
+      final response = await ApiService.request(
+        url: "$baseUrl/api/mute/user",
+        method: "POST",
+        body: body
+      );
+
+      if (response.statusCode == 200) {
+        print("User muted successfully");
+        return true;
+      } else {
+        print("Mute failed: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Mute error: $e");
+      return false;
+    }
+  }
+
+  // For Unmute user
+
+  Future<bool> unmuteUser({
+    required int userId,
+  }) async {
+    try {
+
+      final response = await ApiService.request(
+          url: "$baseUrl/api/mute/user/$userId", method: "DELETE");
+
+      if (response.statusCode == 200) {
+        print("User unmuted successfully");
+        return true;
+      } else {
+        print("Unmute failed: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Error unmuting user: $e");
+      return false;
+    }
+  }
+
+  // For mute group
+  Future<bool> muteGroup({
+    required int muteGroupId,
+    required int durationHours,
+  }) async {
+    try {
+
+      final body = {
+        "groupId": muteGroupId,
+        "durationHours": durationHours
+      };
+
+      final response = await ApiService.request(
+          url: "$baseUrl/api/mute/group",
+          method: "POST",
+          body: body
+      );
+
+      if (response.statusCode == 200) {
+        print("Group muted successfully");
+        return true;
+      } else {
+        print("Mute failed: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Mute error: $e");
+      return false;
+    }
+  }
+
+  // For Unmute user
+
+  Future<bool> unMuteGroup({
+    required int groupId,
+  }) async {
+    try {
+
+      final response = await ApiService.request(
+          url: "$baseUrl/api/mute/group/$groupId", method: "DELETE");
+
+      if (response.statusCode == 200) {
+        print("Group unmuted successfully");
+        return true;
+      } else {
+        print("Unmute failed: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Error unmuting group: $e");
+      return false;
+    }
+  }
+
 }

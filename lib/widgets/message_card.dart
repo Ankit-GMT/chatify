@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:chatify/Screens/Media%20Viewer%20Screens/audio_player_screen.dart';
 import 'package:chatify/Screens/Media%20Viewer%20Screens/full_image_viewer.dart';
 import 'package:chatify/Screens/Media%20Viewer%20Screens/video_player_screen.dart';
@@ -99,14 +101,21 @@ class MessageCard extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            message.thumbnailUrl ?? message.fileUrl!,
-            width: 200,
-            height: 200,
-            fit: BoxFit.cover,
-          ),
+          child: isMe
+              ? Image.file(
+                  File(message.localPath ?? ""),
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.cover,
+                )
+              : Image.network(
+                  message.thumbnailUrl ?? message.fileUrl!,
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.cover,
+                ),
         ),
-        if (!message.isDownloaded)
+        if (!message.isDownloaded && !isMe)
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -134,7 +143,7 @@ class MessageCard extends StatelessWidget {
               ),
             ),
           ),
-        if (message.isDownloaded)
+        if (message.isDownloaded || isMe)
           Positioned.fill(
             child: InkWell(
               onTap: () =>
@@ -145,35 +154,6 @@ class MessageCard extends StatelessWidget {
       ],
     );
   }
-
-  // for Audio files
-  // Widget buildAudioMessage() {
-  //   return Container(
-  //     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-  //     decoration: BoxDecoration(
-  //       color: Colors.white.withAlpha(25),
-  //       borderRadius: BorderRadius.circular(8),
-  //     ),
-  //     child: Row(
-  //       mainAxisSize: MainAxisSize.min,
-  //       children: [
-  //         Container(
-  //           padding: EdgeInsets.all(6),
-  //           decoration: BoxDecoration(
-  //             color: Colors.white.withAlpha(55),
-  //             shape: BoxShape.circle,
-  //           ),
-  //           child: Icon(Icons.play_arrow, color: Colors.white, size: 20),
-  //         ),
-  //         SizedBox(width: 8),
-  //         Container(width: 80, height: 2, color: Colors.white),
-  //         SizedBox(width: 8),
-  //         Text("0:12",
-  //             style: TextStyle(color: Colors.white.withAlpha(190), fontSize: 10)),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget buildAudioMessage() {
     return Stack(
@@ -187,7 +167,7 @@ class MessageCard extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              !message.isDownloaded
+              (!message.isDownloaded && !isMe)
                   ? message.downloadProgress == 0
                       ? GestureDetector(
                           onTap: onDownload,
@@ -202,7 +182,7 @@ class MessageCard extends StatelessWidget {
                   : Icon(Icons.audiotrack, color: Colors.white, size: 22),
               SizedBox(width: 10),
               Text(
-                "Audio File",
+                message.fileName ?? "Audio File",
                 style: TextStyle(color: Colors.white, fontSize: 12),
               ),
             ],
@@ -222,11 +202,12 @@ class MessageCard extends StatelessWidget {
         //             ),
         //     ),
         //   ),
-        if (message.isDownloaded)
+        if (message.isDownloaded || isMe)
           Positioned.fill(
             child: InkWell(
               onTap: () {
-                openAudioPlayerSheet(Get.context!, message.localPath!);
+                openAudioPlayerSheet(
+                    Get.context!, message.localPath!, message.fileName!);
               },
               child: Container(color: Colors.transparent),
             ),
@@ -242,9 +223,9 @@ class MessageCard extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: message.thumbnailUrl != null
+          child: message.thumbnailUrl != null || message.localPath != null
               ? Image.network(
-                  message.thumbnailUrl!,
+                  isMe ? message.localPath! : message.thumbnailUrl!,
                   width: 200,
                   height: 200,
                   fit: BoxFit.cover,
@@ -281,7 +262,9 @@ class MessageCard extends StatelessWidget {
           ),
 
         // if NOT downloaded => download icon
-        if (message.localPath == null && (message.downloadProgress == 0) && !isMe)
+        if (message.localPath == null &&
+            (message.downloadProgress == 0) &&
+            !isMe)
           GestureDetector(
             onTap: onDownload,
             child: Container(
@@ -297,32 +280,6 @@ class MessageCard extends StatelessWidget {
     );
   }
 
-// for document message
-
-  // Widget buildDocumentMessage() {
-  //   return Container(
-  //     padding: EdgeInsets.all(10),
-  //     decoration: BoxDecoration(
-  //       color: Colors.white.withAlpha(25),
-  //       borderRadius: BorderRadius.circular(8),
-  //     ),
-  //     child: Row(
-  //       mainAxisSize: MainAxisSize.min,
-  //       children: [
-  //         Icon(Icons.insert_drive_file, color: Colors.white, size: 22),
-  //         SizedBox(width: 10),
-  //         Expanded(
-  //           child: Text(
-  //             message.content.isNotEmpty ? message.content : "Document",
-  //             style: TextStyle(color: Colors.white),
-  //             overflow: TextOverflow.ellipsis,
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   Widget buildDocumentMessage() {
     return Stack(
       children: [
@@ -335,7 +292,7 @@ class MessageCard extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              !message.isDownloaded
+              (!message.isDownloaded && !isMe)
                   ? message.downloadProgress == 0
                       ? GestureDetector(
                           onTap: onDownload,
@@ -349,7 +306,7 @@ class MessageCard extends StatelessWidget {
                       color: Colors.white, size: 22),
               SizedBox(width: 10),
               Text(
-                message.content.isNotEmpty ? message.content : "Document",
+                message.fileName ?? "Document",
                 style: TextStyle(color: Colors.white),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -370,7 +327,7 @@ class MessageCard extends StatelessWidget {
         //             ),
         //     ),
         //   ),
-        if (message.isDownloaded)
+        if (message.isDownloaded || isMe)
           Positioned.fill(
             child: InkWell(
               onTap: () async {

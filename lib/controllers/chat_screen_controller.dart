@@ -8,6 +8,7 @@ import 'package:chatify/services/api_service.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChatScreenController extends GetxController {
   final int chatId;
@@ -94,42 +95,6 @@ class ChatScreenController extends GetxController {
 
 
 
-  // Future<void> downloadMedia(Message message) async {
-  //   message.downloadProgress = 0;
-  //   messages.refresh();
-  //
-  //   final dir = await getApplicationDocumentsDirectory();
-  //   final rawName = message.fileUrl!.split('/').last;
-  //   final sanitizedName = rawName.split('?').first; // remove ? params
-  //   final savePath = "${dir.path}/$sanitizedName";
-  //
-  //   final file = File(savePath);
-  //   if (file.existsSync()) {
-  //     message.localPath = savePath;
-  //     messages.refresh();
-  //     return;
-  //   }
-  //
-  //   final request = http.Request('GET', Uri.parse(message.fileUrl!));
-  //   final response = await request.send();
-  //
-  //   final total = response.contentLength ?? 0;
-  //   int received = 0;
-  //
-  //   final sink = file.openWrite();
-  //
-  //   await response.stream.listen((chunk) {
-  //     received += chunk.length;
-  //     message.downloadProgress = received / total;
-  //     messages.refresh();
-  //     sink.add(chunk);
-  //   }).asFuture();
-  //
-  //   await sink.close();
-  //   message.localPath = savePath;
-  //   print("File Download Completed: $savePath");
-  //   messages.refresh();
-  // }
 
   Future<void> downloadMedia(Message message) async {
     message.downloadProgress = 0;
@@ -179,45 +144,51 @@ class ChatScreenController extends GetxController {
 
     print("FILE SAVED: $savePath");
     message.localPath = savePath;
+
+    // for local save
+    await saveLocalPath(message.id, savePath);
+
     messages.refresh();
   }
 
 
   Future<void> initializeDownloads() async {
-    final folder = Directory("/storage/emulated/0/Chatify/Download");
-
-    if (!folder.existsSync()) {
-      return; // Folder not created yet
-    }
-
     for (var msg in messages) {
+      // Check SharedPreferences first
+      final savedPath = await getLocalSavedPath(msg.id);
+
+      if (savedPath != null && File(savedPath).existsSync()) {
+        msg.localPath = savedPath;
+        continue;
+      }
+
+      // Fallback to detect file by filename in folder
       if (msg.fileUrl != null) {
+        final folder = Directory("/storage/emulated/0/Chatify/Download");
         final fileName = msg.fileUrl!.split('/').last.split('?').first;
         final localPath = "${folder.path}/$fileName";
 
         if (File(localPath).existsSync()) {
           msg.localPath = localPath;
+          await saveLocalPath(msg.id, localPath); // save to preferences
         }
       }
     }
+
     messages.refresh();
   }
 
 
-  // void initializeDownloads() async {
-  //   for (var msg in messages) {
-  //     if (msg.fileUrl != null) {
-  //       final fileName = msg.fileUrl!.split('/').last.split('?').first;
-  //       final dir = await getApplicationDocumentsDirectory();
-  //       final localPath = "${dir.path}/$fileName";
-  //
-  //       if (File(localPath).existsSync()) {
-  //         msg.localPath = localPath;
-  //       }
-  //     }
-  //   }
-  //   messages.refresh();
-  // }
+  Future<void> saveLocalPath(int messageId, String path) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("msgFile_$messageId", path);
+  }
+
+  Future<String?> getLocalSavedPath(int messageId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("msgFile_$messageId");
+  }
+
 
   @override
   void onInit() {

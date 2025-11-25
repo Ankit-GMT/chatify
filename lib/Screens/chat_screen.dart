@@ -4,7 +4,6 @@ import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/chat_screen_controller.dart';
 import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/models/message.dart';
-import 'package:chatify/services/notification_service.dart';
 import 'package:chatify/widgets/dialog_textfield.dart';
 import 'package:chatify/widgets/message_card.dart';
 import 'package:chatify/widgets/profile_avatar.dart';
@@ -350,6 +349,8 @@ class ChatScreen extends StatelessWidget {
                     right: Get.width * 0.05),
                 physics: AlwaysScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
+
+                  print("Index ${index}");
                   return GestureDetector(
                     onDoubleTap: () {
                       editMessage(chatController.messages[
@@ -396,8 +397,9 @@ class ChatScreen extends StatelessWidget {
                                   chatController.messages.length - index - 1]
                               .senderId ==
                           myId,
-                      onDownload: () => chatController.downloadMedia(chatController
-                          .messages[chatController.messages.length - index - 1]),
+                      onDownload: () => chatController.downloadMedia(
+                          chatController.messages[
+                              chatController.messages.length - index - 1]),
                     ),
                   );
                 },
@@ -420,6 +422,7 @@ class ChatScreen extends StatelessWidget {
                       controller: msgController,
                       maxLines: 5,
                       minLines: 1,
+                      cursorColor: AppColors.white,
                       decoration: InputDecoration(
                           isDense: true,
                           filled: true,
@@ -455,37 +458,51 @@ class ChatScreen extends StatelessWidget {
                   SizedBox(
                     width: Get.width * 0.02,
                   ),
-                  Container(
-                    height: Get.height * 0.045,
-                    width: Get.width * 0.14,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: InkWell(
-                        key: attachKey,
-                        onTap: sendMessage,
-                        child: Icon(
-                          Icons.send,
-                          color: AppColors.white,
-                        )),
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    //   children: [
-                    //     InkWell(
-                    //         onTap: _sendMessage,
-                    //         child:
-                    //         Image.asset(
-                    //           "assets/images/chat_add.png",
-                    //           scale: 2,
-                    //         ),
-                    //     ),
-                    //     Image.asset(
-                    //       "assets/images/chat_mic.png",
-                    //       scale: 2,
-                    //     ),
-                    //   ],
-                    // ),
+                  Obx(
+                    () => messageController.isLoading.value
+                        ? SizedBox(
+                            height: Get.height * 0.045,
+                            width: Get.width * 0.12,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          )
+                        : Container(
+                            height: Get.height * 0.045,
+                            width: Get.width * 0.12,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: InkWell(
+                                key: attachKey,
+                                onTap: sendMessage,
+                                child: Icon(
+                                  Icons.send,
+                                  size: Get.width * 0.05,
+                                  color: AppColors.white,
+                                )),
+
+                            // Row(
+                            //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            //   children: [
+                            //     InkWell(
+                            //         onTap: _sendMessage,
+                            //         child:
+                            //         Image.asset(
+                            //           "assets/images/chat_add.png",
+                            //           scale: 2,
+                            //         ),
+                            //     ),
+                            //     Image.asset(
+                            //       "assets/images/chat_mic.png",
+                            //       scale: 2,
+                            //     ),
+                            //   ],
+                            // ),
+                          ),
                   ),
                 ],
               ),

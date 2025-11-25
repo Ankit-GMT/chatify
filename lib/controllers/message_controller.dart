@@ -8,6 +8,7 @@ import 'package:chatify/Screens/video_call_screen1.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/profile_controller.dart';
+import 'package:chatify/models/message.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -15,10 +16,12 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MessageController extends GetxController {
   final String baseUrl = APIs.url;
   final box = GetStorage();
+  var isLoading = false.obs;
   final profileController = Get.find<ProfileController>();
 
 
@@ -29,6 +32,7 @@ class MessageController extends GetxController {
     String type = "TEXT",
   }) async {
     try {
+      isLoading.value = true;
       final res = await ApiService.request(
           url: "$baseUrl/api/chats/$chatId/messages",
           method: "POST",
@@ -37,14 +41,18 @@ class MessageController extends GetxController {
             "type": type,
           });
 
+      isLoading.value = false;
+
       if (res.statusCode == 200 || res.statusCode == 201) {
         print("Message sent: ${res.body}");
+
         return true;
       } else {
         print("Failed to send: ${res.statusCode} ${res.body}");
         return false;
       }
     } catch (e) {
+      isLoading.value = false;
       print("Error: $e");
       return false;
     }
@@ -59,6 +67,7 @@ class MessageController extends GetxController {
 
       if (res.statusCode == 200 || res.statusCode == 204) {
         print("Message deleted");
+        await removeSavedPath(messageId);
         return true;
       } else {
         print("Failed to delete: ${res.statusCode} ${res.body}");
@@ -69,6 +78,12 @@ class MessageController extends GetxController {
       return false;
     }
   }
+
+  Future<void> removeSavedPath(int messageId) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.remove("msgFile_$messageId");
+  }
+
 
   // Update
 
@@ -302,8 +317,7 @@ class MessageController extends GetxController {
     isEmojiVisible.toggle();
   }
 
-  // for send image
-
+  // for send Media
   var isSending = false.obs;
 
   Future<void> sendMedia(
@@ -313,6 +327,7 @@ class MessageController extends GetxController {
     String? caption,
   }) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
       isSending.value = true;
 
       final res = await ApiService.sendMediaMessage(
@@ -324,8 +339,12 @@ class MessageController extends GetxController {
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        print("$type SEND SUCCESS: $data");
+        final message = Message.fromJson(data);
+        //for storing local
+        message.localPath = file.path;
+        await prefs.setString("msgFile_${message.id}", file.path);
 
+        print("$type SEND SUCCESS: $data");
         // Optionally update chat messages list
       } else {
         print("$type SEND FAILED: ${res.body}");

@@ -251,6 +251,32 @@ class GroupController extends GetxController {
     }
   }
 
+  // for remove member (admin only)
+
+  Future<void> removeMember({required int groupId, required int memberId}) async {
+    try {
+      isLoading.value = true;
+      final response = await ApiService.request(
+       method: "DELETE",
+        url: "$baseUrl/api/groups/$groupId/members/$memberId"
+      );
+
+      isLoading.value = false;
+
+      if (response.statusCode == 200) {
+        Get.snackbar("Success", "Member removed");
+        Get.offAll(() => MainScreen());
+      } else {
+        Get.snackbar("Error", "Failed to remove member");
+      }
+    } catch (e) {
+      isLoading.value = false;
+      print("Delete Member Error: $e");
+      Get.snackbar("Error", "Something went wrong");
+    }
+  }
+
+
   // For exit group (except admin)
 
   Future<void> exitGroup({
