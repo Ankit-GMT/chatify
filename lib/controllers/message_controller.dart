@@ -16,6 +16,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:media_scanner/media_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MessageController extends GetxController {
@@ -340,6 +341,9 @@ class MessageController extends GetxController {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final message = Message.fromJson(data);
+
+        await scanFileToGallery(file.path);
+
         //for storing local
         message.localPath = file.path;
         await prefs.setString("msgFile_${message.id}", file.path);
@@ -423,6 +427,15 @@ class MessageController extends GetxController {
             chatId: chatId,
             type: "DOCUMENT",
           ));
+    }
+  }
+
+  Future<void> scanFileToGallery(String path) async {
+    try {
+      await MediaScanner.loadMedia(path: path);
+      print("Media scanned to gallery: $path");
+    } catch (e) {
+      print("Gallery scan failed: $e");
     }
   }
 

@@ -7,6 +7,7 @@ import 'package:chatify/models/message.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:media_scanner/media_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -145,6 +146,9 @@ class ChatScreenController extends GetxController {
     print("FILE SAVED: $savePath");
     message.localPath = savePath;
 
+    //For gallary
+    await scanFileToGallery(savePath);
+
     // for local save
     await saveLocalPath(message.id, savePath);
 
@@ -187,6 +191,15 @@ class ChatScreenController extends GetxController {
   Future<String?> getLocalSavedPath(int messageId) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString("msgFile_$messageId");
+  }
+
+  Future<void> scanFileToGallery(String path) async {
+    try {
+      await MediaScanner.loadMedia(path: path);
+      print("Media scanned to gallery: $path");
+    } catch (e) {
+      print("Gallery scan failed: $e");
+    }
   }
 
 

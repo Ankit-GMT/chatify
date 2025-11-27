@@ -22,7 +22,8 @@ class TabBarController extends GetxController {
   // for local storing
   void saveContactsToLocal() {
     box.write(registeredKey, registeredUsers.map((e) => e.toJson()).toList());
-    box.write(notRegisteredKey, notRegisteredUsers.map((e) => e.toJson()).toList());
+    box.write(
+        notRegisteredKey, notRegisteredUsers.map((e) => e.toJson()).toList());
   }
 
   void loadContactsFromLocal() {
@@ -89,7 +90,7 @@ class TabBarController extends GetxController {
       isLoading1.value = true;
 
       final res =
-          await ApiService.request(url: "$baseUrl/api/chats", method: "GET");
+      await ApiService.request(url: "$baseUrl/api/chats", method: "GET");
 
       final data = jsonDecode(res.body);
       // print("All chats... $data");
@@ -100,15 +101,16 @@ class TabBarController extends GetxController {
         groupChats.value =
             allChats.where((chat) => chat.type == "GROUP").toList();
         print(
-            "Group chats: ${groupChats().map((chat) => chat.members!.map((d) => d.userId).toList()).toList()}");
+            "Group chats: ${groupChats().map((chat) =>
+                chat.members!.map((d) => d.userId).toList()).toList()}");
 
         filterChats();
-
       } else {
         Get.snackbar("Error", data['error'] ?? "No chats found");
       }
     } catch (e) {
-      Get.snackbar("Error--", e.toString());
+      Get.snackbar("Error", e.toString());
+      print(e.toString());
     } finally {
       isLoading1.value = false;
     }
@@ -150,7 +152,7 @@ class TabBarController extends GetxController {
 
   bool get areAllSelectedPinned =>
       selectedChats.isNotEmpty &&
-      selectedChats.every((chat) => chat.isPinned.value);
+          selectedChats.every((chat) => chat.isPinned.value);
 
   void reorderChats() {
     allChats.sort((a, b) {
@@ -189,11 +191,11 @@ class TabBarController extends GetxController {
         final member1 = chat.members?[1];
 
         final member0Name =
-            "${member0?.firstName ?? ''} ${member0?.lastName ?? ''}"
-                .toLowerCase();
+        "${member0?.firstName ?? ''} ${member0?.lastName ?? ''}"
+            .toLowerCase();
         final member1Name =
-            "${member1?.firstName ?? ''} ${member1?.lastName ?? ''}"
-                .toLowerCase();
+        "${member1?.firstName ?? ''} ${member1?.lastName ?? ''}"
+            .toLowerCase();
 
         if (myId == member0?.userId) {
           return member1Name.contains(query);
@@ -256,9 +258,8 @@ class TabBarController extends GetxController {
   }
 
   Future<void> _loadContacts({bool forceRefresh = false}) async {
-
     print(DateTime.now());
-    
+
     // Show cached instantly
     final cachedRegistered = box.read(registeredKey);
     final cachedNotRegistered = box.read(notRegisteredKey);
@@ -310,8 +311,8 @@ class TabBarController extends GetxController {
     return cleaned;
   }
 
-  void mergeNotRegisteredWithContacts(
-      List<ContactModel> notRegisteredUsers, List<Contact> localContacts) {
+  void mergeNotRegisteredWithContacts(List<ContactModel> notRegisteredUsers,
+      List<Contact> localContacts) {
     for (var user in notRegisteredUsers) {
       String apiPhone = normalizePhone(user.phoneNumber!);
 
@@ -357,113 +358,124 @@ class TabBarController extends GetxController {
   }
 
 
-  // For Mute users
+  bool get areAllSelectedMuted =>
+      selectedChats.isNotEmpty &&
+          selectedChats.every((chat) => chat.muted.value);
 
-  Future<bool> muteUser({
-    required int mutedUserId,
+// Mute API
+  Future<bool> muteChatsBulk({
+    required List<Map<String, dynamic>> targets,
     required int durationHours,
   }) async {
-    try {
 
+    try {
       final body = {
-        "mutedUserId": mutedUserId,
+        "targets": targets,
         "durationHours": durationHours,
       };
 
       final response = await ApiService.request(
-        url: "$baseUrl/api/mute/user",
-        method: "POST",
-        body: body
-      );
+          url: "$baseUrl/api/mute/bulk", method: "POST", body: body);
 
-      if (response.statusCode == 200) {
-        print("User muted successfully");
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
-        print("Mute failed: ${response.body}");
+        print("Mute error: ${response.statusCode} - ${response.body}");
         return false;
       }
     } catch (e) {
-      print("Mute error: $e");
+      print("Mute exception: $e");
       return false;
     }
   }
 
-  // For Unmute user
+  // Mute function for UI
+  Future<void> muteSelectedChats({int durationHours = 8}) async {
+    if (selectedChats.isEmpty) return;
 
-  Future<bool> unmuteUser({
-    required int userId,
-  }) async {
-    try {
+    final targets = selectedChats.map((chat) {
+      return {
+        "targetType": chat.type == "GROUP" ? "GROUP" : "USER",
+        "targetId": chat.id,
+      };
+    }).toList();
 
-      final response = await ApiService.request(
-          url: "$baseUrl/api/mute/user/$userId", method: "DELETE");
+    final success = await muteChatsBulk(
+      targets: targets,
+      durationHours: durationHours,
+    );
 
-      if (response.statusCode == 200) {
-        print("User unmuted successfully");
-        return true;
-      } else {
-        print("Unmute failed: ${response.body}");
-        return false;
+    if (success) {
+      // Updating local state
+      for (var chat in selectedChats) {
+        chat.muted.value = true;
       }
-    } catch (e) {
-      print("Error unmuting user: $e");
-      return false;
+
+      clearSelection();
+      update();
+
+      Get.snackbar("Muted", "Selected chats have been muted");
+    } else {
+      Get.snackbar("Error", "Failed to mute chats");
     }
   }
 
-  // For mute group
-  Future<bool> muteGroup({
-    required int muteGroupId,
-    required int durationHours,
+  // Mute API
+  Future<bool> unMuteChatsBulk({
+    required List<Map<String, dynamic>> targets,
   }) async {
-    try {
 
+    try {
       final body = {
-        "groupId": muteGroupId,
-        "durationHours": durationHours
+        "targets": targets,
       };
 
       final response = await ApiService.request(
-          url: "$baseUrl/api/mute/group",
-          method: "POST",
-          body: body
-      );
+          url: "$baseUrl/api/mute/bulk", method: "DELETE",body: body);
 
-      if (response.statusCode == 200) {
-        print("Group muted successfully");
+      print("Body unmute :- $body");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
-        print("Mute failed: ${response.body}");
+        print("UnMute error: ${response.statusCode} - ${response.body}");
         return false;
       }
     } catch (e) {
-      print("Mute error: $e");
+      print("UnMute exception: $e");
       return false;
     }
   }
 
-  // For Unmute user
+  // Mute function for UI
+  Future<void> unMuteSelectedChats() async {
+    if (selectedChats.isEmpty) return;
 
-  Future<bool> unMuteGroup({
-    required int groupId,
-  }) async {
-    try {
+    final targets = selectedChats.map((chat) {
+      return {
+        "targetType": chat.type == "GROUP" ? "GROUP" : "USER",
+        "targetId": chat.id,
+      };
+    }).toList();
+    print("Targets :- $targets");
+    final success = await unMuteChatsBulk(
+      targets: targets,
+    );
 
-      final response = await ApiService.request(
-          url: "$baseUrl/api/mute/group/$groupId", method: "DELETE");
-
-      if (response.statusCode == 200) {
-        print("Group unmuted successfully");
-        return true;
-      } else {
-        print("Unmute failed: ${response.body}");
-        return false;
+    if (success) {
+      // Updating local state
+      for (var chat in selectedChats) {
+        chat.muted.value = false;
       }
-    } catch (e) {
-      print("Error unmuting group: $e");
-      return false;
+
+      clearSelection();
+      update();
+
+      Get.snackbar("UnMuted", "Selected chats have been Unmuted");
+    } else {
+      Get.snackbar("Error", "Failed to Unmute chats");
     }
   }
+
 
 }

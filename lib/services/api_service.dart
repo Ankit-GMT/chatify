@@ -40,7 +40,7 @@ class ApiService {
         response = await http.patch(Uri.parse(url),
             headers: mergedHeaders, body: jsonEncode(body));
       } else if (method == "DELETE") {
-        response = await http.delete(Uri.parse(url), headers: mergedHeaders);
+        response = await http.delete(Uri.parse(url), headers: mergedHeaders, body: jsonEncode(body));
       } else {
         throw Exception("Unsupported method: $method");
       }

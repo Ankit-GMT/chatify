@@ -64,6 +64,7 @@ dependencies:
   path_provider: ^2.1.5
   just_audio: ^0.10.5
   audio_video_progress_bar: ^2.0.3
+  media_scanner: ^2.2.0
 
 
 dev_dependencies:

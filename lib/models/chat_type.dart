@@ -12,6 +12,15 @@ class ChatType {
 
   RxBool isPinned = false.obs;
 
+  int? pinOrder;
+  String? lastMessageAt;
+  String? lastMessageContent;
+  String? lastMessageType;
+  int? lastSenderId;
+  String? lastSenderName;
+  bool? pinned;
+  RxBool muted = false.obs;
+
   ChatType(
       {this.id,
         this.type,
@@ -20,7 +29,16 @@ class ChatType {
         this.createdAt,
         this.lastMessage,
         this.unreadCount,
-        this.members});
+        this.members,
+        this.pinOrder,
+        this.lastMessageAt,
+        this.lastMessageContent,
+        this.lastMessageType,
+        this.lastSenderId,
+        this.lastSenderName,
+        this.pinned,
+        // this.muted,
+      });
 
   ChatType.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -30,6 +48,17 @@ class ChatType {
     createdAt = json['createdAt'];
     lastMessage = json['lastMessage'];
     unreadCount = json['unreadCount'];
+    pinOrder = json['pinOrder'];
+    lastMessageAt = json['lastMessageAt'];
+    lastMessageContent = json['lastMessageContent'];
+    lastMessageType = json['lastMessageType'];
+    lastSenderId = json['lastSenderId'];
+    lastSenderName = json['lastSenderName'];
+    pinned = json['pinned'];
+
+    muted = (json["muted"] == true).obs;
+
+
     if (json['members'] != null) {
       members = <Members>[];
       json['members'].forEach((v) {
@@ -47,6 +76,16 @@ class ChatType {
     data['createdAt'] = createdAt;
     data['lastMessage'] = lastMessage;
     data['unreadCount'] = unreadCount;
+    data['pinOrder'] = pinOrder;
+    data['lastMessageAt'] = lastMessageAt;
+    data['lastMessageContent'] = lastMessageContent;
+    data['lastMessageType'] = lastMessageType;
+    data['lastSenderId'] = lastSenderId;
+    data['lastSenderName'] = lastSenderName;
+    data['pinned'] = pinned;
+    data['muted'] = muted.value;
+
+
     if (members != null) {
       data['members'] = members!.map((v) => v.toJson()).toList();
     }

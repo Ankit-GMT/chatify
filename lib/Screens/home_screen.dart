@@ -73,8 +73,18 @@ class HomeScreen extends StatelessWidget {
                               onPressed: tabController.togglePinSelected,
                             ),
                             IconButton(
-                              icon: const Icon(Icons.volume_off_outlined),
-                              onPressed: () {},
+                              icon: Icon(
+                                  // tabController.areAllSelectedMuted ? Icons.volume_up:
+                                  Icons.volume_off_outlined),
+                              onPressed: () {
+                                tabController.muteSelectedChats();
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.volume_up),
+                              onPressed: () {
+                                tabController.unMuteSelectedChats();
+                              },
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete_outline),
