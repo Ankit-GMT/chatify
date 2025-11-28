@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/user_controller.dart';
 import 'package:chatify/widgets/custom_box.dart';

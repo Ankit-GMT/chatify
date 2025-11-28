@@ -156,10 +156,7 @@ class ChatScreen extends StatelessWidget {
                               onTap: () {
                                 Get.to(
                                     () => chatController.type.value == "GROUP"
-                                        ? GroupProfileScreen(
-                                            chatType:
-                                                chatController.chatType.value,
-                                          )
+                                        ? GroupProfileScreen()
                                         : ProfileScreen(
                                             id: myId ==
                                                     chatController

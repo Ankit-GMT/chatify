@@ -9,16 +9,14 @@ class ChatType {
   String? lastMessage;
   int? unreadCount;
   List<Members>? members;
-
-  RxBool isPinned = false.obs;
-
+  //
   int? pinOrder;
   String? lastMessageAt;
   String? lastMessageContent;
   String? lastMessageType;
   int? lastSenderId;
   String? lastSenderName;
-  bool? pinned;
+  RxBool pinned = false.obs;
   RxBool muted = false.obs;
 
   ChatType(
@@ -36,7 +34,7 @@ class ChatType {
         this.lastMessageType,
         this.lastSenderId,
         this.lastSenderName,
-        this.pinned,
+        // this.pinned,
         // this.muted,
       });
 
@@ -54,7 +52,7 @@ class ChatType {
     lastMessageType = json['lastMessageType'];
     lastSenderId = json['lastSenderId'];
     lastSenderName = json['lastSenderName'];
-    pinned = json['pinned'];
+    pinned = (json['pinned'] == true).obs;
 
     muted = (json["muted"] == true).obs;
 
@@ -82,7 +80,7 @@ class ChatType {
     data['lastMessageType'] = lastMessageType;
     data['lastSenderId'] = lastSenderId;
     data['lastSenderName'] = lastSenderName;
-    data['pinned'] = pinned;
+    data['pinned'] = pinned.value;
     data['muted'] = muted.value;
 
 

@@ -61,7 +61,6 @@ class TabBarController extends GetxController {
   final filteredRegisteredList = <ContactModel>[].obs;
   final filteredNotRegisteredList = <ContactModel>[].obs;
 
-  // final searchQuery = ''.obs;
   final ProfileController profileController = Get.put(ProfileController());
 
   @override
@@ -71,7 +70,6 @@ class TabBarController extends GetxController {
     await getAllChats();
     await _loadContacts();
     filterChats();
-    print("Print 2 on in it");
     filterContacts();
     ever(searchQuery, (_) {
       filterChats();
@@ -137,39 +135,7 @@ class TabBarController extends GetxController {
     isSelectionMode.value = false;
   }
 
-  void togglePinSelected() {
-    // Check if all selected chats are already pinned
-    final allPinned = selectedChats.every((chat) => chat.isPinned.value);
 
-    // If all are pinned → unpin them; otherwise, pin them
-    for (var chat in selectedChats) {
-      chat.isPinned.value = !allPinned;
-    }
-
-    reorderChats();
-    clearSelection();
-  }
-
-  bool get areAllSelectedPinned =>
-      selectedChats.isNotEmpty &&
-          selectedChats.every((chat) => chat.isPinned.value);
-
-  void reorderChats() {
-    allChats.sort((a, b) {
-      if (a.isPinned.value && !b.isPinned.value) return -1;
-      if (!a.isPinned.value && b.isPinned.value) return 1;
-      return 0;
-    });
-    groupChats.sort((a, b) {
-      if (a.isPinned.value && !b.isPinned.value) return -1;
-      if (!a.isPinned.value && b.isPinned.value) return 1;
-      return 0;
-    });
-  }
-
-  // void updateSearch(String value) {
-  //   searchQuery.value = value.toLowerCase();
-  // }
 
   void filterChats() {
     final myId = profileController.user.value?.id;
@@ -357,10 +323,11 @@ class TabBarController extends GetxController {
     filteredNotRegisteredList.assignAll(resultNotRegistered);
   }
 
-
+// For checking which icon to show in homescreen
   bool get areAllSelectedMuted =>
       selectedChats.isNotEmpty &&
           selectedChats.every((chat) => chat.muted.value);
+
 
 // Mute API
   Future<bool> muteChatsBulk({
@@ -392,11 +359,12 @@ class TabBarController extends GetxController {
   // Mute function for UI
   Future<void> muteSelectedChats({int durationHours = 8}) async {
     if (selectedChats.isEmpty) return;
+    final myId = profileController.user.value?.id;
 
     final targets = selectedChats.map((chat) {
       return {
         "targetType": chat.type == "GROUP" ? "GROUP" : "USER",
-        "targetId": chat.id,
+        "targetId": chat.type == "GROUP" ? chat.id : (chat.members?[0].userId == myId ? (chat.members?[1].userId) : (chat.members?[0].userId)),
       };
     }).toList();
 
@@ -413,6 +381,7 @@ class TabBarController extends GetxController {
 
       clearSelection();
       update();
+      await getAllChats();
 
       Get.snackbar("Muted", "Selected chats have been muted");
     } else {
@@ -420,7 +389,7 @@ class TabBarController extends GetxController {
     }
   }
 
-  // Mute API
+  // UnMute API
   Future<bool> unMuteChatsBulk({
     required List<Map<String, dynamic>> targets,
   }) async {
@@ -433,7 +402,6 @@ class TabBarController extends GetxController {
       final response = await ApiService.request(
           url: "$baseUrl/api/mute/bulk", method: "DELETE",body: body);
 
-      print("Body unmute :- $body");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
@@ -447,14 +415,15 @@ class TabBarController extends GetxController {
     }
   }
 
-  // Mute function for UI
+  // UnMute function for UI
   Future<void> unMuteSelectedChats() async {
     if (selectedChats.isEmpty) return;
 
+    final myId = profileController.user.value?.id;
     final targets = selectedChats.map((chat) {
       return {
         "targetType": chat.type == "GROUP" ? "GROUP" : "USER",
-        "targetId": chat.id,
+        "targetId": chat.type == "GROUP" ? chat.id : (chat.members?[0].userId == myId ? (chat.members?[1].userId) : (chat.members?[0].userId)),
       };
     }).toList();
     print("Targets :- $targets");
@@ -470,6 +439,7 @@ class TabBarController extends GetxController {
 
       clearSelection();
       update();
+      await getAllChats();
 
       Get.snackbar("UnMuted", "Selected chats have been Unmuted");
     } else {
@@ -477,5 +447,128 @@ class TabBarController extends GetxController {
     }
   }
 
+
+  // For Pin chats
+
+  bool get areAllSelectedPinned =>
+      selectedChats.isNotEmpty &&
+          selectedChats.every((chat) => chat.pinned.value);
+
+// Pin API
+  Future<bool> pinChatsBulk({
+    required List<Map<String, dynamic>> targets,
+  }) async {
+
+    try {
+      final body = {
+        "targets": targets,
+      };
+
+      final response = await ApiService.request(
+          url: "$baseUrl/api/pin/bulk", method: "POST", body: body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print(response.body);
+        return true;
+
+      } else {
+        print("Error in pin chat: ${response.statusCode} - ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Pin exception: $e");
+      return false;
+    }
+  }
+
+  // Pin function for UI
+  Future<void> pinSelectedChats() async {
+    if (selectedChats.isEmpty) return;
+
+    final myId = profileController.user.value?.id;
+    final targets = selectedChats.map((chat) {
+      return {
+        "targetType": chat.type == "GROUP" ? "GROUP" : "USER",
+        "targetId": chat.type == "GROUP" ? chat.id : (chat.members?[0].userId == myId ? (chat.members?[1].userId) : (chat.members?[0].userId)),
+      };
+    }).toList();
+
+    final success = await pinChatsBulk(
+      targets: targets,
+    );
+
+    if (success) {
+      // Updating local state
+      for (var chat in selectedChats) {
+        chat.pinned.value = true;
+      }
+
+      clearSelection();
+      update();
+      await getAllChats();
+
+      Get.snackbar("Pinned", "Selected chats have been pinned");
+    } else {
+      Get.snackbar("Error", "Failed to pin chats");
+    }
+  }
+
+  // UnPin API
+  Future<bool> unPinChatsBulk({
+    required List<Map<String, dynamic>> targets,
+  }) async {
+
+    try {
+      final body = {
+        "targets": targets,
+      };
+
+      final response = await ApiService.request(
+          url: "$baseUrl/api/pin/bulk", method: "DELETE",body: body);
+
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print(response.body);
+        return true;
+      } else {
+        print("UnPin error: ${response.statusCode} - ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("UnPin exception: $e");
+      return false;
+    }
+  }
+
+  // UnPin function for UI
+  Future<void> unPinSelectedChats() async {
+    if (selectedChats.isEmpty) return;
+
+    final myId = profileController.user.value?.id;
+    final targets = selectedChats.map((chat) {
+      return {
+        "targetType": chat.type == "GROUP" ? "GROUP" : "USER",
+        "targetId": chat.type == "GROUP" ? chat.id : (chat.members?[0].userId == myId ? (chat.members?[1].userId) : (chat.members?[0].userId)),
+      };
+    }).toList();
+    print("Targets :- $targets");
+    final success = await unPinChatsBulk(
+      targets: targets,
+    );
+
+    if (success) {
+      // Updating local state
+      for (var chat in selectedChats) {
+        chat.pinned.value = false;
+      }
+      clearSelection();
+      update();
+      await getAllChats();
+
+      Get.snackbar("UnPinned", "Selected chats have been Unpinned");
+    } else {
+      Get.snackbar("Error", "Failed to Unpin chats");
+    }
+  }
 
 }

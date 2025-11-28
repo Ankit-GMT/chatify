@@ -25,19 +25,8 @@ class UserController extends GetxController {
       "type": "PRIVATE"
     };
 
-    // print("Create Chat Payload: $body");
-
     try {
       isLoading.value = true;
-
-      // final res = await http.post(
-      //   Uri.parse("$baseUrl/api/chats"),
-      //   headers: {
-      //     "Authorization": "Bearer $token",
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: jsonEncode(body),
-      // );
 
       final res = await ApiService.request(
         url: "$baseUrl/api/chats",
@@ -69,14 +58,6 @@ class UserController extends GetxController {
     try {
       final box = GetStorage();
       final token = box.read("accessToken");
-
-      // final res = await http.get(
-      //   Uri.parse("$baseUrl/api/user/$userId"),
-      //   headers: {
-      //     "Authorization": "Bearer $token",
-      //     "Content-Type": "application/json",
-      //   },
-      // );
 
       final res = await ApiService.request(
           url: "$baseUrl/api/user/$userId", method: "GET");

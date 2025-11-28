@@ -24,9 +24,6 @@ class _SplashScreenState extends State<SplashScreen> {
     final box = GetStorage();
     final token = box.read("accessToken");
 
-    // if(token!=null){
-    //   profileController.fetchUserProfile();
-    // }
     Future.delayed(Duration(seconds: 3),(){
       Get.off(()=> token!= null ? MainScreen() : WelcomeScreen());
     });
@@ -36,20 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          spacing: Get.height *0.02,
-          children: [
-            Image.asset("assets/images/chatify_logo.png",scale: 4,),
-            Text("Chatify",style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-              fontSize: 32,
-            ),),
-          ],
-        ),
-      ),
+      body: Image.asset("assets/images/splash_screen.png",fit: BoxFit.cover,),
     );
   }
 }

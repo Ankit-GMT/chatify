@@ -154,54 +154,7 @@ class AuthController extends GetxController {
     super.onClose();
   }
 
-  // Future<void> registerUser({
-  //   required String firstName,
-  //   required String lastName,
-  //   String? email, //  optional
-  //   required String phoneNumber,
-    // required String dateOfBirth,
-  //   required String profileImageUrl,
-  // }) async {
-  //   try {
-  //     isLoading.value = true;
-  //
-  //     final body = {
-  //       "firstName": firstName,
-  //       "lastName": lastName,
-  //       "phoneNumber": phoneNumber,
-  //       "dateOfBirth": dateOfBirth,
-  //       "profileImageUrl": profileImageUrl,
-  //     };
-  //
-  //     // only add email if user entered it
-  //     if (email != null && email.isNotEmpty) {
-  //       body["email"] = email;
-  //     }
-  //
-  //     final res = await http.post(
-  //       Uri.parse("$baseUrl/api/auth/register"),
-  //       headers: {"Content-Type": "application/json"},
-  //       body: jsonEncode(body),
-  //     );
-  //
-  //     final data = jsonDecode(res.body);
-  //     print(data);
-  //     if (data['accessToken'] != null) {
-  //       // Save tokens locally
-  //       await box.write("accessToken", data['accessToken']);
-  //       await box.write("refreshToken", data['refreshToken']);
-  //
-  //       Get.snackbar("Success", "Registration successful!");
-  //       Get.offAll(() => MainScreen());
-  //     } else {
-  //       Get.snackbar("Error", data['error'] ?? "Something went wrong");
-  //     }
-  //   } catch (e) {
-  //     Get.snackbar("Error", e.toString());
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
+
 
   var pickedImage = Rx<File?>(null);
 

@@ -340,16 +340,16 @@ class EditProfileScreen extends StatelessWidget {
                   //   ),
                   //   textAlign: TextAlign.center,
                   // ),
-                  IconButton(
-                    onPressed: () {
-                      authController.logoutUser();
-                    },
-                    icon: Icon(
-                      Icons.logout_rounded,
-                      size: 30,
-                      color: AppColors.primary,
-                    ),
-                  ),
+                  // IconButton(
+                  //   onPressed: () {
+                  //     authController.logoutUser();
+                  //   },
+                  //   icon: Icon(
+                  //     Icons.logout_rounded,
+                  //     size: 30,
+                  //     color: AppColors.primary,
+                  //   ),
+                  // ),
                 ],
               ),
             ),

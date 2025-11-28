@@ -64,32 +64,52 @@ class HomeScreen extends StatelessWidget {
                         ),
                         Wrap(
                           children: [
+                            // IconButton(
+                            //   icon: Icon(
+                            //     Icons.push_pin,
+                            //   ),
+                            //   onPressed: () {
+                            //     tabController.pinSelectedChats();
+                            //   },
+                            // ),
                             IconButton(
                               icon: Icon(
-                                tabController.areAllSelectedPinned
-                                    ? Icons.push_pin_outlined
-                                    : Icons.push_pin,
+                                tabController.areAllSelectedPinned ?
+                                  Icons.push_pin_outlined : Icons.push_pin,
                               ),
-                              onPressed: tabController.togglePinSelected,
+                              onPressed: () {
+                                if(tabController.areAllSelectedPinned){
+                                  tabController.unPinSelectedChats();
+                                }
+                                else {
+                                  tabController.pinSelectedChats();
+                                }
+
+                              },
                             ),
                             IconButton(
                               icon: Icon(
-                                  // tabController.areAllSelectedMuted ? Icons.volume_up:
+                                  tabController.areAllSelectedMuted ? Icons.volume_up:
                                   Icons.volume_off_outlined),
                               onPressed: () {
-                                tabController.muteSelectedChats();
+                                if(tabController.areAllSelectedMuted){
+                                  tabController.unMuteSelectedChats();
+                                }
+                                else{
+                                  tabController.muteSelectedChats();
+                                }
                               },
                             ),
-                            IconButton(
-                              icon: Icon(Icons.volume_up),
-                              onPressed: () {
-                                tabController.unMuteSelectedChats();
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () {},
-                            ),
+                            // IconButton(
+                            //   icon: Icon(Icons.volume_up),
+                            //   onPressed: () {
+                            //     tabController.unMuteSelectedChats();
+                            //   },
+                            // ),
+                            // IconButton(
+                            //   icon: const Icon(Icons.delete_outline),
+                            //   onPressed: () {},
+                            // ),
                           ],
                         ),
                       ],

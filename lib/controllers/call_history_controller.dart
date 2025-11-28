@@ -39,7 +39,7 @@ class CallHistoryController extends GetxController {
 
       print( "$baseUrl/api/call/history/$type?userId=$userId&page=$page&size=$size");
       final data = jsonDecode(result.body);
-      print("history:- $data");
+      // print("history:- $data");
 
       List<dynamic> calls = data["calls"] ?? [];
 
@@ -49,7 +49,7 @@ class CallHistoryController extends GetxController {
       } else if (type == "video") {
         videoCallHistoryList.value =
             calls.map((e) => CallHistory.fromJson(e)).toList();
-        print('videoCallHistoryList:- $videoCallHistoryList');
+        // print('videoCallHistoryList:- $videoCallHistoryList');
 
       }
     } catch (e) {
@@ -104,8 +104,8 @@ class CallHistoryController extends GetxController {
     // TODO: implement onInit
     super.onInit();
    await loadCallHistory("voice");
-    print("voice done");
+    // print("voice done");
    await loadCallHistory("video");
-    print("video done");
+    // print("video done");
   }
 }

@@ -69,7 +69,7 @@ class VideoCallHistoryScreen extends StatelessWidget {
                           NetworkImage(call.caller.profileImageUrl!),
                     ),
                     title: Text(
-                      // '${call.receiver?.firstName} ${call.receiver?.lastName}',
+                      call.isGroupCall ? "Group Call" :
                       name,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
@@ -78,8 +78,8 @@ class VideoCallHistoryScreen extends StatelessWidget {
                       children: [
                         Icon(
                           call.caller.id == profileController.user.value?.id
-                              ? Icons.call_received
-                              : Icons.call_made,
+                              ? Icons.call_made
+                              : Icons.call_received,
                           color:
                               call.caller.id == profileController.user.value?.id
                                   ? Colors.green
@@ -98,7 +98,8 @@ class VideoCallHistoryScreen extends StatelessWidget {
                         final receiverId = call.caller.id == myId
                             ? call.receiver?.id
                             : call.caller.id;
-                        call.callType == "VIDEO"
+
+                        (call.callType == "VIDEO" && !call.isGroupCall)
                             ? messageController.startCall(
                                 name,
                                 receiverId.toString(),
@@ -118,7 +119,7 @@ class VideoCallHistoryScreen extends StatelessWidget {
                                     .toList());
                       },
                       icon: Icon(
-                        call.callType == "VIDEO" ? Icons.videocam : Icons.group,
+                        call.isGroupCall ? Icons.group : Icons.videocam,
                         color: AppColors.primary,
                       ),
                     ));

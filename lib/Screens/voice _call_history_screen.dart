@@ -70,7 +70,7 @@ class VoiceCallHistoryScreen extends StatelessWidget {
                           NetworkImage(call.caller.profileImageUrl!),
                     ),
                     title: Text(
-                      // '${call.receiver?.firstName} ${call.receiver?.lastName}',
+                      call.isGroupCall ? "Group Call":
                       name,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
@@ -79,8 +79,8 @@ class VoiceCallHistoryScreen extends StatelessWidget {
                       children: [
                         Icon(
                           call.caller.id == profileController.user.value?.id
-                              ? Icons.call_received
-                              : Icons.call_made,
+                              ?  Icons.call_made
+                              : Icons.call_received,
                           color:
                               call.caller.id == profileController.user.value?.id
                                   ? Colors.green
@@ -97,7 +97,7 @@ class VoiceCallHistoryScreen extends StatelessWidget {
                       onPressed: () {
                         final myId = profileController.user.value?.id;
                         final receiverId = call.caller.id == myId ? call.receiver?.id : call.caller.id;
-                        call.callType == "VOICE"
+                        (call.callType == "VOICE" && !call.isGroupCall)
                             ? messageController.startCall(
                                 name,
                                 receiverId.toString(),
@@ -113,7 +113,7 @@ class VoiceCallHistoryScreen extends StatelessWidget {
                                 receiverIds: call.participants!.map((e) =>  e.id.toString()).where((id) => id != myId.toString()).toList());
                       },
                       icon: Icon(
-                        call.callType == "VOICE" ? Icons.call : Icons.group,
+                        call.isGroupCall ? Icons.group : Icons.call,
                         color: AppColors.primary,
                       ),
                     ));

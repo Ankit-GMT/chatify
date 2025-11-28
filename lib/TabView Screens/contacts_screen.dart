@@ -67,11 +67,6 @@ class ContactsScreen extends StatelessWidget {
                             Icons.message,
                             color: AppColors.primary,
                           ),
-                        //   onPressed: () {
-                        //     // open chat with this user
-                        //     // Get.toNamed('/chat', arguments: {'chatWithId': user.id});
-                        //   },
-                        // ),
                       );
                     },
                   ),

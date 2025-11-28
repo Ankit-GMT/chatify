@@ -1,4 +1,5 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/controllers/chat_screen_controller.dart';
 import 'package:chatify/controllers/group_controller.dart';
 import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ class AddGroupMembersScreen extends StatelessWidget {
     final groupController = Get.put(GroupController());
 
     final tabController = Get.find<TabBarController>();
+    final chatController = Get.find<ChatScreenController>();
 
     final availableUsers = tabController.registeredUsers
         .where((user) => !groupController.currentGroupMembers.contains(user.userId))
@@ -76,7 +78,7 @@ class AddGroupMembersScreen extends StatelessWidget {
             await groupController.addMembers(
               memberIds: groupController.selectedContacts.toList(), groupId: groupId,
             );
-            await tabController.getAllChats();
+            chatController.fetchChatType(groupId);
           }
               : null,
           child: Icon(

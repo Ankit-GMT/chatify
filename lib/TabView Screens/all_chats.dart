@@ -14,7 +14,7 @@ class AllChats extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(
       () => tabController.isLoading1.value ?
-          const Center(child: CircularProgressIndicator()) : tabController.filteredChatsList.isEmpty ?
+          const Center(child: CircularProgressIndicator()) : tabController.allChats.isEmpty ?
           EmptyMessagesWidget(onTap: () {
             tabController.currentIndex.value = 2;
           },) :

@@ -1,6 +1,5 @@
 import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/Screens/create_group_screen.dart';
-import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/widgets/chat_user_card.dart';
 import 'package:chatify/widgets/empty_message_widget.dart';
@@ -20,7 +19,7 @@ class GroupChats extends StatelessWidget {
     return Obx(
       () => tabController.isLoading1.value
           ? const Center(child: CircularProgressIndicator())
-          : tabController.filteredGroupsList.isEmpty
+          : tabController.groupChats.isEmpty
               ? EmptyMessagesWidget(
                   isGroup: true,
                   onTap: () {

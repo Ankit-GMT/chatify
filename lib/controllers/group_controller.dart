@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:http_parser/http_parser.dart'; // <= Important
 
@@ -218,7 +219,7 @@ class GroupController extends GetxController {
       if (response.statusCode == 200) {
         Get.snackbar("Success", "Members added successfully");
         selectedContacts.clear();
-        Get.offAll(() => MainScreen());
+        Navigator.pop(Get.context!);
       } else {
         print("Failed to add members: ${response.body}");
       }
@@ -265,7 +266,8 @@ class GroupController extends GetxController {
 
       if (response.statusCode == 200) {
         Get.snackbar("Success", "Member removed");
-        Get.offAll(() => MainScreen());
+        Navigator.pop(Get.context!);
+        // Get.offAll(() => MainScreen());
       } else {
         Get.snackbar("Error", "Failed to remove member");
       }
