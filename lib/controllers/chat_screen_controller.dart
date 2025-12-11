@@ -95,8 +95,6 @@ class ChatScreenController extends GetxController {
   }
 
 
-
-
   Future<void> downloadMedia(Message message) async {
     message.downloadProgress = 0;
     messages.refresh();

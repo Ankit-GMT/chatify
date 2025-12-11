@@ -184,7 +184,9 @@ class GroupProfileScreen extends StatelessWidget {
                             callerName: profileController.user.value!.firstName
                                 .toString(),
                             isVideo: false,
-                            receiverIds: receiverIds);
+                            receiverIds: receiverIds,
+                          groupId: chat.value!.id!
+                        );
                       },
                     ),
                     CustomBox(
@@ -208,7 +210,9 @@ class GroupProfileScreen extends StatelessWidget {
                             callerName: profileController.user.value!.firstName
                                 .toString(),
                             isVideo: true,
-                            receiverIds: receiverIds);
+                            receiverIds: receiverIds,
+                          groupId: chat.value!.id!
+                        );
                       },
                     ),
                     CustomBox(

@@ -19,7 +19,7 @@ class CallHistoryController extends GetxController {
   int page = 0;
   int size = 20;
 
-  // 🔹 Load Initial Call History
+  // Load Initial Call History
   Future<void> loadCallHistory(String type) async {
     final userId = box.read("userId");
 
@@ -37,7 +37,7 @@ class CallHistoryController extends GetxController {
         method: "GET",
       );
 
-      print( "$baseUrl/api/call/history/$type?userId=$userId&page=$page&size=$size");
+      // print( "$baseUrl/api/call/history/$type?userId=$userId&page=$page&size=$size");
       final data = jsonDecode(result.body);
       // print("history:- $data");
 
@@ -50,7 +50,6 @@ class CallHistoryController extends GetxController {
         videoCallHistoryList.value =
             calls.map((e) => CallHistory.fromJson(e)).toList();
         // print('videoCallHistoryList:- $videoCallHistoryList');
-
       }
     } catch (e) {
       print("Error loading call history: $e");
@@ -89,7 +88,6 @@ class CallHistoryController extends GetxController {
           videoCallHistoryList.addAll(
             calls.map((e) => CallHistory.fromJson(e)).toList(),
           );
-
         }
       }
     } catch (e) {
@@ -99,13 +97,25 @@ class CallHistoryController extends GetxController {
     }
   }
 
+  Future<void> refreshHistory(String type) async {
+    isLoading.value = true;
+    page = 0;
+    if (type == 'voice') {
+      voiceCallHistoryList.clear();
+    } else {
+      videoCallHistoryList.clear();
+    }
+    await loadCallHistory(type); // your API call
+    isLoading.value = false;
+  }
+
   @override
   Future<void> onInit() async {
     // TODO: implement onInit
     super.onInit();
-   await loadCallHistory("voice");
+    await loadCallHistory("voice");
     // print("voice done");
-   await loadCallHistory("video");
+    await loadCallHistory("video");
     // print("video done");
   }
 }

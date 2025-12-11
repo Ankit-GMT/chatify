@@ -23,8 +23,9 @@ class MessageController extends GetxController {
   final String baseUrl = APIs.url;
   final box = GetStorage();
   var isLoading = false.obs;
-  final profileController = Get.find<ProfileController>();
 
+
+  final profileController = Get.find<ProfileController>();
 
   // for send message
   Future<bool> sendMessage({
@@ -61,7 +62,6 @@ class MessageController extends GetxController {
 
   Future<bool> deleteMessage(int chatId, int messageId) async {
     try {
-
       final res = await ApiService.request(
           url: "$baseUrl/api/chats/$chatId/messages/$messageId",
           method: "DELETE");
@@ -85,7 +85,6 @@ class MessageController extends GetxController {
     prefs.remove("msgFile_$messageId");
   }
 
-
   // Update
 
   Future<bool> updateMessage({
@@ -94,7 +93,6 @@ class MessageController extends GetxController {
     required String newContent,
   }) async {
     try {
-
       final res = await ApiService.request(
           url: "$baseUrl/api/chats/$chatId/messages/$messageId",
           method: "PATCH",
@@ -122,58 +120,153 @@ class MessageController extends GetxController {
   var isEmojiVisible = false.obs;
 
   // for call start
+  var isVoiceCallOn = false.obs;
+  var isVideoCallOn = false.obs;
 
-  Future<void> startCall(String name, String receiverId, String channelId,
-      bool isVideo, BuildContext context) async {
+  Future<void> startCall(
+    String name,
+    String receiverId,
+    String channelId,
+    bool isVideo,
+    BuildContext context,
+  ) async {
+
+    if (isVoiceCallOn.value || isVideoCallOn.value) return;
+
+    if(isVideo){
+      isVideoCallOn.value = true;
+    }else{
+      isVoiceCallOn.value = true;
+    }
+
+
     final callType = isVideo ? "video" : "voice";
+    final Uri url = Uri.parse("$baseUrl/api/call/invite");
 
-    final response = await http.post(
-      Uri.parse("$baseUrl/api/call/invite"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "channelId": channelId,
-        "receiverId": receiverId,
-        "callerId": profileController.user.value!.id.toString(),
-        "callerName": profileController.user.value!.firstName,
-        "callType": callType,
-      }),
-    );
-    print(
-        "resquested:-  $channelId - $receiverId - ${profileController.user.value!.id.toString()}");
-    final data = jsonDecode(response.body);
-    print('scSDcsDcSD$data');
+    try {
+      final user = profileController.user.value;
+      if (user == null) return;
 
-    if (response.statusCode == 200) {
-      // Navigate immediately to call screen
-      if (callType == "video") {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => VideoCallScreen1(
-              channelId: data['channelId'],
-              token: data['agoraToken'],
-              callerId: profileController.user.value!.id.toString(),
-              receiverId: receiverId,
-              name: name,
-            ),
-          ),
-        );
-      } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => VoiceCallScreen1(
-              channelId: data['channelId'],
-              token: data['agoraToken'],
-              callerId: profileController.user.value!.id.toString(),
-              receiverId: receiverId,
-              name: name,
-            ),
-          ),
-        );
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "channelId": channelId,
+          "receiverId": receiverId,
+          "callerId": user.id.toString(),
+          "callerName": user.firstName,
+          "callType": callType,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        debugPrint("Call API failed: ${response.body}");
+        return;
       }
+
+      final data = jsonDecode(response.body);
+
+      _navigateToCallScreen(
+        context: context,
+        isVideo: isVideo,
+        name: name,
+        userId: user.id.toString(),
+        receiverId: receiverId,
+        channelId: data['channelId'],
+        token: data['agoraToken'],
+      );
+    } catch (e) {
+      debugPrint("Error starting call: $e");
+    }
+    finally{
+      isVideoCallOn.value = false;
+      isVoiceCallOn.value = false;
     }
   }
+
+  void _navigateToCallScreen({
+    required BuildContext context,
+    required bool isVideo,
+    required String name,
+    required String userId,
+    required String receiverId,
+    required String channelId,
+    required String token,
+  }) {
+    final Widget screen = isVideo
+        ? VideoCallScreen1(
+            channelId: channelId,
+            token: token,
+            callerId: userId,
+            receiverId: receiverId,
+            name: name,
+          )
+        : VoiceCallScreen1(
+            channelId: channelId,
+            token: token,
+            callerId: userId,
+            receiverId: receiverId,
+            name: name,
+          );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => screen),
+    );
+  }
+
+  // Future<void> startCall(String name, String receiverId, String channelId,
+  //     bool isVideo, BuildContext context) async {
+  //
+  //   final callType = isVideo ? "video" : "voice";
+  //
+  //   final response = await http.post(
+  //     Uri.parse("$baseUrl/api/call/invite"),
+  //     headers: {"Content-Type": "application/json"},
+  //     body: jsonEncode({
+  //       "channelId": channelId,
+  //       "receiverId": receiverId,
+  //       "callerId": profileController.user.value!.id.toString(),
+  //       "callerName": profileController.user.value!.firstName,
+  //       "callType": callType,
+  //     }),
+  //   );
+  //   // print(
+  //   //     "resquested:-  $channelId - $receiverId - ${profileController.user.value!.id.toString()}");
+  //   final data = jsonDecode(response.body);
+  //   // print('scSDcsDcSD$data');
+  //
+  //   if (response.statusCode == 200) {
+  //     // Navigate immediately to call screen
+  //     if (callType == "video") {
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (_) => VideoCallScreen1(
+  //             channelId: data['channelId'],
+  //             token: data['agoraToken'],
+  //             callerId: profileController.user.value!.id.toString(),
+  //             receiverId: receiverId,
+  //             name: name,
+  //           ),
+  //         ),
+  //       );
+  //     } else {
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (_) => VoiceCallScreen1(
+  //             channelId: data['channelId'],
+  //             token: data['agoraToken'],
+  //             callerId: profileController.user.value!.id.toString(),
+  //             receiverId: receiverId,
+  //             name: name,
+  //           ),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
 
   // for call end
 
@@ -206,14 +299,14 @@ class MessageController extends GetxController {
 
   // for group call
 
-  Future<void> startGroupCall({
-    required BuildContext context,
-    required String channelId,
-    required String callerId,
-    required String callerName,
-    required bool isVideo,
-    required List<String> receiverIds,
-  }) async {
+  Future<void> startGroupCall(
+      {required BuildContext context,
+      required String channelId,
+      required String callerId,
+      required String callerName,
+      required bool isVideo,
+      required List<String> receiverIds,
+      required int groupId}) async {
     final callType = isVideo ? "VIDEO" : "VOICE";
     try {
       final url = Uri.parse("$baseUrl/api/call/group/invite");
@@ -224,6 +317,7 @@ class MessageController extends GetxController {
         "callerName": callerName,
         "callType": callType,
         "receiverIds": receiverIds,
+        "groupId": groupId,
       };
 
       final response = await http.post(
@@ -438,7 +532,6 @@ class MessageController extends GetxController {
       print("Gallery scan failed: $e");
     }
   }
-
 
   @override
   void onInit() {

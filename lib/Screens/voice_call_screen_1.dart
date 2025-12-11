@@ -4,6 +4,8 @@ import 'package:chatify/controllers/voice_call_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../services/floating_call_bubble_service.dart';
+
 class VoiceCallScreen1 extends StatelessWidget {
   final String channelId;
   final String token;
@@ -28,134 +30,140 @@ class VoiceCallScreen1 extends StatelessWidget {
         token: token,
         callerId: callerId,
         receiverId: receiverId,
+        name: name
       ),
+      permanent: true,
     );
 
     final size = MediaQuery.of(context).size;
 
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        alignment: Alignment.center,
-        children: [
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Color(0xff2a2a2a),
-                // gradient:
-              ),
-            ),
-          ),
-          // Background Blur Effects
-          Positioned(
-            left: size.width * 0.7,
-            top: size.height * 0.2,
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(
-                  sigmaX: 228.4, sigmaY: 228.4, tileMode: TileMode.decal),
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) async{
+        FloatingCallBubbleService.to.isVisible.value = true;
+      },
+      child: Scaffold(
+        body: Stack(
+          fit: StackFit.expand,
+          alignment: Alignment.center,
+          children: [
+            Positioned.fill(
               child: Container(
-                width: size.width * 0.67,
-                height: size.width * 0.67,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFC35E31).withAlpha(140),
-                  shape: BoxShape.circle,
+                  color: Color(0xff2a2a2a),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            right: size.width * 0.7,
-            top: size.height * 0.2,
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(
-                  sigmaX: 228.4, sigmaY: 228.4, tileMode: TileMode.decal),
-              child: Container(
-                width: size.width * 0.67,
-                height: size.width * 0.67,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFC35E31).withAlpha(140),
-                  shape: BoxShape.circle,
+            // Background Blur Effects
+            Positioned(
+              left: size.width * 0.7,
+              top: size.height * 0.2,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(
+                    sigmaX: 228.4, sigmaY: 228.4, tileMode: TileMode.decal),
+                child: Container(
+                  width: size.width * 0.67,
+                  height: size.width * 0.67,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC35E31).withAlpha(140),
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ),
-          ),
+            Positioned(
+              right: size.width * 0.7,
+              top: size.height * 0.2,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(
+                    sigmaX: 228.4, sigmaY: 228.4, tileMode: TileMode.decal),
+                child: Container(
+                  width: size.width * 0.67,
+                  height: size.width * 0.67,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC35E31).withAlpha(140),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
 
-          // Caller Info
-          Column(
-            children: [
-              SizedBox(
-                height: size.height * 0.27,
-              ),
-              CircleAvatar(
-                radius: size.width * 0.25,
-                backgroundColor: Colors.grey.shade800,
-                child: const Icon(Icons.person, size: 60, color: Colors.white70),
-              ),
-              const SizedBox(height: 24),
-               Text(
-                name,
-                style: TextStyle(
-                  fontSize: 22,
-                  color: AppColors.white,
-                  fontWeight: FontWeight.w600,
+            // Caller Info
+            Column(
+              children: [
+                SizedBox(
+                  height: size.height * 0.27,
                 ),
-              ),
-              const SizedBox(height: 8),
-              Obx(() => Text(
-                controller.isConnected.value
-                    ? controller.formatDuration(controller.callDuration.value)
-                    : "Calling…",
-                style: TextStyle(
-                  color: controller.isConnected.value
-                      ? Colors.greenAccent
-                      : Colors.grey.shade400,
-                  fontSize: 16,
+                CircleAvatar(
+                  radius: size.width * 0.25,
+                  backgroundColor: Colors.grey.shade800,
+                  child: const Icon(Icons.person, size: 60, color: Colors.white70),
                 ),
-              )),
-            ],
-          ),
-
-          // Bottom Buttons
-          Obx(() => controller.localUserJoined.value
-              ? Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 100),
-              child: Container(
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(40),
+                const SizedBox(height: 24),
+                 Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 22,
+                    color: AppColors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _controlButton(
-                      icon: controller.isMuted.value
-                          ? Icons.mic_off
-                          : Icons.mic,
-                      onTap: controller.toggleMute,
-                    ),
-                    _divider(),
-                    _controlButton(
-                      icon: controller.isSpeakerOn.value
-                          ? Icons.volume_up
-                          : Icons.volume_off,
-                      onTap: controller.toggleSpeaker,
-                    ),
-                    _divider(),
-                    _controlButton(
-                      icon: Icons.call_end,
-                      onTap: controller.endCall,
-                      color: Colors.redAccent,
-                    ),
-                  ],
-                ),
-              ),
+                const SizedBox(height: 8),
+                Obx(() => Text(
+                  controller.isConnected.value
+                      ? controller.formatDuration(controller.callDuration.value)
+                      : "Calling…",
+                  style: TextStyle(
+                    color: controller.isConnected.value
+                        ? Colors.greenAccent
+                        : Colors.grey.shade400,
+                    fontSize: 16,
+                  ),
+                )),
+              ],
             ),
-          )
-              : const SizedBox.shrink()),
-        ],
+
+            // Bottom Buttons
+            Obx(() => controller.localUserJoined.value
+                ? Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 100),
+                child: Container(
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _controlButton(
+                        icon: controller.isMuted.value
+                            ? Icons.mic_off
+                            : Icons.mic,
+                        onTap: controller.toggleMute,
+                      ),
+                      _divider(),
+                      _controlButton(
+                        icon: controller.isSpeakerOn.value
+                            ? Icons.volume_up
+                            : Icons.volume_off,
+                        onTap: controller.toggleSpeaker,
+                      ),
+                      _divider(),
+                      _controlButton(
+                        icon: Icons.call_end,
+                        onTap: controller.endCall,
+                        color: Colors.redAccent,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+                : const SizedBox.shrink()),
+          ],
+        ),
       ),
     );
   }

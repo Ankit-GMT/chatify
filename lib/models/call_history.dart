@@ -12,6 +12,9 @@ class CallHistory {
   final int? durationSeconds;
   final String formattedDuration;
   final DateTime createdAt;
+  final int? groupId;
+  final String? groupName;
+  final String? groupImageUrl;
 
   CallHistory({
     required this.id,
@@ -27,6 +30,9 @@ class CallHistory {
     this.durationSeconds,
     required this.formattedDuration,
     required this.createdAt,
+    this.groupId,
+    this.groupName,
+    this.groupImageUrl,
   });
 
   factory CallHistory.fromJson(Map<String, dynamic> json) {
@@ -52,6 +58,9 @@ class CallHistory {
       durationSeconds: json['durationSeconds'],
       formattedDuration: json['formattedDuration'],
       createdAt: DateTime.parse(json['createdAt']),
+      groupId: json['groupId'],
+      groupName: json['groupName'],
+      groupImageUrl: json['groupImageUrl'],
     );
   }
 }

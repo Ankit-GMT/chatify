@@ -17,6 +17,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.5.3"
+  android_pip:
+    dependency: "direct main"
+    description:
+      name: android_pip
+      sha256: "40506a5ddd92a095a7d7ceba4aca8df2eabf203661b25a76af673d7ed8c923ee"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.1"
   args:
     dependency: transitive
     description:

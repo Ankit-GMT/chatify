@@ -2,25 +2,28 @@ import 'dart:async';
 import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/message_controller.dart';
-import 'package:chatify/controllers/profile_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:get/get.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:get_storage/get_storage.dart';
 
-class VoiceCallController extends GetxController {
+import '../services/floating_call_bubble_service.dart';
+
+
+class VoiceCallController extends GetxController with WidgetsBindingObserver {
   final String channelId;
   final String token;
   final String callerId;
   final String receiverId;
+  final String name;
 
-  VoiceCallController({
-    required this.channelId,
-    required this.token,
-    required this.callerId,
-    required this.receiverId,
-  });
+  VoiceCallController(
+      {required this.channelId,
+      required this.token,
+      required this.callerId,
+      required this.receiverId,
+      required this.name});
 
   final messageController = Get.put(MessageController());
 
@@ -35,6 +38,11 @@ class VoiceCallController extends GetxController {
   final callDuration = Duration.zero.obs;
   final remoteUid = RxnInt();
 
+  // For bubble
+  RxString callerName = ''.obs;
+  final bubbleX = 20.0.obs;
+  final bubbleY = 150.0.obs;
+
   final box = GetStorage();
 
   bool _isCallActive = true;
@@ -42,10 +50,25 @@ class VoiceCallController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     _initAgora();
   }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      print("APP MINIMIZED — CALL STILL RUNNING");
+      // FloatingCallBubbleService.to.isVisible.value = true;
+      // Do NOT end call
+    }
+
+    if (state == AppLifecycleState.resumed) {
+      print("APP RESUMED — RESTORE CALL UI");
+    }
+  }
+
 
   Future<void> _initAgora() async {
+    callerName.value = name;
     _engine = createAgoraRtcEngine();
     await _engine.initialize(const RtcEngineContext(
       appId: appId,
@@ -120,20 +143,20 @@ class VoiceCallController extends GetxController {
     FlutterCallkitIncoming.endAllCalls();
 
     // for reset everything
-    Get.delete<VoiceCallController>();
+    Get.delete<VoiceCallController>(force: true);
 
     // if (Get.isOverlaysOpen) Get.back();
     if (Navigator.canPop(Get.context!)) {
       Navigator.pop(Get.context!);
+    } else {
+      Get.offAll(() => MainScreen());
     }
-    else{
-      Get.offAll(()=> MainScreen());
-    }
+    FloatingCallBubbleService.to.hide();
   }
-
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     _engine.leaveChannel();
     _engine.release();

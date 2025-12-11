@@ -1,8 +1,8 @@
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/audio_player_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 
 void openAudioPlayerSheet(BuildContext context, String audioUrl, String fileName) {
   final controller = Get.put(AudioPlayerController());

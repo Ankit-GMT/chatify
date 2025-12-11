@@ -15,7 +15,6 @@ class MainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final bottomController = Get.put(BottomController());
-    final box = GetStorage();
 
     return Scaffold(
       body: Obx(() => IndexedStack(

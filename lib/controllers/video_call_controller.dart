@@ -153,7 +153,7 @@ class VideoCallController extends GetxController {
     FlutterCallkitIncoming.endAllCalls();
 
     // for reset everything
-    Get.delete<VideoCallController>();
+    Get.delete<VideoCallController>(force: true);
 
     if (Navigator.canPop(Get.context!)) {
       Navigator.pop(Get.context!);
