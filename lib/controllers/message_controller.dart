@@ -10,6 +10,7 @@ import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/message.dart';
 import 'package:chatify/services/api_service.dart';
+import 'package:chatify/services/notification_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -24,8 +25,6 @@ class MessageController extends GetxController {
   final box = GetStorage();
   var isLoading = false.obs;
 
-
-  final profileController = Get.find<ProfileController>();
 
   // for send message
   Future<bool> sendMessage({
@@ -132,6 +131,7 @@ class MessageController extends GetxController {
   ) async {
 
     if (isVoiceCallOn.value || isVideoCallOn.value) return;
+    final profileController = Get.find<ProfileController>();
 
     if(isVideo){
       isVideoCallOn.value = true;
@@ -142,6 +142,7 @@ class MessageController extends GetxController {
 
     final callType = isVideo ? "video" : "voice";
     final Uri url = Uri.parse("$baseUrl/api/call/invite");
+
 
     try {
       final user = profileController.user.value;
@@ -166,6 +167,16 @@ class MessageController extends GetxController {
 
       final data = jsonDecode(response.body);
 
+      NotificationService().showCallerOngoingCallNotification({
+        "callerId": user.id.toString(),
+        "receiverId": receiverId,
+        "callerName": user.firstName,
+        "receiverName": name,
+        "channelId": channelId,
+        "token": data['agoraToken'],
+        "callType": callType,
+      });
+
       _navigateToCallScreen(
         context: context,
         isVideo: isVideo,
@@ -183,6 +194,57 @@ class MessageController extends GetxController {
       isVoiceCallOn.value = false;
     }
   }
+
+  Future<void> retryCall({
+    required String name,
+    required String receiverId,
+    required String channelId,
+    required bool isVideo,
+  }) async {
+    final profileController = Get.find<ProfileController>();
+    final user = profileController.user.value;
+    if (user == null) return;
+
+    final callType = isVideo ? "video" : "voice";
+
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/api/call/invite"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "channelId": channelId,
+          "receiverId": receiverId,
+          "callerId": user.id.toString(),
+          "callerName": user.firstName,
+          "callType": callType,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        debugPrint("Retry call failed: ${response.body}");
+        return;
+      }
+
+      final data = jsonDecode(response.body);
+
+      // Update ongoing notification
+      NotificationService().showCallerOngoingCallNotification({
+        "callerId": user.id.toString(),
+        "receiverId": receiverId,
+        "callerName": user.firstName,
+        "receiverName": name,
+        "channelId": data['channelId'],
+        "token": data['agoraToken'],
+        "callType": callType,
+      });
+
+      // DO NOT navigate again
+      // You are already on call screen
+    } catch (e) {
+      debugPrint("Retry call error: $e");
+    }
+  }
+
 
   void _navigateToCallScreen({
     required BuildContext context,
@@ -215,75 +277,25 @@ class MessageController extends GetxController {
     );
   }
 
-  // Future<void> startCall(String name, String receiverId, String channelId,
-  //     bool isVideo, BuildContext context) async {
-  //
-  //   final callType = isVideo ? "video" : "voice";
-  //
-  //   final response = await http.post(
-  //     Uri.parse("$baseUrl/api/call/invite"),
-  //     headers: {"Content-Type": "application/json"},
-  //     body: jsonEncode({
-  //       "channelId": channelId,
-  //       "receiverId": receiverId,
-  //       "callerId": profileController.user.value!.id.toString(),
-  //       "callerName": profileController.user.value!.firstName,
-  //       "callType": callType,
-  //     }),
-  //   );
-  //   // print(
-  //   //     "resquested:-  $channelId - $receiverId - ${profileController.user.value!.id.toString()}");
-  //   final data = jsonDecode(response.body);
-  //   // print('scSDcsDcSD$data');
-  //
-  //   if (response.statusCode == 200) {
-  //     // Navigate immediately to call screen
-  //     if (callType == "video") {
-  //       Navigator.push(
-  //         context,
-  //         MaterialPageRoute(
-  //           builder: (_) => VideoCallScreen1(
-  //             channelId: data['channelId'],
-  //             token: data['agoraToken'],
-  //             callerId: profileController.user.value!.id.toString(),
-  //             receiverId: receiverId,
-  //             name: name,
-  //           ),
-  //         ),
-  //       );
-  //     } else {
-  //       Navigator.push(
-  //         context,
-  //         MaterialPageRoute(
-  //           builder: (_) => VoiceCallScreen1(
-  //             channelId: data['channelId'],
-  //             token: data['agoraToken'],
-  //             callerId: profileController.user.value!.id.toString(),
-  //             receiverId: receiverId,
-  //             name: name,
-  //           ),
-  //         ),
-  //       );
-  //     }
-  //   }
-  // }
-
   // for call end
 
   Future<void> endCall({
     required String channelId,
-    required String callerId,
-    required String receiverId,
+    // required int userId,
+    required String endReason,
   }) async {
+    final profileController = Get.find<ProfileController>();
     try {
+      final user = profileController.user.value;
+      if (user == null) return;
       //Tell backend to end the call for both users
       final response = await http.post(
         Uri.parse("$baseUrl/api/call/end"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "channelId": channelId,
-          "receiverId": receiverId,
-          "callerId": callerId
+          "userId": user.id,
+          "reason": endReason
         }),
       );
 

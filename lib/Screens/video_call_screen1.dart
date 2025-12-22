@@ -1,5 +1,7 @@
 import 'package:android_pip/android_pip.dart';
+import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/video_call_controller.dart';
+import 'package:chatify/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -175,15 +177,30 @@ class _VideoCallScreen1State extends State<VideoCallScreen1> with WidgetsBinding
                           style: TextStyle(fontSize: 22,
                             fontWeight: FontWeight.w600,)),
                       const SizedBox(height: 6),
-                      Text(
-                        controller.isConnected.value
-                            ? controller.formatDuration(controller.callDuration.value)
-                            : "Calling…",
-                        style: TextStyle(color: controller.isConnected.value
-                            ? Colors.greenAccent
-                            : Colors.grey,
-                          fontSize: 16,),
-                      ),
+                      Obx(() {
+                        switch (controller.callUIState.value) {
+                          case CallUIState.calling:
+                            return Text(
+                              "Calling…",
+                              style: TextStyle(
+                                  color: Colors.grey.shade400, fontSize: 16),
+                            );
+
+                          case CallUIState.connected:
+                            return Text(
+                              controller.formatDuration(
+                                  controller.callDuration.value),
+                              style: const TextStyle(
+                                  color: Colors.greenAccent, fontSize: 16),
+                            );
+
+                          case CallUIState.timeout:
+                            return const Text(
+                              "No answer",
+                              style: TextStyle(color: Colors.redAccent, fontSize: 16),
+                            );
+                        }
+                      }),
                     ],
                   ),
                 ): const SizedBox.shrink(),
@@ -200,7 +217,8 @@ class _VideoCallScreen1State extends State<VideoCallScreen1> with WidgetsBinding
                   child: AnimatedOpacity(
                     duration: const Duration(milliseconds: 250),
                     opacity: controller.showControls.value ? 1 : 0,
-                    child: controller.localUserJoined.value
+                    child:
+                    controller.localUserJoined.value && (controller.callUIState.value == CallUIState.connected || controller.callUIState.value == CallUIState.calling )
                         ? Center(
                       child: Container(
                         height: 60,
@@ -240,6 +258,43 @@ class _VideoCallScreen1State extends State<VideoCallScreen1> with WidgetsBinding
                               ),
                             ],
                           ),
+                        ),
+                      ),
+                    )
+                        : controller.callUIState.value == CallUIState.timeout ?
+
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 100),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: AppColors.white,
+                              child: _controlButton(
+                                icon: Icons.close,
+                                onPressed:() {
+                                  NotificationService().localNotifications.cancel(999);
+
+                                  Get.delete<VideoCallController>(force: true);
+                                  Navigator.pop(context,[false]);
+                                },
+                                color: AppColors.grey,
+                              ),
+                            ),
+                            const SizedBox(width: 40),
+                            CircleAvatar(
+                              backgroundColor: AppColors.white,
+                              child: _controlButton(
+                                icon: Icons.refresh,
+                                onPressed: () {
+                                  // controller.retryCall();
+                                },
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     )

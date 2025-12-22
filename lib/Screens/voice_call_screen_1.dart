@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/voice_call_controller.dart';
+import 'package:chatify/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -26,20 +27,26 @@ class VoiceCallScreen1 extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(
       VoiceCallController(
-        channelId: channelId,
-        token: token,
-        callerId: callerId,
-        receiverId: receiverId,
-        name: name
+          channelId: channelId,
+          token: token,
+          callerId: callerId,
+          receiverId: receiverId,
+          name: name
       ),
       permanent: true,
     );
 
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery
+        .of(context)
+        .size;
 
     return PopScope(
-      onPopInvokedWithResult: (didPop, result) async{
-        FloatingCallBubbleService.to.isVisible.value = true;
+      onPopInvokedWithResult: (didPop, result) {
+        if(result == null)
+          {
+            FloatingCallBubbleService.to.isVisible.value = true;
+
+          }
       },
       child: Scaffold(
         body: Stack(
@@ -96,10 +103,11 @@ class VoiceCallScreen1 extends StatelessWidget {
                 CircleAvatar(
                   radius: size.width * 0.25,
                   backgroundColor: Colors.grey.shade800,
-                  child: const Icon(Icons.person, size: 60, color: Colors.white70),
+                  child: const Icon(
+                      Icons.person, size: 60, color: Colors.white70),
                 ),
                 const SizedBox(height: 24),
-                 Text(
+                Text(
                   name,
                   style: TextStyle(
                     fontSize: 22,
@@ -108,60 +116,132 @@ class VoiceCallScreen1 extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Obx(() => Text(
-                  controller.isConnected.value
-                      ? controller.formatDuration(controller.callDuration.value)
-                      : "Calling…",
-                  style: TextStyle(
-                    color: controller.isConnected.value
-                        ? Colors.greenAccent
-                        : Colors.grey.shade400,
-                    fontSize: 16,
-                  ),
-                )),
+                Obx(() {
+                  switch (controller.callUIState.value) {
+                    case CallUIState.calling:
+                      return Text(
+                        "Calling…",
+                        style: TextStyle(
+                            color: Colors.grey.shade400, fontSize: 16),
+                      );
+
+                    case CallUIState.connected:
+                      return Text(
+                        controller.formatDuration(
+                            controller.callDuration.value),
+                        style: const TextStyle(
+                            color: Colors.greenAccent, fontSize: 16),
+                      );
+
+                    case CallUIState.timeout:
+                      return const Text(
+                        "No answer",
+                        style: TextStyle(color: Colors.redAccent, fontSize: 16),
+                      );
+                  }
+                }),
+
               ],
             ),
 
             // Bottom Buttons
-            Obx(() => controller.localUserJoined.value
-                ? Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 100),
-                child: Container(
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(40),
+            Obx(() {
+              return
+                controller
+                    .localUserJoined.value && (controller.callUIState.value == CallUIState.connected || controller.callUIState.value == CallUIState.calling )
+                    ? Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 100),
+                    child:
+                    Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _controlButton(
+                            icon: controller.isMuted.value
+                                ? Icons.mic_off
+                                : Icons.mic,
+                            onTap: controller.toggleMute,
+                          ),
+                          _divider(),
+                          _controlButton(
+                            icon: controller.isSpeakerOn.value
+                                ? Icons.volume_up
+                                : Icons.volume_off,
+                            onTap: controller.toggleSpeaker,
+                          ),
+                          _divider(),
+                          _controlButton(
+                            icon: Icons.call_end,
+                            onTap: controller.endCall,
+                            color: Colors.redAccent,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _controlButton(
-                        icon: controller.isMuted.value
-                            ? Icons.mic_off
-                            : Icons.mic,
-                        onTap: controller.toggleMute,
-                      ),
-                      _divider(),
-                      _controlButton(
-                        icon: controller.isSpeakerOn.value
-                            ? Icons.volume_up
-                            : Icons.volume_off,
-                        onTap: controller.toggleSpeaker,
-                      ),
-                      _divider(),
-                      _controlButton(
-                        icon: Icons.call_end,
-                        onTap: controller.endCall,
-                        color: Colors.redAccent,
-                      ),
-                    ],
+                )
+                    // :
+                // controller.callUIState.value == CallUIState.calling ?
+                // Align(
+                //   alignment: Alignment.bottomCenter,
+                //   child: Padding(
+                //     padding: const EdgeInsets.only(bottom: 100),
+                //     child: _controlButton(
+                //       icon: Icons.call_end,
+                //       onTap: () {
+                //         Navigator.pop(context);
+                //       },
+                //       color: Colors.redAccent,
+                //     ),
+                //   ),
+                // )
+                    : controller.callUIState.value == CallUIState.timeout ?
+
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 100),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                      backgroundColor: AppColors.white,
+                          child: _controlButton(
+                            icon: Icons.close,
+                            onTap:() {
+                              NotificationService().localNotifications.cancel(999);
+                              FloatingCallBubbleService.to.hide();
+                              Get.delete<VoiceCallController>(force: true);
+                              Navigator.pop(context,[false]);
+                            },
+                            color: AppColors.grey,
+                          ),
+                        ),
+                        const SizedBox(width: 40),
+                        CircleAvatar(
+                          backgroundColor: AppColors.white,
+                          child: _controlButton(
+                            icon: Icons.refresh,
+                            onTap: () {
+                              controller.retryCall();
+                            },
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
-            )
-                : const SizedBox.shrink()),
+                )
+                    : const SizedBox.shrink();
+            }
+            ),
           ],
         ),
       ),
@@ -183,12 +263,13 @@ class VoiceCallScreen1 extends StatelessWidget {
     );
   }
 
-  Widget _divider() => const VerticalDivider(
-    color: Colors.white38,
-    thickness: 1,
-    indent: 15,
-    endIndent: 15,
-  );
+  Widget _divider() =>
+      const VerticalDivider(
+        color: Colors.white38,
+        thickness: 1,
+        indent: 15,
+        endIndent: 15,
+      );
 
   Widget _buildBlurCircle(Size size, Alignment align, Color color) {
     return Align(

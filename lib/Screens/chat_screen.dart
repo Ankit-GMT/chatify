@@ -372,13 +372,19 @@ class ChatScreen extends StatelessWidget {
                       right: Get.width * 0.05),
                   physics: AlwaysScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
+
+                    final isMyMessage = chatController
+                        .messages[
+                    chatController.messages.length - index - 1]
+                        .senderId ==
+                        myId;
                     // print("Index ${index}");
                     return GestureDetector(
-                      onDoubleTap: () {
+                      onDoubleTap: isMyMessage ? () {
                         editMessage(chatController.messages[
                             chatController.messages.length - index - 1]);
-                      },
-                      onLongPress: () {
+                      } : null,
+                      onLongPress: isMyMessage ? () {
                         showCupertinoModalPopup(
                           // barrierDismissible: false,
                           context: context,
@@ -411,7 +417,7 @@ class ChatScreen extends StatelessWidget {
                             );
                           },
                         );
-                      },
+                      }: null,
                       child: MessageCard(
                         message: chatController.messages[
                             chatController.messages.length - index - 1],

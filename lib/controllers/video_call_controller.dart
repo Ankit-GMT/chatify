@@ -3,6 +3,8 @@ import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
+import 'package:chatify/services/notification_service.dart';
+import 'package:chatify/sound_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:get/get.dart';
@@ -40,10 +42,13 @@ class VideoCallController extends GetxController {
 
   Timer? _timer;
   Timer? _hideTimer;
+  final callUIState = CallUIState.calling.obs;
+
 
   @override
   void onInit() {
     super.onInit();
+    SoundManager().playOutgoing();
     _initAgora();
   }
 
@@ -67,6 +72,8 @@ class VideoCallController extends GetxController {
           this.remoteUid = remoteUid;
           isRemoteVideoOff.value = false;
           isConnected.value = true;
+          callUIState.value = CallUIState.connected;
+          SoundManager().stop();
           _startTimer();
         },
         onUserOffline: (RtcConnection connection, int remoteUid,
@@ -145,8 +152,9 @@ class VideoCallController extends GetxController {
     _timer?.cancel();
     await messageController.endCall(
       channelId: channelId,
-      callerId: callerId,
-      receiverId: receiverId,
+      // callerId: callerId,
+      // receiverId: receiverId,
+      endReason: 'call_end'
     );
     await _engine.leaveChannel();
     await _engine.release();
@@ -161,10 +169,33 @@ class VideoCallController extends GetxController {
     else{
       Get.offAll(()=> MainScreen());
     }
+    NotificationService().localNotifications.cancel(999);
+
   }
+
+  void onCallTimeout() async {
+    // If already connected, ignore
+    if (callUIState.value == CallUIState.connected) return;
+
+    callUIState.value = CallUIState.timeout;
+
+    //
+    SoundManager().stop();
+
+    _timer?.cancel();
+
+    try {
+      await _engine.leaveChannel();
+    } catch (_) {}
+
+    // End system call UI
+    FlutterCallkitIncoming.endAllCalls();
+  }
+
 
   @override
   void onClose() {
+    SoundManager().stop();
     _timer?.cancel();
     _hideTimer?.cancel();
     _engine.leaveChannel();
@@ -173,4 +204,9 @@ class VideoCallController extends GetxController {
   }
 
   RtcEngine get engine => _engine;
+}
+enum CallUIState {
+  calling,
+  connected,
+  timeout,
 }

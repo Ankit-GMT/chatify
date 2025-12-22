@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/message_controller.dart';
+import 'package:chatify/services/notification_service.dart';
+import 'package:chatify/sound_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:get/get.dart';
@@ -36,7 +38,11 @@ class VoiceCallController extends GetxController with WidgetsBindingObserver {
   final isConnected = false.obs;
   final localUserJoined = false.obs;
   final callDuration = Duration.zero.obs;
+  final callUIState = CallUIState.calling.obs;
+
   final remoteUid = RxnInt();
+
+
 
   // For bubble
   RxString callerName = ''.obs;
@@ -49,8 +55,10 @@ class VoiceCallController extends GetxController with WidgetsBindingObserver {
 
   @override
   void onInit() {
+
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+    SoundManager().playOutgoing();
     _initAgora();
   }
   @override
@@ -82,13 +90,16 @@ class VoiceCallController extends GetxController with WidgetsBindingObserver {
       onUserJoined: (connection, uid, elapsed) {
         remoteUid.value = uid;
         isConnected.value = true;
+        callUIState.value = CallUIState.connected;
+
+        SoundManager().stop();
         _startTimer();
       },
       onUserOffline: (connection, uid, reason) {
         if (uid == remoteUid.value) {
           remoteUid.value = null;
         }
-        endCall();
+        // endCall();
       },
     ));
 
@@ -103,6 +114,36 @@ class VoiceCallController extends GetxController with WidgetsBindingObserver {
       ),
     );
   }
+
+  Future<void> retryCall() async {
+    callUIState.value = CallUIState.calling;
+    isConnected.value = false;
+    callDuration.value = Duration.zero;
+
+    await messageController.retryCall(
+      name: name,
+      receiverId: receiverId,
+      channelId: channelId,
+      isVideo: false,
+    );
+  }
+  void onCallTimeout() async {
+    if (callUIState.value == CallUIState.connected) return;
+
+    callUIState.value = CallUIState.timeout;
+
+    _timer?.cancel();
+    SoundManager().stop();
+
+    try {
+      await _engine.leaveChannel();
+    } catch (_) {}
+
+    FlutterCallkitIncoming.endAllCalls();
+  }
+
+
+
 
   void toggleMute() async {
     isMuted.toggle();
@@ -134,8 +175,9 @@ class VoiceCallController extends GetxController with WidgetsBindingObserver {
 
     await messageController.endCall(
       channelId: channelId,
-      callerId: callerId,
-      receiverId: receiverId,
+      // callerId: callerId,
+      // receiverId: receiverId,
+        endReason: 'call_end'
     );
 
     await _engine.leaveChannel();
@@ -151,15 +193,23 @@ class VoiceCallController extends GetxController with WidgetsBindingObserver {
     } else {
       Get.offAll(() => MainScreen());
     }
+    NotificationService().localNotifications.cancel(999);
+
     FloatingCallBubbleService.to.hide();
   }
 
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
+    SoundManager().stop();
     _timer?.cancel();
     _engine.leaveChannel();
     _engine.release();
     super.onClose();
   }
+}
+enum CallUIState {
+  calling,
+  connected,
+  timeout,
 }

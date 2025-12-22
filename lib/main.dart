@@ -1,4 +1,3 @@
-
 import 'package:chatify/Screens/splash_screen.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:chatify/controllers/auth_controller.dart';
@@ -22,21 +21,26 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Register background handler once (keep as you had it)
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  // SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   if (!await Permission.contacts.isGranted) {
     await Permission.contacts.request();
   }
+
   Get.put(AuthController(), permanent: true);
   Get.put(ThemeController(), permanent: true);
   Get.put(FloatingCallBubbleService());
 
+  // Use the singleton NotificationService and initialize once
   final notificationService = NotificationService();
   await notificationService.initialize();
   await notificationService.printFcmToken();
+
   final box = GetStorage();
   print("accessToken: ${box.read("accessToken")}");
+
   runApp(MyApp(
     notificationService: notificationService,
   ));
@@ -57,33 +61,35 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _checkLaunchFromNotification();   // ADD THIS
+
+    // Use the injected singleton instead of creating new instances
+    _checkLaunchFromNotification();
     _checkActiveCallsOnLaunch();
   }
 
   Future<void> _checkLaunchFromNotification() async {
-    await Future.delayed(Duration(seconds: 1));
+    // small delay to let plugin initialize
+    await Future.delayed(const Duration(milliseconds: 800));
 
-    final details = await NotificationService()
+    final details = await widget.notificationService
         .localNotifications
         .getNotificationAppLaunchDetails();
 
     if (details != null && details.didNotificationLaunchApp) {
       final payload = details.notificationResponse?.payload;
 
-      if (payload != null && payload.isNotEmpty) {
+      if (payload != null && payload.isNotEmpty && payload.length <15) {
         print("App launched by NOTIFICATION. Payload = $payload");
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          NotificationService().navigateToChat(payload);
+          widget.notificationService.navigateToChat(payload);
         });
       }
     }
   }
 
-
   Future<void> _checkActiveCallsOnLaunch() async {
-    await Future.delayed(Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 700));
 
     final calls = await FlutterCallkitIncoming.activeCalls();
     print("ACTIVE CALLS ON APP LAUNCH: $calls");
@@ -91,7 +97,8 @@ class _MyAppState extends State<MyApp> {
     if (calls != null && calls.isNotEmpty) {
       final call = calls.first;
 
-      // If call is invalid or ended, CLEAN IT
+      if (call == null) return;
+
       if (call['id'] == null || call['extra'] == null) {
         await FlutterCallkitIncoming.endAllCalls();
         return;
@@ -102,7 +109,7 @@ class _MyAppState extends State<MyApp> {
       raw is Map ? raw.map((k, v) => MapEntry(k.toString(), v)) : {};
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        NotificationService().openCallScreen(data);
+        widget.notificationService.openCallScreen(data);
       });
     }
   }
@@ -119,7 +126,6 @@ class _MyAppState extends State<MyApp> {
       themeController.isDarkMode.value ? ThemeMode.dark : ThemeMode.light,
       home: const SplashScreen(),
 
-      // ⬇⬇⬇ THIS is the important part
       builder: (context, child) {
         return Overlay(
           initialEntries: [
@@ -127,43 +133,38 @@ class _MyAppState extends State<MyApp> {
               builder: (context) {
                 return Stack(
                   children: [
-                    // Current route
                     child ?? const SizedBox.shrink(),
-
-                    // Floating bubble
                     Obx(() {
                       final bubble = FloatingCallBubbleService.to;
-                      if (!bubble.isVisible.value) return SizedBox.shrink();
+                      if (!bubble.isVisible.value) return const SizedBox.shrink();
                       final c = Get.find<VoiceCallController>();
 
                       return Positioned(
                         left: c.bubbleX.value,
                         top: c.bubbleY.value,
                         child: Draggable(
-                          feedback: _buildBubble(c,bubble),
+                          feedback: _buildBubble(c, bubble),
                           childWhenDragging: Opacity(
                             opacity: 0.3,
-                            child: _buildBubble(c,bubble),
+                            child: _buildBubble(c, bubble),
                           ),
                           onDragEnd: (details) {
                             double x = details.offset.dx;
                             double y = details.offset.dy;
 
-                            // Screen width
                             double screenWidth = Get.width;
 
-                            // SNAP LEFT or RIGHT
                             if (x < screenWidth / 2) {
-                              x = 10; // left padding
+                              x = 10;
                             } else {
-                              x = screenWidth - 160; // right side bubble width included
+                              x = screenWidth - 160;
                             }
 
                             c.bubbleX.value = x;
                             c.bubbleY.value = y.clamp(40, Get.height - 160);
                           },
 
-                          child: _buildBubble(c,bubble),
+                          child: _buildBubble(c, bubble),
                         ),
                       );
                     }),
@@ -174,15 +175,14 @@ class _MyAppState extends State<MyApp> {
           ],
         );
       },
-
     );
   }
-  Widget _buildBubble(VoiceCallController c,FloatingCallBubbleService bubble) {
+
+  Widget _buildBubble(VoiceCallController c, FloatingCallBubbleService bubble) {
     return Material(
       type: MaterialType.transparency,
       child: GestureDetector(
         onTap: () {
-          // Reopen full call screen
           final c = Get.find<VoiceCallController>();
           Get.to(() => VoiceCallScreen1(
             channelId: c.channelId,
@@ -195,24 +195,21 @@ class _MyAppState extends State<MyApp> {
         },
         child: Container(
           width: 160,
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.80),
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 8)],
+            boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8)],
           ),
-          child:
-          Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(c.callerName.value,
-                  style: TextStyle(color: Colors.white, fontSize: 15)),
-              SizedBox(height: 4),
+                  style: const TextStyle(color: Colors.white, fontSize: 15)),
+              const SizedBox(height: 4),
               Text(c.formatDuration(c.callDuration.value),
-                  style: TextStyle(color: Colors.white70, fontSize: 13)),
-              SizedBox(height: 8),
-
-              // End Call Button
+                  style: const TextStyle(color: Colors.white70, fontSize: 13)),
+              const SizedBox(height: 8),
               GestureDetector(
                 onTap: () {
                   final c = Get.find<VoiceCallController>();
@@ -220,12 +217,12 @@ class _MyAppState extends State<MyApp> {
                   bubble.hide();
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
                   decoration: BoxDecoration(
                     color: Colors.redAccent,
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  child: Text("End Call",
+                  child: const Text("End Call",
                       style: TextStyle(color: Colors.white, fontSize: 12)),
                 ),
               ),
@@ -235,5 +232,4 @@ class _MyAppState extends State<MyApp> {
       ),
     );
   }
-
 }

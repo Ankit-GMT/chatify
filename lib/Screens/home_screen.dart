@@ -5,6 +5,7 @@ import 'package:chatify/TabView%20Screens/group_chats.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/controllers/tabBar_controller.dart';
+import 'package:chatify/sound_manager.dart';
 import 'package:chatify/widgets/tab_box.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
