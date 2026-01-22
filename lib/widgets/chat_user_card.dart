@@ -69,17 +69,18 @@ class _ChatUserCardState extends State<ChatUserCard> {
 
       subtitle: Row(
         children: [
-          true
+          widget.chatType?.lastSenderId == myId
               ? const Icon(Icons.done_all_rounded, color: Colors.blue, size: 15)
-              : const Icon(Icons.done_all, color: Colors.white, size: 15),
+          :SizedBox.shrink(),
+              // : const Icon(Icons.done_all, color: Colors.white, size: 15),
           SizedBox(
             width: 5,
           ),
           SizedBox(
-            width: 130,
+            width: Get.width * 0.35,
             child: Text(widget.chatType!.lastMessageContent ?? '',
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(fontSize: 12),
+                style: GoogleFonts.poppins(fontSize: 12,fontWeight: widget.chatType?.unreadCount == 0 ? FontWeight.w400 : FontWeight.w600),
                 maxLines: 1),
           ),
         ],
@@ -90,11 +91,11 @@ class _ChatUserCardState extends State<ChatUserCard> {
         () => Row(
           mainAxisAlignment: MainAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
-          spacing: 5,
+          spacing: 4,
           children: [
             widget.chatType!.unreadCount == 0 ? SizedBox() :
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 1),
               // width: 34,
               // height: 24,
               decoration: BoxDecoration(
@@ -111,11 +112,12 @@ class _ChatUserCardState extends State<ChatUserCard> {
               spacing: 5,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  TimeFormat.getFormattedTime(context: context, time: widget.chatType!.lastMessageAt ?? "2025-11-27T17:54:18.381618"),
+                widget.chatType!.lastMessageAt != null ? Text(
+                  // TimeFormat.getFormattedTime(context: context, time: widget.chatType!.lastMessageAt),
+                  TimeFormat.formatTime(widget.chatType!.lastMessageAt),
                   style: GoogleFonts.poppins(
                       fontSize: 12, fontWeight: FontWeight.w400),
-                ),
+                ) : SizedBox.shrink(),
 
                 Row(
                   spacing: 5,

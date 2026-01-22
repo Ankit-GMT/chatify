@@ -53,7 +53,7 @@ class OtpScreen extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 15, top: 15),
+                    padding: EdgeInsets.only(left: 15, top: Get.height * 0.05,),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
@@ -110,6 +110,7 @@ class OtpScreen extends StatelessWidget {
                             TextSpan(
                               text: "Didn't receive code ?  ",
                               style: GoogleFonts.poppins(
+                                color: AppColors.primary,
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
@@ -136,7 +137,8 @@ class OtpScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                   horizontal: 45,
                 ),
-                child: PinCodeTextField(
+                child:
+                PinCodeTextField(
                   appContext: context,
                   length: 4,
                   textStyle: TextStyle(color: Colors.black),
@@ -144,7 +146,7 @@ class OtpScreen extends StatelessWidget {
                     otpCode = value;
                   },
                   onCompleted: (value) {
-                    print("OTP Entered: $value");
+                    debugPrint("OTP Entered: $value");
                   },
                   keyboardType: TextInputType.number,
                   cursorColor: AppColors.black,

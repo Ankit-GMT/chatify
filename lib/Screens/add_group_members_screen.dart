@@ -50,7 +50,7 @@ class AddGroupMembersScreen extends StatelessWidget {
                       return ListTile(
                         onTap: () => groupController.onTap(contact.userId!),
                         leading: CircleAvatar(
-                          backgroundImage: NetworkImage(contact.profileImageUrl!),
+                          backgroundImage: NetworkImage(contact.profileImageUrl ?? ''),
                         ),
                         title: Text("${contact.firstName} ${contact.lastName}"),
                         trailing: isSelected

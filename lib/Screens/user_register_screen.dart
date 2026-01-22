@@ -205,14 +205,16 @@ class UserRegisterScreen extends StatelessWidget {
                     if (firstNameController.text.isNotEmpty &&
                         lastNameController.text.isNotEmpty &&
                         dobController.text.isNotEmpty) {
-                      authController.registerUser(
-                          firstName: firstNameController.text,
-                          lastName: lastNameController.text,
-                          phoneNumber: authController.phoneNumber.value,
-                          email: email,
-                          dateOfBirth: dobController.text,
-                          profileImageFile: authController.pickedImage.value!
-                      );
+                      // authController.registerUser(
+                      //     firstName: firstNameController.text,
+                      //     lastName: lastNameController.text,
+                      //     phoneNumber: authController.phoneNumber.value,
+                      //     email: email,
+                      //     dateOfBirth: dobController.text,
+                      //     password: 'password123',
+                      //     confirmPassword: 'password123',
+                      //     // profileImageFile: authController.pickedImage.value!
+                      // );
                     } else {
                       Get.snackbar(
                           "Error", "Please fill all the required fields");

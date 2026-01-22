@@ -5,6 +5,7 @@ import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/chat_user.dart';
 import 'package:chatify/services/api_service.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
@@ -38,16 +39,16 @@ class UserController extends GetxController {
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         final data = jsonDecode(res.body);
-        // print("Chat Created, data: $data");
+        // debugPrint("Chat Created, data: $data");
         tabController.getAllChats();
         return ChatType.fromJson(data);
       } else {
-        // print("Failed to create chat: ${res.statusCode} ${res.body}");
+        // debugPrint("Failed to create chat: ${res.statusCode} ${res.body}");
         return null;
       }
     } catch (e) {
       isLoading.value = false;
-      // print("Exception while creating chat: $e");
+      // debugPrint("Exception while creating chat: $e");
       return null;
     }
   }
@@ -69,14 +70,14 @@ class UserController extends GetxController {
             body is Map && (body['id'] != null)
                 ? body
                 : (body['user'] ?? body['data'] ?? body);
-        // print(userJson);
+        // debugPrint(userJson);
 
         user.value = ChatUser.fromJson(Map<String, dynamic>.from(userJson));
       } else {
-        print("Failed to fetch profile: ${res.statusCode} ${res.body}");
+        debugPrint("Failed to fetch profile: ${res.statusCode} ${res.body}");
       }
     } catch (e) {
-      print("Error fetchUserProfile: $e");
+      debugPrint("Error fetchUserProfile: $e");
     }
   }
 

@@ -1,6 +1,10 @@
 package com.example.chatify
 
 import android.app.PictureInPictureParams
+
+import android.app.Service
+import android.content.Intent
+import android.os.IBinder
 import android.os.Build
 import android.util.Rational
 import io.flutter.embedding.android.FlutterActivity
@@ -49,3 +53,8 @@ class MainActivity : FlutterActivity() {
     }
 }
 
+class ScreenShareService : Service() {
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
+    }
+}

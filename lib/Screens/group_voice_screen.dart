@@ -73,7 +73,7 @@ class _MainScreenScreenState extends State<GroupVoiceCallScreen> {
           setState(() => _localUserJoined = true);
         },
         onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
-          debugPrint("👤 Remote user $remoteUid joined");
+          debugPrint("Remote user $remoteUid joined");
 
           final matchUser = widget.receiverIds.firstWhere(
                 (u) => u['id'] == remoteUid,
@@ -166,7 +166,8 @@ class _MainScreenScreenState extends State<GroupVoiceCallScreen> {
     await messageController.endGroupCall(
         channelId: widget.channelId,
         callerId: widget.callerId,
-        receiverIds: widget.receiverIds.map((e) => e['id'].toString()).toList());
+        receiverIds: widget.receiverIds.map((e) => e['id'].toString()).toList()
+    );
 
     _timer?.cancel();
     await _cleanupAgoraEngine();

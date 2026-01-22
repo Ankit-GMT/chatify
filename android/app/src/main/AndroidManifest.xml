@@ -47,26 +47,33 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <!--for bring app to foreground from background in Android 10 -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-
+<!--    <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT"-->
+<!--        tools:ignore="ProtectedPermissions" />-->
     <!-- (Optional) For picking images in Android 13+ -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
 
     <application
         android:label="chatify"
         android:requestLegacyExternalStorage="true"
-        android:foregroundServiceType="connectedDevice|microphone"
+        android:foregroundServiceType="connectedDevice|microphone|mediaProjection"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <service
             android:name="io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingService"
             android:exported="false"
             tools:ignore="MissingClass">
+
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <service
+            android:name=".ScreenShareService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
 
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"

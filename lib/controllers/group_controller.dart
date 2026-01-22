@@ -14,7 +14,9 @@ import 'package:image_picker/image_picker.dart';
 
 class GroupController extends GetxController {
   var isLoading = false.obs;
+
   final String baseUrl = APIs.url;
+  RxString groupName = ''.obs;
 
   final box = GetStorage();
 
@@ -57,7 +59,7 @@ class GroupController extends GetxController {
         "memberIds": memberIds.where((id) => id != currentUserId).toList(),
       });
 
-      print("JSON DATA: $jsonString");
+      debugPrint("JSON DATA: $jsonString");
 
       request.files.add(
         http.MultipartFile.fromString(
@@ -89,15 +91,15 @@ class GroupController extends GetxController {
         );
       }
 
-      print("HEADERS: ${request.headers}");
-      print("FILES: ${request.files}");
+      debugPrint("HEADERS: ${request.headers}");
+      debugPrint("FILES: ${request.files}");
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
       isLoading.value = false;
 
-      print("STATUS: ${response.statusCode}");
-      print("BODY: $responseBody");
+      debugPrint("STATUS: ${response.statusCode}");
+      debugPrint("BODY: $responseBody");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         Get.snackbar("Success", "Group created successfully");
@@ -107,7 +109,7 @@ class GroupController extends GetxController {
       }
     } catch (e) {
       isLoading.value = false;
-      print("EXCEPTION: $e");
+      debugPrint("EXCEPTION: $e");
     }
   }
 
@@ -149,8 +151,8 @@ class GroupController extends GetxController {
         );
       }
 
-      print("FIELDS: ${request.fields}");
-      print("HEADERS: ${request.headers}");
+      debugPrint("FIELDS: ${request.fields}");
+      debugPrint("HEADERS: ${request.headers}");
 
       var response = await request.send();
       var responseData = await http.Response.fromStream(response);
@@ -316,5 +318,6 @@ class GroupController extends GetxController {
     // TODO: implement onClose
     super.onClose();
     selectedContacts.clear();
+
   }
 }

@@ -27,7 +27,7 @@ class ViewAllMembersScreen extends StatelessWidget {
               return ListTile(
                 leading: CircleAvatar(
                   backgroundImage: NetworkImage(
-                      chatType!.members![index].profileImageUrl! ?? ''),
+                      chatType!.members![index].profileImageUrl ?? ''),
                 ),
                 title: Text(
                     "${chatType!.members![index].firstName} ${chatType!.members![index].lastName}"),

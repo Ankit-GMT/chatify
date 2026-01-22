@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 
 class ProfileController extends GetxController {
@@ -36,15 +37,15 @@ class ProfileController extends GetxController {
 
         final user = ChatUser.fromJson(data);
 
-        print("Profile fetched: ${user.firstName} ${user.lastName}");
+        debugPrint("Profile fetched: ${user.firstName} ${user.lastName}");
 
         return user;
       } else {
-        print("Failed to fetch profile: ${res.body}");
+        debugPrint("Failed to fetch profile: ${res.body}");
         return null;
       }
     } catch (e) {
-      print("Error in getProfile: $e");
+      debugPrint("Error in getProfile: $e");
       return null;
     }
   }
@@ -53,21 +54,36 @@ class ProfileController extends GetxController {
   Future<bool> editProfile(ChatUser user) async {
     try {
 
-      final res = await ApiService.request(
-        url: "$baseUrl/api/user/me",
-        method: "PATCH",
-        body: user.toJson(),
+      var uri = Uri.parse("$baseUrl/api/user/me");
+      var request = http.MultipartRequest("PATCH", uri);
+
+      // Add authorization header
+      request.headers['Authorization'] = "Bearer $token";
+      request.headers['Accept'] = "application/json";
+
+      final jsonString = jsonEncode(user.toJson());
+
+      request.files.add(
+        http.MultipartFile.fromString(
+          "data",
+          jsonString,
+          contentType: MediaType("application", "json"),
+        ),
       );
 
+      var res = await request.send();
+      var responseData = await http.Response.fromStream(res);
+
+
       if (res.statusCode == 200) {
-        print("Profile updated: ${res.body}");
+        debugPrint("Profile updated: ${responseData.body}");
         return true;
       } else {
-        print("Failed to update profile: ${res.body}");
+        debugPrint("Failed to update profile: ${responseData.body}");
         return false;
       }
     } catch (e) {
-      print("Error in editProfile: $e");
+      debugPrint("Error in editProfile: $e");
       return false;
     }
   }
@@ -90,6 +106,14 @@ class ProfileController extends GetxController {
       // Add authorization header
       request.headers["Authorization"] = "Bearer ${box.read("accessToken")}";
 
+      request.files.add(
+        http.MultipartFile.fromString(
+          "data",
+          jsonEncode({}),
+          contentType: MediaType("application", "json"),
+        ),
+      );
+
       // Attach image
       request.files.add(
         await http.MultipartFile.fromPath(
@@ -103,7 +127,7 @@ class ProfileController extends GetxController {
       final response = await http.Response.fromStream(streamedRes);
 
       final data = jsonDecode(response.body);
-      print(data);
+      debugPrint("Profile image update response: $data");
 
       if (response.statusCode == 200) {
         Get.snackbar("Success", "Profile image updated!");

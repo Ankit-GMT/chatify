@@ -452,7 +452,7 @@ class _MainScreenScreenState extends State<GroupVideoCallScreen> {
         decoration: BoxDecoration(
           border: Border.all(color: Colors.white10),
           borderRadius: BorderRadius.circular(12),
-          color: Colors.black,
+          color: Colors.transparent,
         ),
         child: isMuted
             ? Center(

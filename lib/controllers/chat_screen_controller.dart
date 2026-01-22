@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/message.dart';
 import 'package:chatify/services/api_service.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:media_scanner/media_scanner.dart';
@@ -28,6 +28,7 @@ class ChatScreenController extends GetxController {
   Future<void> loadMessages(int id) async {
     final data = await fetchMessages(id);
     messages.value = data;
+    await markChatAsRead(id);
     await initializeDownloads();
   }
 
@@ -66,6 +67,7 @@ class ChatScreenController extends GetxController {
 
       if (res.statusCode == 200) {
         final List data = jsonDecode(res.body);
+        // print("-=-= $data");
         // log(data.toString());
         return data.map((e) => Message.fromJson(e)).toList();
       } else {
@@ -73,7 +75,7 @@ class ChatScreenController extends GetxController {
         return [];
       }
     } catch (e) {
-      print("Error: $e");
+      print("Error:-= $e");
       return [];
     }
   }
@@ -199,6 +201,103 @@ class ChatScreenController extends GetxController {
       print("Gallery scan failed: $e");
     }
   }
+
+  // For chat lock individually
+
+  Future<void> lockChat({
+    required String chatId,
+    required String pin,
+  }) async {
+    try {
+      isLoading.value = true;
+      final body = {
+        "pin": pin,
+      };
+
+      final res = await ApiService.request(url: "$baseUrl/api/chats/$chatId/lock", method: "POST", body: body );
+
+
+      final data = jsonDecode(res.body);
+      debugPrint("Lock Chat Response: $data");
+
+      if (res.statusCode == 200 && data['success'] == true) {
+        Get.snackbar(
+          "Chat Locked",
+          "This chat is now protected with a PIN",
+        );
+
+        // Optional: update local state
+        chatType.value?.locked.value = true;
+        chatType.refresh();
+
+        Navigator.pop(Get.context!);
+
+      } else {
+        Get.snackbar(
+          "Error",
+          data['message'] ?? "Failed to lock chat",
+        );
+      }
+    } catch (e) {
+      debugPrint("Lock Chat Error: $e");
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // For unlock
+
+  Future<void> unlockChat({
+    required String chatId,
+  }) async {
+    try {
+      isLoading.value = true;
+
+      final res = await ApiService.request(url: "$baseUrl/api/chats/$chatId/lock", method: 'DELETE');
+
+
+      final data = jsonDecode(res.body);
+      debugPrint("Unlock Chat Response: $data");
+
+      if (res.statusCode == 200 && data['success'] == true) {
+        Get.snackbar("Chat Unlocked", "Chat lock removed successfully");
+
+        // Update local state if needed
+        chatType.value?.locked.value = false;
+        chatType.refresh();
+
+        Navigator.of(Get.context!).pop();
+      } else {
+        Get.snackbar(
+          "Error",
+          data['message'] ?? "Failed to unlock chat",
+        );
+      }
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<bool> markChatAsRead(int chatId) async {
+    try {
+      final res = await ApiService.request(url: "$baseUrl/api/chats/$chatId/mark-read", method: "POST");
+
+      if (res.statusCode == 200 || res.statusCode == 204) {
+        return true;
+      } else {
+        debugPrint(
+            "Mark Read Failed: ${res.statusCode} - ${res.body}");
+        return false;
+      }
+    } catch (e) {
+      debugPrint("Error in markChatAsRead: $e");
+      return false;
+    }
+  }
+
 
 
   @override

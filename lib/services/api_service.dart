@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:chatify/Screens/login_screen.dart';
 import 'package:chatify/constants/apis.dart';
+import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
@@ -49,15 +50,15 @@ class ApiService {
       if (response.statusCode == 401 || response.statusCode == 403) {
         bool refreshed = await _refreshToken();
         if (refreshed) {
-          print("Retrying API after refresh...");
+          debugPrint("Retrying API after refresh...");
           return await request(
               url: url, method: method, headers: headers, body: body);
         } else {
-          print("Refresh token failed. Logging out.");
+          debugPrint("Refresh token failed. Logging out.");
           _logoutUser();
         }
       }
-      print('status Code :- ${response.statusCode}');
+      debugPrint('status Code :- ${response.statusCode}');
 
       return response;
     } catch (e) {
@@ -81,14 +82,14 @@ class ApiService {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         box.write("accessToken", data["accessToken"]);
-        print("Token refreshed successfully");
+        debugPrint("Token refreshed successfully");
         return true;
       } else {
-        print("Failed to refresh token: ${res.body}");
+        debugPrint("Failed to refresh token: ${res.body}");
         return false;
       }
     } catch (e) {
-      print("Error in refresh token: $e");
+      debugPrint("Error in refresh token: $e");
       return false;
     }
   }

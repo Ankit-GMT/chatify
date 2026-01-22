@@ -1,12 +1,12 @@
+import 'package:chatify/Screens/status/status_screen.dart';
 import 'package:chatify/Screens/video_call_history_screen.dart';
-import 'package:chatify/Screens/edit_profile_screen.dart';
 import 'package:chatify/Screens/home_screen.dart';
 import 'package:chatify/Screens/voice%20_call_history_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/controllers/birthday_controller.dart';
 import 'package:chatify/controllers/bottom_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -15,6 +15,7 @@ class MainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final bottomController = Get.put(BottomController());
+    final birthdayController = Get.put(BirthdayController());
 
     return Scaffold(
       body: Obx(() => IndexedStack(
@@ -23,7 +24,7 @@ class MainScreen extends StatelessWidget {
           HomeScreen(),
           VoiceCallHistoryScreen(),
           VideoCallHistoryScreen(),
-          EditProfileScreen(),
+          StatusScreen(),
         ],
       ),),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -31,7 +32,7 @@ class MainScreen extends StatelessWidget {
         height: 60,
         width: Get.width * 0.85,
         decoration: BoxDecoration(
-          color: AppColors.black,
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(30),
         ),
         child: Row(
@@ -77,7 +78,7 @@ class MainScreen extends StatelessWidget {
               onPressed: () {
                 bottomController.currentIndex.value=3;
               },
-              icon: Image.asset("assets/images/bottom_profile.png",scale: 2,),
+              icon: Image.asset("assets/images/bottom_status.png",scale: 3,),
             ),
           ],
         ),

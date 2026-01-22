@@ -1,6 +1,4 @@
-import 'package:chatify/Screens/settings_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
-import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/models/chat_user.dart';
 import 'package:chatify/widgets/dialog_textfield.dart';
 import 'package:chatify/widgets/profile_avatar.dart';
@@ -15,7 +13,6 @@ class EditProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authController = Get.find<AuthController>();
     final profileController = Get.put(ProfileController());
 
     var firstNameController = TextEditingController(
@@ -36,49 +33,36 @@ class EditProfileScreen extends StatelessWidget {
             SizedBox(
               height: Get.height * 0.05,
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SizedBox(
-                  width: 43,
-                ),
-                Text(
-                  "Edit Profile",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-                ),
-                PopupMenuButton(
-                  itemBuilder: (context) {
-                    return [
-                      PopupMenuItem(
-                        onTap: () {
-                          Get.to(() => SettingsScreen());
-                        },
-                        child: Text("Settings"),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  IconButton(
+                    color: AppColors.iconGrey,
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStatePropertyAll(AppColors.white),
+                      shape: WidgetStatePropertyAll(
+                        RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(color: Colors.grey.shade200)),
                       ),
-                      PopupMenuItem(
-                        onTap: () {
-                          Get.defaultDialog(
-                            title: "Logout",
-                            middleText: "Are you sure you want to logout?",
-                            textCancel: "No",
-                            textConfirm: "Yes",
-                            confirmTextColor: Colors.white,
-                            buttonColor: AppColors.primary,
-                            titlePadding: EdgeInsets.only(top: 20,bottom: 10),
-                            contentPadding: EdgeInsets.only(bottom: 20),
-                            onConfirm: () {
-                              // Your logout function
-                              Get.back(); // close dialog
-                              authController.logoutUser();
-                            },
-                          );
-                        },
-                        child: Text("Logout"),
-                      ),
-                    ];
-                  },
-                ),
-              ],
+                    ),
+                    onPressed: () {
+                      Get.back();
+                    },
+                    icon: Icon(Icons.arrow_left),
+                  ),
+                  SizedBox(width: Get.width * 0.26),
+                  Text(
+                    "Edit Profile",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -155,10 +139,23 @@ class EditProfileScreen extends StatelessWidget {
                                 children: [
                                   TextField(
                                     controller: firstNameController,
+                                    cursorColor: AppColors.primary,
                                     decoration: InputDecoration(
                                       labelText: "First Name",
+                                      labelStyle: TextStyle(
+                                        color: AppColors.primary
+                                      ),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide(color: AppColors.primary),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide(color: AppColors.primary),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide(color: AppColors.primary),
                                       ),
                                     ),
                                   ),
@@ -166,8 +163,20 @@ class EditProfileScreen extends StatelessWidget {
                                     controller: lastNameController,
                                     decoration: InputDecoration(
                                       labelText: "Last Name",
+                                      labelStyle: TextStyle(
+                                          color: AppColors.primary
+                                      ),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide(color: AppColors.primary),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide(color: AppColors.primary),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide(color: AppColors.primary),
                                       ),
                                     ),
                                   ),
@@ -175,6 +184,10 @@ class EditProfileScreen extends StatelessWidget {
                               ),
                               actions: [
                                 TextButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: AppColors.white
+                                  ),
                                     onPressed: () async {
                                       ChatUser updatedUser = ChatUser(
                                         firstName:
@@ -195,7 +208,8 @@ class EditProfileScreen extends StatelessWidget {
                                       profileController.fetchUserProfile();
                                       Navigator.pop(context);
                                     },
-                                    child: Text("Update"))
+                                    child: Text("Update"),
+                                ),
                               ],
                             );
                           },
@@ -225,10 +239,20 @@ class EditProfileScreen extends StatelessWidget {
                             return AlertDialog(
                               title: Text("Edit Date of Birth"),
                               content: TextField(
+                                cursorColor: AppColors.primary,
                                 controller: dobController,
                                 decoration: InputDecoration(
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: AppColors.primary),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: AppColors.primary),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: AppColors.primary),
                                   ),
                                 ),
                                 readOnly: true,
@@ -253,6 +277,10 @@ class EditProfileScreen extends StatelessWidget {
                               ),
                               actions: [
                                 TextButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: AppColors.white
+                                  ) ,
                                   onPressed: () async {
                                     ChatUser updatedUser = ChatUser(
                                       dateOfBirth: dobController.text.trim(),

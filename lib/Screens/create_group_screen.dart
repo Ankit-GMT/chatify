@@ -89,7 +89,9 @@ class CreateGroupScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
             ),
           ),
-          CustomTextfield(controller: nameController, hintText: "My Group"),
+          CustomTextfield(controller: nameController, hintText: "My Group",onChanged: (value) {
+            groupController.groupName.value = value.trim();
+          },),
           SizedBox(
             height: Get.height * 0.02,
           ),
@@ -115,7 +117,7 @@ class CreateGroupScreen extends StatelessWidget {
                     return ListTile(
                       onTap: () => groupController.onTap(contact.userId!),
                       leading: CircleAvatar(
-                        backgroundImage: NetworkImage(contact.profileImageUrl!),
+                        backgroundImage: NetworkImage(contact.profileImageUrl ?? ''),
                       ),
                       title: Text("${contact.firstName} ${contact.lastName}"),
                       trailing: isSelected
@@ -138,10 +140,10 @@ class CreateGroupScreen extends StatelessWidget {
             : FloatingActionButton(
                 backgroundColor: AppColors.primary,
                 onPressed: (groupController.selectedContacts.isNotEmpty &&
-                        nameController.text.isNotEmpty)
+                    groupController.groupName.value.isNotEmpty)
                     ? () async {
                         await groupController.createGroup(
-                          name: nameController.text.trim(),
+                          name: groupController.groupName.value,
                           groupImageFile: groupController.pickedImage.value,
                           memberIds: groupController.selectedContacts.toList(),
                           // selected member IDs
@@ -149,7 +151,7 @@ class CreateGroupScreen extends StatelessWidget {
                         );
                         await tabController.getAllChats();
 
-                        print("created group ${nameController.text}");
+                        debugPrint("created group ${nameController.text}");
                       }
                     : null,
                 child: Icon(

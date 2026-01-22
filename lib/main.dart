@@ -1,6 +1,8 @@
+import 'package:chatify/Screens/group_voice_screen1.dart';
 import 'package:chatify/Screens/splash_screen.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:chatify/controllers/auth_controller.dart';
+import 'package:chatify/controllers/group_voice_call_controller.dart';
 import 'package:chatify/controllers/theme_controller.dart';
 import 'package:chatify/controllers/voice_call_controller.dart';
 import 'package:chatify/firebase_options.dart';
@@ -39,7 +41,7 @@ void main() async {
   await notificationService.printFcmToken();
 
   final box = GetStorage();
-  print("accessToken: ${box.read("accessToken")}");
+  debugPrint("accessToken: ${box.read("accessToken")}");
 
   runApp(MyApp(
     notificationService: notificationService,
@@ -65,6 +67,7 @@ class _MyAppState extends State<MyApp> {
     // Use the injected singleton instead of creating new instances
     _checkLaunchFromNotification();
     _checkActiveCallsOnLaunch();
+    // _checkInitialFcmMessage();
   }
 
   Future<void> _checkLaunchFromNotification() async {
@@ -79,7 +82,7 @@ class _MyAppState extends State<MyApp> {
       final payload = details.notificationResponse?.payload;
 
       if (payload != null && payload.isNotEmpty && payload.length <15) {
-        print("App launched by NOTIFICATION. Payload = $payload");
+        debugPrint("App launched by NOTIFICATION. Payload = $payload");
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
           widget.notificationService.navigateToChat(payload);
@@ -92,7 +95,7 @@ class _MyAppState extends State<MyApp> {
     await Future.delayed(const Duration(milliseconds: 700));
 
     final calls = await FlutterCallkitIncoming.activeCalls();
-    print("ACTIVE CALLS ON APP LAUNCH: $calls");
+    debugPrint("ACTIVE CALLS ON APP LAUNCH: $calls");
 
     if (calls != null && calls.isNotEmpty) {
       final call = calls.first;
@@ -113,6 +116,26 @@ class _MyAppState extends State<MyApp> {
       });
     }
   }
+
+  // Future<void> _checkInitialFcmMessage() async {
+  //   await Future.delayed(const Duration(milliseconds: 800));
+  //
+  //   final initialMessage =
+  //   await FirebaseMessaging.instance.getInitialMessage();
+  //
+  //   if (initialMessage == null) return;
+  //
+  //   final data = initialMessage.data;
+  //   final type = data['type'];
+  //
+  //   print("APP LAUNCHED FROM FCM: $data");
+  //
+  //   if (type == "BIRTHDAY_NOTIFICATION") {
+  //     pendingBirthdayData = data;
+  //   }
+  // }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +160,40 @@ class _MyAppState extends State<MyApp> {
                     Obx(() {
                       final bubble = FloatingCallBubbleService.to;
                       if (!bubble.isVisible.value) return const SizedBox.shrink();
+
+                      final bool isGroup =
+                      Get.isRegistered<GroupVoiceCallController>();
+
+                      if (isGroup) {
+                        final c = Get.find<GroupVoiceCallController>();
+
+                        return Positioned(
+                          left: c.bubbleX.value,
+                          top: c.bubbleY.value,
+                          child: Draggable(
+                            feedback: _buildGroupBubble(c, bubble),
+                            childWhenDragging: Opacity(
+                              opacity: 0.3,
+                              child: _buildGroupBubble(c, bubble),
+                            ),
+                            onDragEnd: (details) {
+                              double x = details.offset.dx;
+                              double y = details.offset.dy;
+
+                              if (x < Get.width / 2) {
+                                x = 10;
+                              } else {
+                                x = Get.width - 180;
+                              }
+
+                              c.bubbleX.value = x;
+                              c.bubbleY.value = y.clamp(40, Get.height - 180);
+                            },
+                            child: _buildGroupBubble(c, bubble),
+                          ),
+                        );
+                      }
+
                       final c = Get.find<VoiceCallController>();
 
                       return Positioned(
@@ -232,4 +289,101 @@ class _MyAppState extends State<MyApp> {
       ),
     );
   }
+  Widget _buildGroupBubble(
+      GroupVoiceCallController c,
+      FloatingCallBubbleService bubble,
+      ) {
+    return Material(
+      type: MaterialType.transparency,
+      child: GestureDetector(
+        onTap: () {
+          Get.to(() => GroupVoiceCallScreen1(
+            channelId: c.channelId,
+            token: c.token,
+            callerId: c.callerId,
+            receiverIds: c.receiverIds,
+          ));
+          bubble.hide();
+        },
+        child: Container(
+          width: 180,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.85),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
+              BoxShadow(color: Colors.black45, blurRadius: 8),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                c.groupName.value,
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                c.formatDuration(c.callDuration.value),
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "${c.remoteUids.length + 1} participants",
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () {
+                  c.endCall();
+                  bubble.hide();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 6, horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Text(
+                    "End Call",
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
 }
+
+/// Temporary
+
+// import 'package:chatify/Screens/NewLoginUI/mobile_verification_screen.dart';
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+// import 'package:google_fonts/google_fonts.dart';
+//
+// void main() {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   runApp(const MyApp());
+// }
+//
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return GetMaterialApp(
+//       title: 'Chatify',
+//       debugShowCheckedModeBanner: false,
+//       theme: ThemeData(
+//         textTheme: GoogleFonts.poppinsTextTheme()
+//       ),
+//       home: MobileVerificationScreen(),
+//     );
+//   }
+// }

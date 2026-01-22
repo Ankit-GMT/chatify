@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:chatify/Screens/group_video_screen.dart';
+import 'package:chatify/Screens/group_video_screen1.dart';
 import 'package:chatify/Screens/group_voice_screen.dart';
+import 'package:chatify/Screens/group_voice_screen1.dart';
 import 'package:chatify/Screens/media_preview_screen.dart';
 import 'package:chatify/Screens/video_call_screen1.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
@@ -45,16 +47,16 @@ class MessageController extends GetxController {
       isLoading.value = false;
 
       if (res.statusCode == 200 || res.statusCode == 201) {
-        print("Message sent: ${res.body}");
+        debugPrint("Message sent: ${res.body}");
 
         return true;
       } else {
-        print("Failed to send: ${res.statusCode} ${res.body}");
+        debugPrint("Failed to send: ${res.statusCode} ${res.body}");
         return false;
       }
     } catch (e) {
       isLoading.value = false;
-      print("Error: $e");
+      debugPrint("Error: $e");
       return false;
     }
   }
@@ -66,15 +68,15 @@ class MessageController extends GetxController {
           method: "DELETE");
 
       if (res.statusCode == 200 || res.statusCode == 204) {
-        print("Message deleted");
+        debugPrint("Message deleted");
         await removeSavedPath(messageId);
         return true;
       } else {
-        print("Failed to delete: ${res.statusCode} ${res.body}");
+        debugPrint("Failed to delete: ${res.statusCode} ${res.body}");
         return false;
       }
     } catch (e) {
-      print("Error: $e");
+      debugPrint("Error: $e");
       return false;
     }
   }
@@ -100,14 +102,14 @@ class MessageController extends GetxController {
           });
 
       if (res.statusCode == 200) {
-        print("Message updated: ${res.body}");
+        debugPrint("Message updated: ${res.body}");
         return true;
       } else {
-        print("Failed to update: ${res.statusCode} ${res.body}");
+        debugPrint("Failed to update: ${res.statusCode} ${res.body}");
         return false;
       }
     } catch (e) {
-      print("Error: $e");
+      debugPrint("Error: $e");
       return false;
     }
   }
@@ -350,7 +352,7 @@ class MessageController extends GetxController {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => GroupVideoCallScreen(
+              builder: (_) => GroupVideoCallScreen1(
                   channelId: channel,
                   token: agoraToken,
                   callerId: callerId,
@@ -361,7 +363,7 @@ class MessageController extends GetxController {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => GroupVoiceCallScreen(
+              builder: (_) => GroupVoiceCallScreen1(
                   channelId: channel,
                   token: agoraToken,
                   callerId: callerId,
@@ -410,7 +412,7 @@ class MessageController extends GetxController {
         return {"error": "Failed to end group call"};
       }
     } catch (e) {
-      print("⚠️ Exception while ending group call: $e");
+      print(" Exception while ending group call: $e");
       return {"error": e.toString()};
     }
   }

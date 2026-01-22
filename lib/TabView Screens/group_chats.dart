@@ -27,7 +27,8 @@ class GroupChats extends StatelessWidget {
                         CreateGroupScreen(currentUserId: box.read("userId")));
                   },
                 )
-              : ListView.separated(
+          : tabController.filteredGroupsList.isEmpty ? Center(child: Text("No search result found"),)
+          : ListView.separated(
                   padding: const EdgeInsets.only(bottom: 80),
                   physics: const BouncingScrollPhysics(),
                   itemBuilder: (context, index) {
@@ -43,15 +44,7 @@ class GroupChats extends StatelessWidget {
                           if (tabController.isSelectionMode.value) {
                             tabController.toggleSelection(chat);
                           } else {
-                            Get.to(
-                                () => ChatScreen(
-                                      chatId: tabController.filteredGroupsList
-                                          .elementAt(index)
-                                          .id,
-                                    ),
-                                arguments: tabController.filteredGroupsList
-                                    .elementAt(index)
-                                    .id);
+                            tabController.handleChatOpen(chat);
                           }
                         },
                         chatUser: null,

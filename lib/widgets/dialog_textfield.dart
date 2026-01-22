@@ -1,3 +1,4 @@
+import 'package:chatify/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class Dialogs {
@@ -15,14 +16,31 @@ class Dialogs {
             content: TextField(
               controller: controller,
               maxLines: 2,
+              minLines: 1,
+              cursorColor: AppColors.primary,
               decoration: InputDecoration(
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppColors.primary),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppColors.primary),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppColors.primary),
+                ),
               ),
             ),
             actions: [
               TextButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white
+                ),
                 onPressed: onSave,
-                child: Text("Save"),
+                child: Text("Update"),
               ),
             ]);
       },

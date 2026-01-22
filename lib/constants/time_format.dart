@@ -1,23 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-
-// class TimeFormat {
-//   static String getFormattedTime(
-//       {required BuildContext context, required String time}) {
-//     DateTime dt = DateTime.parse(time);
-//
-//     // Format to 12-hour clock with AM/PM
-//     String formatted = DateFormat('hh:mm a').format(dt);
-//     return formatted;
-//   }
-// }
 
 class TimeFormat {
   static String getFormattedTime({
     required BuildContext context,
-    required String time,
+    required String? time,
   }) {
-    DateTime dt = DateTime.parse(time);
+    DateTime dt = DateTime.parse(time!);
     DateTime now = DateTime.now();
 
 
@@ -37,5 +27,30 @@ class TimeFormat {
 
     // Older
     return DateFormat('MM/dd/yy').format(dt);
+  }
+
+ static String formatTime(String? time) {
+
+   DateTime dt = DateTime.parse(time!);
+
+    final now = DateTime.now();
+
+    final today = DateTime(now.year, now.month, now.day);
+    final date = DateTime(dt.year, dt.month, dt.day);
+
+    final dayDiff = today.difference(date).inDays;
+
+    if (dayDiff == 0) {
+      return TimeOfDay.fromDateTime(dt).format(Get.context!);
+    }
+
+    if (dayDiff == 1) {
+      return "Yesterday";
+    }
+
+    return "${dt.day.toString().padLeft(2, '0')}/"
+        "${dt.month.toString().padLeft(2, '0')}/"
+        "${dt.year}";
+        // "${TimeOfDay.fromDateTime(dt).format(Get.context!)}";
   }
 }

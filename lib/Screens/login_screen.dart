@@ -1,3 +1,5 @@
+import 'package:chatify/Screens/NewLoginUI/create_account_screen.dart';
+import 'package:chatify/Screens/NewLoginUI/login_email_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
@@ -59,12 +61,12 @@ class LoginScreen extends StatelessWidget {
               Text(
                 "Lets Join With us",
                 style: GoogleFonts.poppins(
-                    fontSize: 20, fontWeight: FontWeight.w500),
+                    fontSize: 24, fontWeight: FontWeight.w500),
               ),
               Text(
                 "Enter Your Mobile Number",
                 style: GoogleFonts.poppins(
-                    fontSize: 20, fontWeight: FontWeight.w400),
+                    fontSize: 16, fontWeight: FontWeight.w400),
               ),
               SizedBox(
                 height: Get.height * 0.06,
@@ -133,7 +135,7 @@ class LoginScreen extends StatelessWidget {
                         mobileNumber = phone.number.toString();
                       },
                       onCountryChanged: (country) {
-                        // print('Country changed to: ' + country.name);
+                        // debugPrint('Country changed to: ' + country.name);
                       },
                     ),
                   ),
@@ -148,7 +150,7 @@ class LoginScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: GestureDetector(
                   onTap: () {
-                    print(mobileNumber);
+                    debugPrint(mobileNumber);
                     if(mobileNumber?.length == 10){
                       authController.sendOtp(mobileNumber!);
                     }
@@ -183,6 +185,41 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ),
               ),),
+              SizedBox(
+                height: Get.height * 0.02,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: GestureDetector(
+                  onTap: () {
+                    Get.to(()=> LoginEmailScreen());
+                  },
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Text("Login with email",style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),),
+                  ),
+                ),
+              ),
+              SizedBox(height: Get.height*0.02,),
+              SizedBox(
+                width: double.infinity,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 5,
+                  children: [
+                    Text("Don't have an account?",style: TextStyle(fontSize: 12,fontWeight: FontWeight.w500,color: AppColors.primary),),
+                    GestureDetector(
+                        onTap: () {
+                          Get.to(()=> CreateAccountScreen());
+                        },
+                        child: Text("Sign Up",style: TextStyle(color: AppColors.primary,fontWeight: FontWeight.w600),)),
+                  ],
+                ),
+              ),
               SizedBox(
                 height: Get.height * 0.04,
               ),

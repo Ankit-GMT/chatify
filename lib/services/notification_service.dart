@@ -2,15 +2,18 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:chatify/Screens/chat_screen.dart';
-import 'package:chatify/Screens/group_video_screen.dart';
-import 'package:chatify/Screens/group_voice_screen.dart';
+import 'package:chatify/Screens/group_video_screen1.dart';
+import 'package:chatify/Screens/group_voice_screen1.dart';
 import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/Screens/video_call_screen1.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
+import 'package:chatify/controllers/group_video_call_controller.dart';
+import 'package:chatify/controllers/group_voice_call_controller.dart';
 import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/controllers/video_call_controller.dart';
 import 'package:chatify/controllers/voice_call_controller.dart';
 import 'package:chatify/services/floating_call_bubble_service.dart';
+import 'package:chatify/widgets/birthday_top_sheet.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_callkit_incoming/entities/entities.dart';
@@ -18,9 +21,12 @@ import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 Map<String, dynamic>? pendingCallData;
+Map<String, dynamic>? pendingBirthdayData;
+
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -51,10 +57,10 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
     // Show incoming using CallKit
     if (isCallExpired(data)) {
-      print("Ignoring expired call invite");
+      debugPrint("Ignoring expired call invite");
       return;
     }
-    print("not ignoring123");
+    debugPrint("not ignoring123");
     await FlutterCallkitIncoming.showCallkitIncoming(params);
     return;
   }
@@ -90,6 +96,11 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (type == 'chat_message') {
     await NotificationService.showBackgroundMessageNotification(data);
   }
+  // if (type == "BIRTHDAY_NOTIFICATION") {
+  //   final box = GetStorage();
+  //   await box.write("pendingBirthday", data);
+  // }
+
 }
 
 class NotificationService {
@@ -128,7 +139,7 @@ class NotificationService {
         await Permission.camera.request();
       }
     } catch (e) {
-      print('Permission request error: $e');
+      debugPrint('Permission request error: $e');
     }
 
     await _fcm.requestPermission(alert: true, badge: true, sound: true);
@@ -136,10 +147,10 @@ class NotificationService {
 
   Future<void> printFcmToken() async {
     final token = await _fcm.getToken();
-    print("FCM Token: $token");
+    debugPrint("FCM Token: $token");
 
     _fcm.onTokenRefresh.listen((newToken) {
-      print("FCM Token refreshed: $newToken");
+      debugPrint("FCM Token refreshed: $newToken");
     });
   }
 
@@ -168,27 +179,28 @@ class NotificationService {
     final data = message.data ?? {};
     final type = data['type']?.toString() ?? '';
 
-    log("📩 MESSAGE: $data");
+    print("📩 MESSAGE: $data");
 
     // Incoming ringing
     if (type == 'call_invite' || type == 'group_call_invite') {
       if (isCallExpired(data)) {
-        print("Ignoring expired call invite");
+        debugPrint("Ignoring expired call invite");
         await _showMissedCallNotification(data);
         return;
       }
-      print("not ignoring");
+      debugPrint("not ignoring");
       await _showIncomingCall(data);
     }
 
     if (type == 'group_call_end') {
       await FlutterCallkitIncoming.endAllCalls();
 
-      if (Navigator.canPop(Get.context!)) {
-        Navigator.pop(Get.context!);
-      } else {
-        Get.offAll(() => MainScreen());
-      }
+      // if (Navigator.canPop(Get.context!)) {
+      //   Navigator.pop(Get.context!);
+      // }
+      // else {
+      //   Get.offAll(() => MainScreen());
+      // }
     }
 
     // Caller hung up OR receiver declined
@@ -209,7 +221,7 @@ class NotificationService {
       FloatingCallBubbleService.to.hide();
     }
 
-    //  AUTO TIMEOUT (30s)
+    //  AUTO TIMEOUT (35s)
      if (type == 'call_timeout' || type == 'call_missed_timeout') {
       await FlutterCallkitIncoming.endAllCalls();
 
@@ -221,6 +233,16 @@ class NotificationService {
         Get.find<VideoCallController>().onCallTimeout();
       }
     }
+     if(type == 'group_call_missed_timeout'){
+       await FlutterCallkitIncoming.endAllCalls();
+       if (Get.isRegistered<GroupVoiceCallController>() && data['callType'] == 'VOICE') {
+         Get.find<GroupVoiceCallController>().onCallTimeout();
+       }
+
+       if (Get.isRegistered<GroupVideoCallController>() && data['callType'] == 'VIDEO') {
+         Get.find<GroupVideoCallController>().onCallTimeout();
+       }
+     }
 
     //  MISSED CALL
      if (type == 'call_missed') {
@@ -231,7 +253,70 @@ class NotificationService {
      if (type == 'chat_message') {
       await showBackgroundMessageNotification(data);
     }
+    if (type == "BIRTHDAY_NOTIFICATION") {
+      // handleBirthdayNotification(
+      //   navigatorKey.currentContext!,
+      //   data,
+      // );
+      //   final box = GetStorage();
+      //   await box.write("pendingBirthday", data);
+      //   final context = navigatorKey.currentContext;
+      //   if (context != null) {
+      //     handleBirthdayNotification(context, data);
+      //     await box.remove("pendingBirthday"); // clear since we showed it
+      //   }
+    }
   }
+
+  void handleBirthdayNotification(BuildContext context, Map<String, dynamic> data) {
+
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    try {
+      final String usersJson = data["birthdayUsers"];
+      final int totalBirthdaysToday = int.parse(data['totalBirthdaysToday']);
+
+      List decodedList = jsonDecode(usersJson);
+
+      List<Map<String, dynamic>> birthdayUsers =
+      decodedList.map((e) => {
+        "userId": e["userId"],
+        "fullName": e["fullName"],
+        "profilePhoto": e["profilePhoto"],
+      }).toList();
+
+      // Show your custom top sheet
+      showGeneralDialog(
+        context: context,
+        barrierDismissible: true,
+        barrierLabel: "BirthdaySheet",
+        barrierColor: Colors.black.withOpacity(0.7),
+        transitionDuration: const Duration(milliseconds: 400),
+        pageBuilder: (_, __, ___) {
+          return Align(
+            alignment: Alignment.topCenter,
+            child: BirthdayTopSheet(birthdayUsers: birthdayUsers,isMultiple: totalBirthdaysToday >1, title: data['title'],),
+          );
+        },
+        transitionBuilder: (_, animation, __, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, -1),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOut,
+            )),
+            child: child,
+          );
+        },
+      );
+    } catch (e) {
+      print("Error parsing birthday notification: $e");
+    }
+  }
+
 
   Future<void> _showMissedCallNotification(Map<String, dynamic> data) async {
     final android = AndroidNotificationDetails(
@@ -265,12 +350,12 @@ class NotificationService {
           }
         });
         if (exists) {
-          print('Incoming call for id $id already active — skipping duplicate.');
+          debugPrint('Incoming call for id $id already active — skipping duplicate.');
           return;
         }
       }
     } catch (e) {
-      print('Error checking active calls: $e');
+      debugPrint('Error checking active calls: $e');
     }
 
     final callType = (data['callType'] ?? '').toString();
@@ -278,6 +363,7 @@ class NotificationService {
     final params = CallKitParams(
       id: id.toString(),
       nameCaller: data['callerName'] ?? 'Unknown',
+
       appName: 'Chatify',
       handle: isVideo ? 'Video Call' : 'Voice Call',
       type: isVideo ? 1 : 0,
@@ -316,6 +402,14 @@ class NotificationService {
         break;
 
       case Event.actionCallEnded:
+        await messageController.endCall(
+          channelId: data['channelId'],
+          // callerId: data['callerId'],
+          // receiverId: data['receiverId'],
+          endReason: "call_ended",
+        );
+        await FlutterCallkitIncoming.endAllCalls();
+        break;
       case Event.actionCallTimeout:
         await FlutterCallkitIncoming.endAllCalls();
         break;
@@ -379,7 +473,7 @@ class NotificationService {
           Navigator.push(
             ctx,
             MaterialPageRoute(
-              builder: (_) => GroupVideoCallScreen(
+              builder: (_) => GroupVideoCallScreen1(
                 channelId: callData['channelId'],
                 token: callData['token'],
                 callerId: callData['callerId'],
@@ -391,7 +485,7 @@ class NotificationService {
           Navigator.push(
             ctx,
             MaterialPageRoute(
-              builder: (_) => GroupVoiceCallScreen(
+              builder: (_) => GroupVoiceCallScreen1(
                 channelId: callData['channelId'],
                 token: callData['token'],
                 callerId: callData['callerId'],
@@ -402,7 +496,7 @@ class NotificationService {
         }
       }
     } catch (e) {
-      print('openCallScreen error: $e');
+      debugPrint('openCallScreen error: $e');
     }
   }
   Future<void> showCallerOngoingCallNotification(Map<String, dynamic> data) async {
@@ -452,7 +546,7 @@ class NotificationService {
     if (payload == null || payload.isEmpty) return;
 
     try {
-      print("📨 Notification tapped. Payload = $payload");
+      debugPrint("📨 Notification tapped. Payload = $payload");
 
       // If notification is call related → open call screen
       final data = jsonDecode(payload);
@@ -467,13 +561,13 @@ class NotificationService {
         ),
       );
     } catch (e) {
-      print('Notification tap parse error: $e');
+      debugPrint('Notification tap parse error: $e');
     }
   }
 
   void navigateToChat(String chatId) {
     try {
-      print("navigate to chat :- $chatId");
+      debugPrint("navigate to chat :- $chatId");
       navigatorKey.currentState?.push(
         MaterialPageRoute(
           builder: (_) => ChatScreen(
@@ -482,7 +576,7 @@ class NotificationService {
         ),
       );
     } catch (e) {
-      print('navigateToChat error: $e');
+      debugPrint('navigateToChat error: $e');
     }
   }
 
@@ -514,6 +608,37 @@ class NotificationService {
       payload: data['chatId'] ?? '',
     );
   }
+
+  // For Birthday Notification
+
+  // void showBirthdayTopSheet(BuildContext context, String name) {
+  //   showGeneralDialog(
+  //     context: context,
+  //     barrierDismissible: true,
+  //     barrierLabel: "BirthdaySheet",
+  //     barrierColor: Colors.black.withOpacity(0.7),
+  //     transitionDuration: const Duration(milliseconds: 400),
+  //     pageBuilder: (_, __, ___) {
+  //       return Align(
+  //         alignment: Alignment.topCenter,
+  //         child: BirthdayTopSheet(userName: name),
+  //       );
+  //     },
+  //     transitionBuilder: (_, animation, __, child) {
+  //       return SlideTransition(
+  //         position: Tween<Offset>(
+  //           begin: const Offset(0, -1),
+  //           end: Offset.zero,
+  //         ).animate(CurvedAnimation(
+  //           parent: animation,
+  //           curve: Curves.easeOut,
+  //         )),
+  //         child: child,
+  //       );
+  //     },
+  //   );
+  // }
+
 
 }
 

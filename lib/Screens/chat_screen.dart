@@ -47,22 +47,27 @@ class ChatScreen extends StatelessWidget {
             offset.dx + size.width + 50, offset.dy),
 
         items: [
+          _popupItem(Icons.camera_alt_outlined, "Camera", () async {
+            await messageController.pickImage(ImageSource.camera, chatId!);
+            debugPrint("Pick camera Image");
+            // open image picker
+          }),
           _popupItem(Icons.image, "Image", () async {
             await messageController.pickImage(ImageSource.gallery, chatId!);
-            print("Pick Image");
+            debugPrint("Pick Image");
             // open image picker
           }),
           _popupItem(Icons.video_collection, "Video", () async {
             await messageController.pickVideo(chatId!);
-            print("Pick Video");
+            debugPrint("Pick Video");
           }),
           _popupItem(Icons.mic, "Audio", () async {
             await messageController.pickAudio(chatId!);
-            print("Pick Audio");
+            debugPrint("Pick Audio");
           }),
           _popupItem(Icons.file_copy, "Document", () async {
             await messageController.pickDocument(chatId!);
-            print("Pick Document");
+            debugPrint("Pick Document");
           }),
         ],
       );
@@ -128,442 +133,464 @@ class ChatScreen extends StatelessWidget {
           foregroundColor: Colors.white,
           toolbarHeight: 0,
         ),
-        body: Column(
+        body: Stack(
           children: [
-            Container(
-              height: 85,
-              padding: EdgeInsets.only(
-                  left: Get.width * 0.02, right: Get.width * 0.04),
-              decoration: BoxDecoration(
-                  color: Color(0xff2A2A2A),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  )),
-              child: Obx(
-                () => Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      spacing: Get.width * 0.03,
+            Obx(() => Positioned.fill(
+              child: chatBackground(
+                chatController.chatType.value?.backgroundImageUrl,
+              ),
+            ),),
+
+            // for bright background
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.15),
+              ),
+            ),
+            Column(
+              children: [
+                Container(
+                  height: 85,
+                  padding: EdgeInsets.only(
+                      left: Get.width * 0.02, right: Get.width * 0.04),
+                  decoration: BoxDecoration(
+                      color: Color(0xff2A2A2A),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                      )),
+                  child: Obx(
+                    () => Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        IconButton(
-                          onPressed: () {
-                            Get.back();
-                          },
-                          icon: Icon(Icons.arrow_back),
-                          color: AppColors.white,
-                        ),
-                        chatController.isLoading.value
-                            ? shimmerHeader()
-                            : InkWell(
-                                onTap: () {
-                                  Get.to(
-                                      () => chatController.type.value == "GROUP"
-                                          ? GroupProfileScreen()
-                                          : ProfileScreen(
-                                              id: myId ==
-                                                      chatController
-                                                          .chatType
-                                                          .value
-                                                          ?.members?[0]
-                                                          .userId
-                                                  ? (chatController
-                                                      .chatType
-                                                      .value
-                                                      ?.members?[1]
-                                                      .userId!)
-                                                  : (chatController
-                                                      .chatType
-                                                      .value
-                                                      ?.members?[0]
-                                                      .userId!),
-                                            ));
-                                },
-                                child:
-                                    Row(spacing: Get.width * 0.04, children: [
-                                  ProfileAvatar(
-                                      imageUrl:
-                                          chatController.type.value == "GROUP"
-                                              ? chatController.chatType.value
-                                                      ?.groupImageUrl ??
-                                                  ''
-                                              : myId ==
-                                                      chatController
-                                                          .chatType
-                                                          .value
-                                                          ?.members?[0]
-                                                          .userId
-                                                  ? (chatController
+                        Row(
+                          spacing: Get.width * 0.03,
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                Get.back();
+                              },
+                              icon: Icon(Icons.arrow_back),
+                              color: AppColors.white,
+                            ),
+                            chatController.isLoading.value
+                                ? shimmerHeader()
+                                : InkWell(
+                                    onTap: () {
+                                      Get.to(
+                                          () => chatController.type.value == "GROUP"
+                                              ? GroupProfileScreen()
+                                              : ProfileScreen(
+                                                  id: myId ==
+                                                          chatController
+                                                              .chatType
+                                                              .value
+                                                              ?.members?[0]
+                                                              .userId
+                                                      ? (chatController
                                                           .chatType
                                                           .value
                                                           ?.members?[1]
-                                                          .profileImageUrl) ??
-                                                      ''
-                                                  : chatController
+                                                          .userId!)
+                                                      : (chatController
                                                           .chatType
                                                           .value
                                                           ?.members?[0]
-                                                          .profileImageUrl ??
-                                                      '',
-                                      radius: 25),
-                                  // SizedBox(
-                                  //   width: Get.width * 0.04,
-                                  // ),
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      SizedBox(
-                                        width: Get.width * 0.25,
-                                        child: chatController.type.value ==
-                                                "GROUP"
-                                            ? Text(
-                                                chatController
-                                                        .chatType.value?.name ??
-                                                    '',
-                                                maxLines: 1,
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 16,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    color: AppColors.white),
-                                              )
-                                            : Text(
-                                                myId ==
-                                                        chatController
-                                                            .chatType
-                                                            .value
-                                                            ?.members?[0]
-                                                            .userId
-                                                    ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
-                                                        ''
-                                                    : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
+                                                          .userId!),
+                                            isFromGroup: false,
+                                                ));
+                                    },
+                                    child:
+                                        Row(spacing: Get.width * 0.04, children: [
+                                      ProfileAvatar(
+                                          imageUrl:
+                                              chatController.type.value == "GROUP"
+                                                  ? chatController.chatType.value
+                                                          ?.groupImageUrl ??
+                                                      ''
+                                                  : myId ==
+                                                          chatController
+                                                              .chatType
+                                                              .value
+                                                              ?.members?[0]
+                                                              .userId
+                                                      ? (chatController
+                                                              .chatType
+                                                              .value
+                                                              ?.members?[1]
+                                                              .profileImageUrl) ??
+                                                          ''
+                                                      : chatController
+                                                              .chatType
+                                                              .value
+                                                              ?.members?[0]
+                                                              .profileImageUrl ??
+                                                          '',
+                                          radius: 25),
+                                      // SizedBox(
+                                      //   width: Get.width * 0.04,
+                                      // ),
+                                      Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          SizedBox(
+                                            width: Get.width * 0.25,
+                                            child: chatController.type.value ==
+                                                    "GROUP"
+                                                ? Text(
+                                                    chatController
+                                                            .chatType.value?.name ??
                                                         '',
-                                                maxLines: 1,
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 16,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    color: AppColors.white),
-                                              ),
+                                                    maxLines: 1,
+                                                    style: TextStyle(
+                                                        fontWeight: FontWeight.w500,
+                                                        fontSize: 16,
+                                                        overflow:
+                                                            TextOverflow.ellipsis,
+                                                        color: AppColors.white),
+                                                  )
+                                                : Text(
+                                                    myId ==
+                                                            chatController
+                                                                .chatType
+                                                                .value
+                                                                ?.members?[0]
+                                                                .userId
+                                                        ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
+                                                            ''
+                                                        : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
+                                                            '',
+                                                    maxLines: 1,
+                                                    style: TextStyle(
+                                                        fontWeight: FontWeight.w500,
+                                                        fontSize: 16,
+                                                        overflow:
+                                                            TextOverflow.ellipsis,
+                                                        color: AppColors.white),
+                                                  ),
+                                          ),
+                                          Text(
+                                            "Online",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w300,
+                                              fontSize: 12,
+                                              color: AppColors.white.withAlpha(220),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        "Online",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w300,
-                                          fontSize: 12,
-                                          color: AppColors.white.withAlpha(220),
-                                        ),
-                                      ),
-                                    ],
+                                    ]),
                                   ),
-                                ]),
-                              ),
+                          ],
+                        ),
+                        chatController.type.value == "GROUP"
+                            ? SizedBox()
+                            : Row(
+                                children: [
+                                  messageController.isVoiceCallOn.value
+                                      ? SizedBox(
+                                          width: Get.width * 0.04,
+                                          height: Get.width * 0.04,
+                                          child: CircularProgressIndicator(
+                                              color: Colors.white),
+                                        )
+                                      : InkWell(
+                                          onTap: () {
+                                            final channelId = chatId;
+                                            debugPrint('StartCAll :-   $channelId');
+                                            final receiverId = (myId ==
+                                                    chatController.chatType.value
+                                                        ?.members?[0].userId)
+                                                ? (chatController.chatType.value
+                                                    ?.members?[1].userId!)
+                                                : (chatController.chatType.value
+                                                    ?.members?[0].userId!);
+                                            final receiverName = myId ==
+                                                    chatController.chatType.value
+                                                        ?.members?[0].userId
+                                                ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
+                                                    ''
+                                                : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
+                                                    '';
+
+                                            messageController.startCall(
+                                                receiverName,
+                                                receiverId.toString(),
+                                                channelId.toString(),
+                                                false,
+                                                context);
+                                          },
+                                          child: CircleAvatar(
+                                            radius: Get.width * 0.05,
+                                            backgroundColor: Colors.white,
+                                            child: Image.asset(
+                                                "assets/images/chat_call.png",
+                                                scale: 2),
+                                          ),
+                                        ),
+                                  SizedBox(
+                                    width: Get.width * 0.05,
+                                  ),
+                                  messageController.isVideoCallOn.value
+                                      ? SizedBox(
+                                          width: Get.width * 0.04,
+                                          height: Get.width * 0.04,
+                                          child: CircularProgressIndicator(
+                                              color: Colors.white),
+                                        )
+                                      : InkWell(
+                                          onTap: () {
+                                            final channelId = chatId;
+                                            debugPrint('StartCAll :-   $channelId');
+                                            final receiverId = (myId ==
+                                                    chatController.chatType.value
+                                                        ?.members?[0].userId)
+                                                ? (chatController.chatType.value
+                                                    ?.members?[1].userId!)
+                                                : (chatController.chatType.value
+                                                    ?.members?[0].userId!);
+                                            final receiverName = myId ==
+                                                    chatController.chatType.value
+                                                        ?.members?[0].userId
+                                                ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
+                                                    ''
+                                                : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
+                                                    '';
+
+                                            messageController.startCall(
+                                                receiverName,
+                                                receiverId.toString(),
+                                                channelId.toString(),
+                                                true,
+                                                context);
+                                          },
+                                          child: CircleAvatar(
+                                            radius: Get.width * 0.05,
+                                            backgroundColor: Colors.white,
+                                            child: Image.asset(
+                                              "assets/images/chat_videocall.png",
+                                              scale: 2,
+                                            ),
+                                          ),
+                                        ),
+                                ],
+                              )
                       ],
                     ),
-                    chatController.type.value == "GROUP"
-                        ? SizedBox()
-                        : Row(
-                            children: [
-                              messageController.isVoiceCallOn.value
-                                  ? SizedBox(
-                                      width: Get.width * 0.04,
-                                      height: Get.width * 0.04,
-                                      child: CircularProgressIndicator(
-                                          color: Colors.white),
-                                    )
-                                  : InkWell(
-                                      onTap: () {
-                                        final channelId = chatId;
-                                        print('StartCAll :-   $channelId');
-                                        final receiverId = (myId ==
-                                                chatController.chatType.value
-                                                    ?.members?[0].userId)
-                                            ? (chatController.chatType.value
-                                                ?.members?[1].userId!)
-                                            : (chatController.chatType.value
-                                                ?.members?[0].userId!);
-                                        final receiverName = myId ==
-                                                chatController.chatType.value
-                                                    ?.members?[0].userId
-                                            ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
-                                                ''
-                                            : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
-                                                '';
-
-                                        messageController.startCall(
-                                            receiverName,
-                                            receiverId.toString(),
-                                            channelId.toString(),
-                                            false,
-                                            context);
-                                      },
-                                      child: CircleAvatar(
-                                        radius: Get.width * 0.05,
-                                        backgroundColor: Colors.white,
-                                        child: Image.asset(
-                                            "assets/images/chat_call.png",
-                                            scale: 2),
-                                      ),
-                                    ),
-                              SizedBox(
-                                width: Get.width * 0.05,
-                              ),
-                              messageController.isVideoCallOn.value
-                                  ? SizedBox(
-                                      width: Get.width * 0.04,
-                                      height: Get.width * 0.04,
-                                      child: CircularProgressIndicator(
-                                          color: Colors.white),
-                                    )
-                                  : InkWell(
-                                      onTap: () {
-                                        final channelId = chatId;
-                                        print('StartCAll :-   $channelId');
-                                        final receiverId = (myId ==
-                                                chatController.chatType.value
-                                                    ?.members?[0].userId)
-                                            ? (chatController.chatType.value
-                                                ?.members?[1].userId!)
-                                            : (chatController.chatType.value
-                                                ?.members?[0].userId!);
-                                        final receiverName = myId ==
-                                                chatController.chatType.value
-                                                    ?.members?[0].userId
-                                            ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
-                                                ''
-                                            : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
-                                                '';
-
-                                        messageController.startCall(
-                                            receiverName,
-                                            receiverId.toString(),
-                                            channelId.toString(),
-                                            true,
-                                            context);
-                                      },
-                                      child: CircleAvatar(
-                                        radius: Get.width * 0.05,
-                                        backgroundColor: Colors.white,
-                                        child: Image.asset(
-                                          "assets/images/chat_videocall.png",
-                                          scale: 2,
-                                        ),
-                                      ),
-                                    ),
-                            ],
-                          )
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            Expanded(
-              child: Obx(
-                () => ListView.builder(
-                  itemCount: chatController.messages.length,
-                  reverse: true,
-                  padding: EdgeInsets.only(
-                      top: Get.height * .01,
-                      left: Get.width * 0.05,
-                      right: Get.width * 0.05),
-                  physics: AlwaysScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
+                Expanded(
+                  child: Obx(
+                    () =>
+                        ListView.builder(
+                          itemCount: chatController.messages.length,
+                          reverse: true,
+                          padding: EdgeInsets.only(
+                              top: Get.height * .01,
+                              left: Get.width * 0.05,
+                              right: Get.width * 0.05),
+                          physics: AlwaysScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
 
-                    final isMyMessage = chatController
-                        .messages[
-                    chatController.messages.length - index - 1]
-                        .senderId ==
-                        myId;
-                    // print("Index ${index}");
-                    return GestureDetector(
-                      onDoubleTap: isMyMessage ? () {
-                        editMessage(chatController.messages[
-                            chatController.messages.length - index - 1]);
-                      } : null,
-                      onLongPress: isMyMessage ? () {
-                        showCupertinoModalPopup(
-                          // barrierDismissible: false,
-                          context: context,
-                          builder: (context) {
-                            return CupertinoActionSheet(
-                              title: Text("Delete Message"),
-                              message: Text(
-                                  "Are you sure you want to delete this message?"),
-                              actions: [
-                                CupertinoActionSheetAction(
-                                  child: Text(
-                                    "Delete",
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                  onPressed: () {
-                                    deleteMessage(
-                                        chatController.messages.length -
-                                            index -
-                                            1);
-                                    Navigator.pop(context);
+                            final isMyMessage = chatController
+                                .messages[
+                            chatController.messages.length - index - 1]
+                                .senderId ==
+                                myId;
+                            // debugPrint("Index ${index}");
+                            return GestureDetector(
+                              onDoubleTap: isMyMessage &&
+                                  chatController.messages[chatController.messages.length - index - 1]
+                                      .sentAt
+                                      .isAfter(DateTime.now().subtract(const Duration(minutes: 5)))
+                                  ? () {
+                                editMessage(chatController.messages[
+                                chatController.messages.length - index - 1]);
+                              } : null,
+                              onLongPress: isMyMessage ? () {
+                                showCupertinoModalPopup(
+                                  // barrierDismissible: false,
+                                  context: context,
+                                  builder: (context) {
+                                    return CupertinoActionSheet(
+                                      title: Text("Delete Message"),
+                                      message: Text(
+                                          "Are you sure you want to delete this message?"),
+                                      actions: [
+                                        CupertinoActionSheetAction(
+                                          child: Text(
+                                            "Delete",
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                          onPressed: () {
+                                            deleteMessage(
+                                                chatController.messages.length -
+                                                    index -
+                                                    1);
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                        CupertinoActionSheetAction(
+                                          child: Text("Cancel"),
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                      ],
+                                    );
                                   },
-                                ),
-                                CupertinoActionSheetAction(
-                                  child: Text("Cancel"),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                              ],
+                                );
+                              }: null,
+                              child: MessageCard(
+                                message: chatController.messages[
+                                chatController.messages.length - index - 1],
+                                isMe: chatController
+                                    .messages[
+                                chatController.messages.length - index - 1]
+                                    .senderId ==
+                                    myId,
+                                onDownload: () => chatController.downloadMedia(
+                                    chatController.messages[
+                                    chatController.messages.length - index - 1]),
+                              ),
                             );
                           },
-                        );
-                      }: null,
-                      child: MessageCard(
-                        message: chatController.messages[
-                            chatController.messages.length - index - 1],
-                        isMe: chatController
-                                .messages[
-                                    chatController.messages.length - index - 1]
-                                .senderId ==
-                            myId,
-                        onDownload: () => chatController.downloadMedia(
-                            chatController.messages[
-                                chatController.messages.length - index - 1]),
-                      ),
-                    );
-                  },
+                        ),
+                  ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(
-                  horizontal: Get.width * 0.05, vertical: 5),
-              child: SizedBox(
-                width: double.infinity,
-                // height: 44,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        style: TextStyle(color: AppColors.white),
-                        focusNode: messageController.focusNode,
-                        controller: msgController,
-                        maxLines: 5,
-                        minLines: 1,
-                        cursorColor: AppColors.white,
-                        decoration: InputDecoration(
-                            isDense: true,
-                            filled: true,
-                            fillColor: AppColors.primary,
-                            prefixIcon: IconButton(
-                              padding: EdgeInsets.only(bottom: 0),
-                              onPressed: messageController.toggleEmojiPicker,
-                              icon: Icon(
-                                Icons.emoji_emotions_outlined,
-                                color: AppColors.white.withAlpha(200),
-                              ),
-                            ),
-                            suffixIcon: IconButton(
-                              onPressed: () {
-                                // messageController.pickImage(
-                                //     ImageSource.gallery, chatId!);
-                                showAttachmentMenu(context, attachKey);
-                              },
-                              icon: Icon(
-                                Icons.attach_file,
-                                color: AppColors.white,
-                              ),
-                            ),
-                            hintText: "Type a message . . .",
-                            hintStyle: TextStyle(
-                                color: AppColors.white.withAlpha(155)),
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide.none,
-                              borderRadius: BorderRadius.circular(20),
-                            )),
-                      ),
-                    ),
-                    SizedBox(
-                      width: Get.width * 0.02,
-                    ),
-                    Obx(
-                      () => messageController.isLoading.value
-                          ? SizedBox(
-                              height: Get.height * 0.045,
-                              width: Get.width * 0.12,
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  color: AppColors.primary,
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: Get.width * 0.05, vertical: 5),
+                  child: SizedBox(
+                    width: double.infinity,
+                    // height: 44,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            style: TextStyle(color: AppColors.white),
+                            focusNode: messageController.focusNode,
+                            controller: msgController,
+                            maxLines: 5,
+                            minLines: 1,
+                            cursorColor: AppColors.white,
+                            decoration: InputDecoration(
+                                isDense: true,
+                                filled: true,
+                                fillColor: AppColors.primary,
+                                prefixIcon: IconButton(
+                                  padding: EdgeInsets.only(bottom: 0),
+                                  onPressed: messageController.toggleEmojiPicker,
+                                  icon: Icon(
+                                    Icons.emoji_emotions_outlined,
+                                    color: AppColors.white.withAlpha(200),
+                                  ),
                                 ),
-                              ),
-                            )
-                          : Container(
-                              height: Get.height * 0.045,
-                              width: Get.width * 0.12,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: InkWell(
-                                  key: attachKey,
-                                  onTap: sendMessage,
-                                  child: Icon(
-                                    Icons.send,
-                                    size: Get.width * 0.05,
+                                suffixIcon: IconButton(
+                                  onPressed: () {
+                                    // messageController.pickImage(
+                                    //     ImageSource.gallery, chatId!);
+                                    showAttachmentMenu(context, attachKey);
+                                  },
+                                  icon: Icon(
+                                    Icons.attach_file,
                                     color: AppColors.white,
-                                  )),
+                                  ),
+                                ),
+                                hintText: "Type a message . . .",
+                                hintStyle: TextStyle(
+                                    color: AppColors.white.withAlpha(155)),
+                                border: OutlineInputBorder(
+                                  borderSide: BorderSide.none,
+                                  borderRadius: BorderRadius.circular(20),
+                                )),
+                          ),
+                        ),
+                        SizedBox(
+                          width: Get.width * 0.02,
+                        ),
+                        Obx(
+                          () => messageController.isLoading.value
+                              ? SizedBox(
+                                  height: Get.height * 0.045,
+                                  width: Get.width * 0.12,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                )
+                              : Container(
+                                  height: Get.height * 0.045,
+                                  width: Get.width * 0.12,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: InkWell(
+                                      key: attachKey,
+                                      onTap: sendMessage,
+                                      child: Icon(
+                                        Icons.send,
+                                        size: Get.width * 0.05,
+                                        color: AppColors.white,
+                                      )),
 
-                              // Row(
-                              //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              //   children: [
-                              //     InkWell(
-                              //         onTap: _sendMessage,
-                              //         child:
-                              //         Image.asset(
-                              //           "assets/images/chat_add.png",
-                              //           scale: 2,
-                              //         ),
-                              //     ),
-                              //     Image.asset(
-                              //       "assets/images/chat_mic.png",
-                              //       scale: 2,
-                              //     ),
-                              //   ],
-                              // ),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 5,
-            ),
-            Obx(() => Offstage(
-                  offstage: !messageController.isEmojiVisible.value,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: EmojiPicker(
-                      textEditingController: msgController,
-                      config: Config(
-                          height: 280,
-                          checkPlatformCompatibility: true,
-                          emojiViewConfig: EmojiViewConfig(
-                            columns: 7,
-                            emojiSizeMax: 25,
-                            backgroundColor: Colors.transparent,
-                          ),
-                          categoryViewConfig: CategoryViewConfig(
-                            backgroundColor: Colors.transparent,
-                            indicatorColor: AppColors.primary,
-                            iconColorSelected: AppColors.primary,
-                          ),
-                          bottomActionBarConfig:
-                              BottomActionBarConfig(enabled: false)),
+                                  // Row(
+                                  //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  //   children: [
+                                  //     InkWell(
+                                  //         onTap: _sendMessage,
+                                  //         child:
+                                  //         Image.asset(
+                                  //           "assets/images/chat_add.png",
+                                  //           scale: 2,
+                                  //         ),
+                                  //     ),
+                                  //     Image.asset(
+                                  //       "assets/images/chat_mic.png",
+                                  //       scale: 2,
+                                  //     ),
+                                  //   ],
+                                  // ),
+                                ),
+                        ),
+                      ],
                     ),
                   ),
-                )),
+                ),
+                SizedBox(
+                  height: 5,
+                ),
+                Obx(() => Offstage(
+                      offstage: !messageController.isEmojiVisible.value,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: EmojiPicker(
+                          textEditingController: msgController,
+                          config: Config(
+                              height: 280,
+                              checkPlatformCompatibility: true,
+                              emojiViewConfig: EmojiViewConfig(
+                                columns: 7,
+                                emojiSizeMax: 25,
+                                backgroundColor: Colors.transparent,
+                              ),
+                              categoryViewConfig: CategoryViewConfig(
+                                backgroundColor: Colors.transparent,
+                                indicatorColor: AppColors.primary,
+                                iconColorSelected: AppColors.primary,
+                              ),
+                              bottomActionBarConfig:
+                                  BottomActionBarConfig(enabled: false)),
+                        ),
+                      ),
+                    )),
+              ],
+            ),
           ],
         ),
       ),
@@ -633,5 +660,31 @@ Widget shimmerHeader() {
         )
       ],
     ),
+  );
+}
+
+Widget chatBackground(String? bgUrl) {
+  //Default
+  if (bgUrl == null || bgUrl.isEmpty) {
+    return Image.asset(
+      "assets/images/chat_bg_default.png",
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+    );
+  }
+
+  // Network Background
+  return Image.network(
+    bgUrl,
+    fit: BoxFit.cover,
+    width: double.infinity,
+    height: double.infinity,
+    errorBuilder: (_, __, ___) {
+      return Image.asset(
+        "assets/images/chat_bg_default.png",
+        fit: BoxFit.cover,
+      );
+    },
   );
 }

@@ -1,6 +1,7 @@
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
+import 'package:chatify/controllers/theme_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,12 +16,15 @@ class VoiceCallHistoryScreen extends StatelessWidget {
   final callHistoryController = Get.put(CallHistoryController());
   final profileController = Get.find<ProfileController>();
   final messageController = Get.put(MessageController());
+  final themeController = Get.find<ThemeController>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Voice Calls"),
+        backgroundColor:themeController.isDarkMode.value ? AppColors.black: AppColors.white,
+        title: Text("Voice Calls",style: TextStyle(
+            fontSize: 24, fontWeight: FontWeight.w600,color: themeController.isDarkMode.value ? AppColors.white: AppColors.black),),
       ),
       body: Obx(() {
         if (callHistoryController.isLoading.value) {
@@ -81,7 +85,7 @@ class VoiceCallHistoryScreen extends StatelessWidget {
                   return ListTile(
                       leading: CircleAvatar(
                         backgroundImage:
-                            NetworkImage(call.caller.profileImageUrl!),
+                            NetworkImage(call.caller.profileImageUrl ?? ''),
                       ),
                       title: Text(
                         call.isGroupCall ? call.groupName ?? 'Group Call' :

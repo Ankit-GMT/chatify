@@ -127,6 +127,7 @@ class VoiceCallController extends GetxController with WidgetsBindingObserver {
       isVideo: false,
     );
   }
+
   void onCallTimeout() async {
     if (callUIState.value == CallUIState.connected) return;
 
@@ -141,7 +142,6 @@ class VoiceCallController extends GetxController with WidgetsBindingObserver {
 
     FlutterCallkitIncoming.endAllCalls();
   }
-
 
 
 

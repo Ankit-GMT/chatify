@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfileAvatar extends StatelessWidget {
-  final String imageUrl;
+  final String? imageUrl;
   final double radius;
 
   const ProfileAvatar({super.key, required this.imageUrl, required this.radius});
@@ -10,7 +10,7 @@ class ProfileAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CachedNetworkImage(
-      imageUrl: imageUrl,
+      imageUrl: imageUrl ?? '',
       imageBuilder: (context, imageProvider) => CircleAvatar(
         radius: radius,
         backgroundImage: imageProvider,

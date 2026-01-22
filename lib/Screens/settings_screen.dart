@@ -1,8 +1,12 @@
+import 'package:chatify/constants/apis.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/theme_controller.dart';
+import 'package:chatify/widgets/custom_text_screen.dart';
 import 'package:chatify/widgets/custom_tile.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -35,7 +39,7 @@ class SettingsScreen extends StatelessWidget {
                   },
                   icon: Icon(Icons.arrow_left),
                 ),
-                SizedBox(width: Get.width * 0.24),
+                SizedBox(width: Get.width * 0.26),
                 Text(
                   "Settings",
                   style: TextStyle(
@@ -60,6 +64,8 @@ class SettingsScreen extends StatelessWidget {
               isTheme: true,
               icon: Obx(
                 () => Switch(
+                  activeThumbColor: AppColors.primary,
+                  inactiveThumbColor: AppColors.primary,
                   value: themeController.isDarkMode.value,
                   onChanged: (value) {
                     themeController.toggleTheme();
@@ -70,27 +76,44 @@ class SettingsScreen extends StatelessWidget {
             CustomTile(
               title: "About Us",
               image: "assets/images/setting_about.png",
-              onTap: () {},
+              onTap: () {
+                Get.to(CustomTextScreen(title: "About Us", content: aboutUs));
+              },
             ),
             CustomTile(
               title: "Contact Us",
               image: "assets/images/setting_contact.png",
-              onTap: () {},
+              onTap: () {
+                Get.to(CustomTextScreen(title: "Contact Us", content: aboutUs));
+              },
             ),
             CustomTile(
               title: "Privacy Policy",
               image: "assets/images/setting_privacy.png",
-              onTap: () {},
+              onTap: () {
+                Get.to(CustomTextScreen(title: "Privacy Policy", content: privacyPolicy));
+              },
             ),
             CustomTile(
-              title: "Support",
-              image: "assets/images/setting_support.png",
-              onTap: () {},
+              title: "Terms and Conditions",
+              image: "assets/images/setting_terms.png",
+              onTap: () {
+                Get.to(CustomTextScreen(title: "Terms and Conditions", content: terms));
+              },
             ),
             CustomTile(
               title: "Invite",
               image: "assets/images/setting_invite.png",
-              onTap: () {},
+              onTap: () {
+                if (kIsWeb) {
+                  Get.snackbar('Not supported', 'Sharing is not supported on web');
+                } else {
+                  Share.share(
+                    'Check out Chatify https://example.com',
+                    subject: 'Chatify',
+                  );
+                }
+              },
             ),
             Text(
               "Version 1.0.0",

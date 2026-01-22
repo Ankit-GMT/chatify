@@ -25,6 +25,10 @@ class MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (message.type == "SYSTEM_BACKGROUND_CHANGE") {
+      return _buildSystemMessage();
+    }
+
     return Column(
       crossAxisAlignment:
           isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -34,7 +38,7 @@ class MessageCard extends StatelessWidget {
             : Row(
                 children: [
                   ProfileAvatar(
-                      imageUrl: message.senderProfileImageUrl, radius: 10),
+                      imageUrl: message.senderProfileImageUrl ?? '', radius: 10),
                   SizedBox(width: 5),
                   Text("${message.senderFirstName} ${message.senderLastName}",
                       style: TextStyle(fontSize: 10)),
@@ -66,6 +70,7 @@ class MessageCard extends StatelessWidget {
                     if (message.type == "VIDEO") buildVideoMessage(),
                     if (message.type == "DOCUMENT") buildDocumentMessage(),
                     if (message.type == "TEXT") buildTextMessage(),
+
                     SizedBox(height: 6),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -92,6 +97,30 @@ class MessageCard extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+
+  // for other messages
+  Widget _buildSystemMessage() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withAlpha(125),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            message.content,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.white70,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -127,7 +156,7 @@ class MessageCard extends StatelessWidget {
                         icon:
                             Icon(Icons.download, color: Colors.white, size: 32),
                         onPressed: () {
-                          print("Download tapped");
+                          debugPrint("Download tapped");
                           onDownload?.call();
                         },
                       )
@@ -207,7 +236,7 @@ class MessageCard extends StatelessWidget {
             child: InkWell(
               onTap: () {
                 openAudioPlayerSheet(
-                    Get.context!, message.localPath!, message.fileName!);
+                    Get.context!, message.localPath ?? message.fileUrl!, message.fileName!);
               },
               child: Container(color: Colors.transparent),
             ),

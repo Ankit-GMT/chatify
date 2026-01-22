@@ -3,11 +3,11 @@ import 'package:get/get.dart';
 
 class AppColors {
   // Primary colors
-  static const Color primary = Color(0xffC35E31); // Brown (used in your tab)
+  static const Color primary = Color(0xffC35E31);
   static const Color secondary =
       Color(0xffF1D8CD); // Light brown (used in your tab)
 
-  // static const Color primary = Colors.black; // Brown (used in your tab)
+  // static const Color primary = Colors.black;
   // static const Color secondary = Colors.grey;
   static const Color chatBackground = Color(0xfff0e6e2);
 

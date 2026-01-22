@@ -6,6 +6,7 @@ import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/services/notification_service.dart';
 import 'package:chatify/sound_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:get/get.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
@@ -191,6 +192,66 @@ class VideoCallController extends GetxController {
     // End system call UI
     FlutterCallkitIncoming.endAllCalls();
   }
+
+  var isScreenSharing = false.obs;
+
+  Future<void> startScreenShare() async {
+    try {
+      // 1. Disable PiP as it can conflict with media projection overlays
+      MethodChannel("chatify/pip").invokeMethod("disablePip");
+
+      // 2. Start screen capture
+      await _engine.startScreenCapture(
+        const ScreenCaptureParameters2(
+          captureAudio: true,
+          captureVideo: true,
+          videoParams: ScreenVideoParameters(
+            frameRate: 15,
+            bitrate: 2000,
+            dimensions: VideoDimensions(width: 720, height: 1280),
+          ),
+        ),
+      );
+
+      // 3. Update Channel Media Options (Corrected field names for v6.x)
+      await _engine.updateChannelMediaOptions(
+        const ChannelMediaOptions(
+          publishCameraTrack: false,         // Turn off camera
+          publishMicrophoneTrack: true,      // Keep mic on
+          publishScreenCaptureVideo: true,   // IMPORTANT: Switch to screen
+          publishScreenCaptureAudio: true,   // IMPORTANT
+        ),
+      );
+
+      isScreenSharing.value = true;
+    } catch (e) {
+      debugPrint("Error starting screen share: $e");
+    }
+  }
+
+  Future<void> stopScreenShare() async {
+    try {
+      await _engine.stopScreenCapture();
+
+      // Revert media options back to camera
+      await _engine.updateChannelMediaOptions(
+        const ChannelMediaOptions(
+          publishCameraTrack: true,
+          publishMicrophoneTrack: true,
+          publishScreenCaptureVideo: false,
+          publishScreenCaptureAudio: false,
+        ),
+      );
+
+      isScreenSharing.value = false;
+      MethodChannel("chatify/pip").invokeMethod("enablePip");
+    } catch (e) {
+      debugPrint("Error stopping screen share: $e");
+    }
+  }
+
+
+
 
 
   @override

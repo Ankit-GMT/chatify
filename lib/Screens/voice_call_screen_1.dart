@@ -45,7 +45,6 @@ class VoiceCallScreen1 extends StatelessWidget {
         if(result == null)
           {
             FloatingCallBubbleService.to.isVisible.value = true;
-
           }
       },
       child: Scaffold(
@@ -157,7 +156,7 @@ class VoiceCallScreen1 extends StatelessWidget {
                     Container(
                       height: 60,
                       decoration: BoxDecoration(
-                        color: Colors.black54,
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(40),
                       ),
                       child: Row(
@@ -181,6 +180,7 @@ class VoiceCallScreen1 extends StatelessWidget {
                             icon: Icons.call_end,
                             onTap: controller.endCall,
                             color: Colors.redAccent,
+                            bgColor: AppColors.white
                           ),
                         ],
                       ),
@@ -252,14 +252,12 @@ class VoiceCallScreen1 extends StatelessWidget {
     required IconData icon,
     required VoidCallback onTap,
     Color color = Colors.white,
+    Color bgColor = Colors.transparent
   }) {
-    return CircleAvatar(
-      radius: 28,
-      backgroundColor: Colors.transparent,
-      child: IconButton(
-        icon: Icon(icon, color: color),
-        onPressed: onTap,
-      ),
+    return IconButton(
+      icon: Icon(icon, color: color),
+      color: bgColor,
+      onPressed: onTap,
     );
   }
 

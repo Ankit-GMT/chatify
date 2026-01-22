@@ -5,7 +5,7 @@ class Message {
   final int senderId;
   final String senderFirstName;
   final String senderLastName;
-  final String senderProfileImageUrl;
+  final String? senderProfileImageUrl;
 
   final String content;
   final String type;

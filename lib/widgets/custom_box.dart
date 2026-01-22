@@ -5,12 +5,14 @@ import 'package:get/get.dart';
 class CustomBox extends StatelessWidget {
   final String image;
   final String title;
-  final Function() onTap;
+  final bool isLoading;
+  final Function()? onTap;
 
   const CustomBox(
       {super.key,
       required this.image,
       required this.title,
+      this.isLoading = false,
       required this.onTap});
 
   @override
@@ -25,22 +27,32 @@ class CustomBox extends StatelessWidget {
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            SizedBox(
-                height: 24,
-                width: 24,
-                child: Image.asset(
-                  image,
-                  scale: 4,
-                )),
-            Text(
-              title,
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500,color: AppColors.white),
-            ),
-          ],
-        ),
+        child:  Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  isLoading
+                      ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(color: Colors.white),
+                  )
+                      :
+                  SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: Image.asset(
+                        image,
+                        scale: 4,
+                      )),
+                  Text(
+                    title,
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.white),
+                  ),
+                ],
+              ),
       ),
     );
   }
