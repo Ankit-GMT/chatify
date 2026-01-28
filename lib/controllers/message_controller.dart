@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:chatify/Screens/group_video_screen.dart';
 import 'package:chatify/Screens/group_video_screen1.dart';
-import 'package:chatify/Screens/group_voice_screen.dart';
 import 'package:chatify/Screens/group_voice_screen1.dart';
 import 'package:chatify/Screens/media_preview_screen.dart';
 import 'package:chatify/Screens/video_call_screen1.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:chatify/constants/apis.dart';
+import 'package:chatify/controllers/chat_screen_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/message.dart';
 import 'package:chatify/services/api_service.dart';
@@ -21,45 +20,143 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:media_scanner/media_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 class MessageController extends GetxController {
   final String baseUrl = APIs.url;
   final box = GetStorage();
   var isLoading = false.obs;
 
+  //For  web sockets
 
-  // for send message
-  Future<bool> sendMessage({
+  late StompClient stompClient;
+
+  var isSocketConnected = false.obs;
+  var typingUsers = <int, bool>{}.obs;
+
+  void connectSocket() {
+    final token = box.read("accessToken");
+
+    final wsUrl = "${baseUrl.replaceFirst("http", "ws")}/ws";
+
+    stompClient = StompClient(
+      config: StompConfig(
+        url: wsUrl,
+        stompConnectHeaders: {
+          "Authorization": "Bearer $token",
+        },
+        webSocketConnectHeaders: {
+          "Authorization": "Bearer $token",
+        },
+        onConnect: onSocketConnected,
+        onWebSocketError: (error) {
+          debugPrint("❌ Socket error: $error");
+        },
+        onStompError: (frame) {
+          debugPrint("❌ STOMP error: ${frame.body}");
+        },
+        onDisconnect: (frame) {
+          debugPrint("🔌 Socket disconnected");
+        },
+      ),
+    );
+
+    stompClient.activate();
+  }
+
+
+
+  void onSocketConnected(StompFrame frame) {
+    isSocketConnected.value = true;
+    debugPrint("✅ Socket connected");
+
+    stompClient.subscribe(
+      destination: "/user/queue/messages",
+      callback: (frame) {
+        final data = jsonDecode(frame.body!);
+        final message = Message.fromJson(data);
+
+        final chatController = Get.find<ChatScreenController>();
+
+        //  add only if belongs to current chat
+        if (message.roomId == chatController.chatId) {
+          // prevent duplicates
+          if (!chatController.messages.any((m) => m.id == message.id)) {
+            chatController.messages.add(message);
+            chatController.messages.refresh();
+          }
+        }
+      },
+    );
+  }
+
+
+
+  Future<bool> sendMessageWs({
     required int chatId,
+    required int recipientId,
     required String content,
     String type = "TEXT",
   }) async {
-    try {
-      isLoading.value = true;
-      final res = await ApiService.request(
-          url: "$baseUrl/api/chats/$chatId/messages",
-          method: "POST",
-          body: {
-            "content": content,
-            "type": type,
-          });
+    if (!isSocketConnected.value) return false;
 
-      isLoading.value = false;
+    stompClient.send(
+      destination: "/app/send",
+      body: jsonEncode({
+        "roomId": chatId,
+        "recipientId": recipientId,
+        "content": content,
+        "type": type,
+      }),
+    );
 
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        debugPrint("Message sent: ${res.body}");
-
-        return true;
-      } else {
-        debugPrint("Failed to send: ${res.statusCode} ${res.body}");
-        return false;
-      }
-    } catch (e) {
-      isLoading.value = false;
-      debugPrint("Error: $e");
-      return false;
-    }
+    return true;
   }
+
+
+  void sendTyping(int chatId) {
+    if (!isSocketConnected.value) return;
+
+    stompClient.send(
+      destination: "/app/chat.typing/$chatId",
+      body: jsonEncode({"typing": true}),
+    );
+  }
+
+
+
+  // for send message
+  // Future<bool> sendMessage({
+  //   required int chatId,
+  //   required String content,
+  //   String type = "TEXT",
+  // }) async {
+  //   try {
+  //     isLoading.value = true;
+  //     final res = await ApiService.request(
+  //         url: "$baseUrl/api/chats/$chatId/messages",
+  //         method: "POST",
+  //         body: {
+  //           "content": content,
+  //           "type": type,
+  //         });
+  //
+  //     isLoading.value = false;
+  //
+  //     if (res.statusCode == 200 || res.statusCode == 201) {
+  //       debugPrint("Message sent: ${res.body}");
+  //
+  //       return true;
+  //     } else {
+  //       debugPrint("Failed to send: ${res.statusCode} ${res.body}");
+  //       return false;
+  //     }
+  //   } catch (e) {
+  //     isLoading.value = false;
+  //     debugPrint("Error: $e");
+  //     return false;
+  //   }
+  // }
 
   Future<bool> deleteMessage(int chatId, int messageId) async {
     try {
@@ -550,7 +647,7 @@ class MessageController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
+    connectSocket();
     // int chatId = Get.arguments ?? 10;
     // fetchChatType(chatId);
     // loadMessages(chatId);
@@ -561,5 +658,12 @@ class MessageController extends GetxController {
         isEmojiVisible.value = false;
       }
     });
+  }
+
+  @override
+  void onClose() {
+    // TODO: implement onClose
+    stompClient.deactivate();
+    super.onClose();
   }
 }

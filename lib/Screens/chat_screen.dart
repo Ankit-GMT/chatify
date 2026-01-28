@@ -29,6 +29,7 @@ class ChatScreen extends StatelessWidget {
 
     TextEditingController msgController = TextEditingController();
 
+
     void showAttachmentMenu(BuildContext context, GlobalKey key) {
       final RenderBox renderBox =
           key.currentContext!.findRenderObject() as RenderBox;
@@ -76,14 +77,25 @@ class ChatScreen extends StatelessWidget {
     Future<void> sendMessage() async {
       if (msgController.text.trim().isEmpty) return;
 
-      bool ok = await messageController.sendMessage(
+      final box = GetStorage();
+      final myId = box.read("userId");
+
+      final receiverId = (myId ==
+          chatController.chatType.value
+              ?.members?[0].userId)
+          ? (chatController.chatType.value
+          ?.members?[1].userId!)
+          : (chatController.chatType.value
+          ?.members?[0].userId!);
+
+      bool ok = await messageController.sendMessageWs(
         chatId: chatId!,
-        content: msgController.text.trim(),
+        content: msgController.text.trim(), recipientId: receiverId!,
       );
 
       if (ok) {
         msgController.clear();
-        chatController.loadMessages(chatId!); // reload after sending
+        // chatController.loadMessages(chatId!); // reload after sending
       }
     }
 
@@ -91,7 +103,7 @@ class ChatScreen extends StatelessWidget {
       bool ok = await messageController.deleteMessage(
           chatId!, chatController.messages[index].id);
       if (ok) {
-        chatController.loadMessages(chatId!); // reload after delete
+        // chatController.loadMessages(chatId!); // reload after delete
       }
     }
 
@@ -110,7 +122,7 @@ class ChatScreen extends StatelessWidget {
           );
           if (ok) {
             Get.back();
-            chatController.loadMessages(chatId!); // reload messages
+            // chatController.loadMessages(chatId!); // reload messages
           }
         },
       );

@@ -47,7 +47,7 @@ class CustomTextfield extends StatelessWidget {
         onChanged: onChanged,
         obscureText: isPassword,
         maxLength:isPhone ? 10 : null,
-        keyboardType:
+        keyboardType: isPhone ? TextInputType.number :
         isEmail ? TextInputType.emailAddress : TextInputType.text,
         style: TextStyle(color: AppColors.black),
         decoration: InputDecoration(

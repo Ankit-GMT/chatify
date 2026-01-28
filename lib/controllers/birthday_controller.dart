@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:chatify/Screens/self_birthday_sheet.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:chatify/services/notification_service.dart';
@@ -136,11 +137,47 @@ class BirthdayController extends GetxController {
 
     if (data != null && data["isBirthdayToday"] == true) {
       box.write("my_birthday_shown", today);
-      // showMyBirthdayDialog(data["age"]);
+      handleSelfBirthdayFromApi(data['age'],data['firstName']);
     }
   }
 
+  void handleSelfBirthdayFromApi(int age, String firstName) {
+    final context = NotificationService().navigatorKey.currentContext;
+    if (context == null) return;
 
+    try{
+      showGeneralDialog(
+        context: context,
+        barrierDismissible: true,
+        barrierLabel: "BirthdaySheet",
+        barrierColor: Colors.black.withOpacity(0.7),
+        transitionDuration: const Duration(milliseconds: 400),
+        pageBuilder: (_, __, ___) {
+          return Align(
+            alignment: Alignment.topCenter,
+            child: SelfBirthdaySheet(
+              age: age,
+              firstName: firstName,
+            ),
+          );
+        },
+        transitionBuilder: (_, animation, __, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, -1),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOut,
+            )),
+            child: child,
+          );
+        },
+      );
+    } catch (e) {
+      print("Error showing birthday from API: $e");
+    }
+  }
 
 
 }

@@ -65,8 +65,8 @@ class Message {
       roomId: json['roomId'],
       senderId: json['senderId'],
 
-      senderFirstName: json['senderFirstName'],
-      senderLastName: json['senderLastName'],
+      senderFirstName: json['senderFirstName'] ?? "",
+      senderLastName: json['senderLastName'] ?? "",
       senderProfileImageUrl: json['senderProfileImageUrl'],
 
       content: json['content'] ?? "",

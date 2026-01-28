@@ -39,6 +39,10 @@ class BroadCastController extends GetxController{
     recordedDuration.value = 0;
   }
 
+  Rx<DateTime?> selectedDate = Rx<DateTime?>(null);
+  Rx<TimeOfDay?> selectedTime = Rx<TimeOfDay?>(null);
+
+
 
   Future<void> sendBroadcastMessage({
     required String content,

@@ -20,6 +20,8 @@ class CreateAccountScreen extends StatelessWidget {
     final _passwordController = TextEditingController();
     final _confirmPasswordController = TextEditingController();
 
+    final RegExp nameRegex = RegExp(r'^[a-zA-Z ]+$');
+
     return Scaffold(
       // backgroundColor: Colors.white,
       body: Container(
@@ -62,7 +64,10 @@ class CreateAccountScreen extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(left: 15, top: Get.height * 0.055,),
+                    padding: EdgeInsets.only(
+                      left: 15,
+                      top: Get.height * 0.055,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
@@ -70,12 +75,12 @@ class CreateAccountScreen extends StatelessWidget {
                           color: AppColors.iconGrey,
                           style: ButtonStyle(
                             backgroundColor:
-                            WidgetStatePropertyAll(AppColors.white),
+                                WidgetStatePropertyAll(AppColors.white),
                             shape: WidgetStatePropertyAll(
                               RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                   side:
-                                  BorderSide(color: Colors.grey.shade200)),
+                                      BorderSide(color: Colors.grey.shade200)),
                             ),
                           ),
                           onPressed: () {
@@ -186,6 +191,24 @@ class CreateAccountScreen extends StatelessWidget {
                   onTap: authController.isLoading.value
                       ? null
                       : () {
+                          //first name and last name
+                          if (!nameRegex
+                              .hasMatch(_firstNameController.text.trim())) {
+                            Get.snackbar(
+                              "Error",
+                              "First name should contain only letters",
+                            );
+                            return;
+                          }
+
+                          if (!nameRegex
+                              .hasMatch(_lastNameController.text.trim())) {
+                            Get.snackbar(
+                              "Error",
+                              "Last name should contain only letters",
+                            );
+                            return;
+                          }
                           //email validation
                           if (!GetUtils.isEmail(_emailController.text.trim())) {
                             Get.snackbar("Error", "Enter a valid email");

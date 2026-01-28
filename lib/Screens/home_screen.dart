@@ -1,10 +1,8 @@
 import 'package:chatify/Screens/broadcast/broadcast_screen.dart';
 import 'package:chatify/Screens/broadcast/scheduled_broadcasts_list_screen.dart';
-import 'package:chatify/Screens/broadcast/voice_broadcast_screen.dart';
 import 'package:chatify/Screens/create_group_screen.dart';
 import 'package:chatify/Screens/edit_profile_screen.dart';
 import 'package:chatify/Screens/settings_screen.dart';
-import 'package:chatify/Screens/voice_recorder_screen.dart';
 import 'package:chatify/TabView%20Screens/all_chats.dart';
 import 'package:chatify/TabView%20Screens/contacts_screen.dart';
 import 'package:chatify/TabView%20Screens/group_chats.dart';
@@ -12,6 +10,7 @@ import 'package:chatify/TabView%20Screens/unread_chats.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/controllers/birthday_controller.dart';
+import 'package:chatify/controllers/broadcast_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/controllers/theme_controller.dart';
@@ -84,41 +83,67 @@ class HomeScreen extends StatelessWidget {
                             : SizedBox.shrink()),
 
                         // The Button
-                        GestureDetector(
-                          onLongPressStart: (_) =>
-                              tabController.startRecording(),
-                          onLongPressEnd: (_) => tabController.stopRecording(),
-                          child: FloatingActionButton(
-                            backgroundColor: themeController.isDarkMode.value
-                                ? AppColors.white
-                                : AppColors.black,
-                            child: Obx(
-                              () => tabController.isRecording.value
-                                  ? Icon(
-                                      Icons.stop,
-                                      color: themeController.isDarkMode.value
-                                          ? AppColors.black
-                                          : AppColors.white,
-                                    )
-                                  : Image.asset(
-                                      "assets/images/profile_voice.png",
-                                      scale: 3,
-                                      color: themeController.isDarkMode.value
-                                          ? AppColors.black
-                                          : AppColors.white,
-                                    ),
-                              //     Icon(
-                              //   Icons.stop : Icons.mic,
-                              //   color: tabController.isRecording.value ? Colors.red : (themeController.isDarkMode.value ? Colors.black : Colors.white),
-                              // )
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          spacing: 5,
+                          children: [
+                            FloatingActionButton(
+                              heroTag: null,
+                              backgroundColor: themeController.isDarkMode.value
+                                  ? AppColors.white
+                                  : AppColors.black,
+                              child: Icon(
+                                Icons.schedule,
+                                color: themeController.isDarkMode.value
+                                    ? AppColors.black
+                                    : AppColors.white,
+                              ),
+                              onPressed: () {
+                                openBroadcastBottomSheet(context);
+                              },
                             ),
-                            onPressed: () {
-                              Get.snackbar(
-                                  "Record", "Long press to start recording",
-                                  backgroundColor: AppColors.primary,
-                                  colorText: AppColors.white);
-                            },
-                          ),
+                            GestureDetector(
+                              onLongPressStart: (_) =>
+                                  tabController.startRecording(),
+                              onLongPressEnd: (_) =>
+                                  tabController.stopRecording(),
+                              child: FloatingActionButton(
+                                heroTag: null,
+                                backgroundColor:
+                                    themeController.isDarkMode.value
+                                        ? AppColors.white
+                                        : AppColors.black,
+                                child: Obx(
+                                  () => tabController.isRecording.value
+                                      ? Icon(
+                                          Icons.stop,
+                                          color:
+                                              themeController.isDarkMode.value
+                                                  ? AppColors.black
+                                                  : AppColors.white,
+                                        )
+                                      : Image.asset(
+                                          "assets/images/profile_voice.png",
+                                          scale: 3,
+                                          color:
+                                              themeController.isDarkMode.value
+                                                  ? AppColors.black
+                                                  : AppColors.white,
+                                        ),
+                                  //     Icon(
+                                  //   Icons.stop : Icons.mic,
+                                  //   color: tabController.isRecording.value ? Colors.red : (themeController.isDarkMode.value ? Colors.black : Colors.white),
+                                  // )
+                                ),
+                                onPressed: () {
+                                  Get.snackbar(
+                                      "Record", "Long press to start recording",
+                                      backgroundColor: AppColors.primary,
+                                      colorText: AppColors.white);
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     )
@@ -237,10 +262,16 @@ class HomeScreen extends StatelessWidget {
                         Row(
                           spacing: 10,
                           children: [
+                            IconButton(
+                              onPressed: () {
+                                birthdayController.handleSelfBirthdayFromApi(
+                                    25, "Alex");
+                              },
+                              icon: Icon(Icons.account_circle),
+                            ),
                             birthdayController.listBirthdays.isNotEmpty
                                 ? GestureDetector(
                                     onTap: () {
-                                      // GetStorage().remove("birthday_shown");
                                       birthdayController.handleBirthdayFromApi(
                                           birthdayController.listBirthdays);
                                     },
@@ -644,6 +675,300 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  //For scheduled broadcast
+
+  void openBroadcastBottomSheet(BuildContext context) {
+    final BroadCastController controller = Get.put(BroadCastController());
+
+    showModalBottomSheet(
+      context: context,
+
+      isScrollControlled: true,
+      // isDismissible: false,
+      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade400,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+
+                    const Text(
+                      "Messages",
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    /// MESSAGE FIELD (KEYBOARD SAFE)
+                    TextField(
+                      controller: controller.messageController,
+                      // autofocus: true,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: "Message",
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    /// DATE + TIME
+                    Obx(() => Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final date = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime(2030),
+                                  );
+                                  if (date != null) {
+                                    controller.selectedDate.value = date;
+                                  }
+                                },
+                                child: _dateTimeBox(
+                                  text: controller.selectedDate.value == null
+                                      ? "Select Date"
+                                      : controller.selectedDate.value!
+                                          .toString()
+                                          .split(' ')
+                                          .first,
+                                  icon: Icons.calendar_today,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final time = await showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay.now(),
+                                  );
+                                  if (time != null) {
+                                    controller.selectedTime.value = time;
+                                  }
+                                },
+                                child: _dateTimeBox(
+                                  text: controller.selectedTime.value == null
+                                      ? "Select Time"
+                                      : controller.selectedTime.value!
+                                          .format(context),
+                                  icon: Icons.access_time,
+                                ),
+                              ),
+                            ),
+                          ],
+                        )),
+
+                    const SizedBox(height: 20),
+
+                    /// SEND BUTTON (ALWAYS VISIBLE)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            foregroundColor: AppColors.white),
+                        onPressed: () {
+                          if (controller.messageController.text
+                              .trim()
+                              .isEmpty) {
+                            Get.snackbar("Error", "Message cannot be empty");
+                            return;
+                          }
+
+                          Get.back();
+                          openContactSelectionSheet(context);
+                        },
+                        child: const Text(
+                          "Send",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    ).whenComplete(() {
+      // CLEAR EVERYTHING WHEN SHEET CLOSES
+      controller.messageController.clear();
+      controller.selectedDate.value = null;
+      controller.selectedTime.value = null;
+      controller.selectedUserIds.clear();
+    });;
+  }
+
+  void openContactSelectionSheet(BuildContext context) {
+    final BroadCastController controller = Get.find<BroadCastController>();
+    final tabController = Get.find<TabBarController>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SizedBox(
+          height: Get.height * 0.8, // 80% height
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+
+                /// Drag Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                const Text(
+                  "Select Contacts",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+
+                const Divider(),
+
+                /// CONTACT LIST
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: tabController.registeredUsers.length,
+                    itemBuilder: (_, index) {
+                      final user = tabController.registeredUsers[index];
+                      return Obx(() {
+                        final selected =
+                            controller.selectedUserIds.contains(user.userId);
+                        return ListTile(
+                          onTap: () => controller.toggleUser(user.userId!),
+                          leading: CircleAvatar(
+                            backgroundImage:
+                                NetworkImage(user.profileImageUrl ?? ''),
+                          ),
+                          title: Text("${user.firstName} ${user.lastName}"),
+                          trailing: selected
+                              ? const Icon(Icons.check_circle,
+                                  color: Colors.green)
+                              : const Icon(Icons.circle_outlined),
+                        );
+                      });
+                    },
+                  ),
+                ),
+
+                /// CONFIRM BUTTON
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Obx(
+                    () => SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            foregroundColor: AppColors.white),
+                        onPressed: controller.selectedUserIds.isEmpty
+                            ? null
+                            : () {
+                                controller.sendBroadcastMessage(
+                                  content:
+                                      controller.messageController.text.trim(),
+                                  recipientIds:
+                                      controller.selectedUserIds.toList(),
+                                );
+                              },
+                        child: const Text("Confirm & Send"),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _dateTimeBox({required String text, required IconData icon}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Text(text),
+        ],
       ),
     );
   }

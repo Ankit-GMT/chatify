@@ -78,6 +78,7 @@ dependencies:
   video_compress: ^3.1.4
   record: ^6.1.2
   lottie: ^3.3.2
+  stomp_dart_client: ^3.0.1
 
 dev_dependencies:
   flutter_test:
