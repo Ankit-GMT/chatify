@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/status_controller.dart';
 import 'package:chatify/models/status_user.dart';
 import 'package:flutter/material.dart';
@@ -260,17 +261,15 @@ class _StatusViewerScreenState extends State<StatusViewerScreen>
       FocusScope.of(context).unfocus();
       resume();
 
-      Get.snackbar(
+      CustomSnackbar.success(
         "Sent",
         "Reply sent successfully",
       );
     } else {
       resume();
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Failed to send reply",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
     }
   }

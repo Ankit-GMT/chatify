@@ -2,10 +2,12 @@ import 'package:chatify/Screens/NewLoginUI/create_account_screen.dart';
 import 'package:chatify/Screens/NewLoginUI/forgot_password_screen.dart';
 import 'package:chatify/Screens/login_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginEmailScreen extends StatelessWidget {
@@ -17,6 +19,13 @@ class LoginEmailScreen extends StatelessWidget {
 
     final _emailController = TextEditingController();
     final _passwordController = TextEditingController();
+
+    final box = GetStorage();
+
+    if (authController.rememberMe.value) {
+      _emailController.text = box.read('saved_email') ?? '';
+      _passwordController.text = box.read('saved_password') ?? '';
+    }
 
     return Scaffold(
       // backgroundColor: Colors.white,
@@ -111,11 +120,19 @@ class LoginEmailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Checkbox(
-                          value: false,
-                          onChanged: (value) {},
+                        Obx(() => Checkbox(
+                          value: authController.rememberMe.value,
+                          onChanged: (val) {
+                            if (val == true) {
+                              authController.toggleRemember(true);
+                            } else {
+                              authController.toggleRemember(false);
+                              authController.clearSavedLogin();
+                            }
+                          },
                           activeColor: AppColors.primary,
-                        ),
+                        )),
+
                         Text(
                           "Remember Me",
                           style: GoogleFonts.poppins(
@@ -146,25 +163,30 @@ class LoginEmailScreen extends StatelessWidget {
                 child: GestureDetector(
                   onTap:authController.isLoading.value ? null : () {
                     if (_emailController.text.trim().isEmpty) {
-                      Get.snackbar("Error", "Email is required");
+                      CustomSnackbar.error("Error", "Email is required");
                       return;
                     }
 
                     if (!GetUtils.isEmail(_emailController.text.trim())) {
-                      Get.snackbar("Error", "Enter a valid email");
+                      CustomSnackbar.error("Error", "Enter a valid email");
                       return;
                     }
 
                     if (_passwordController.text.isEmpty) {
-                      Get.snackbar("Error", "Password is required");
+                      CustomSnackbar.error("Error", "Password is required");
                       return;
                     }
 
                     if (_passwordController.text.length < 6) {
-                      Get.snackbar(
+                      CustomSnackbar.error(
                           "Error", "Password must be at least 6 characters");
                       return;
                     }
+                    authController.saveLogin(
+                      _emailController.text.trim(),
+                      _passwordController.text.trim(),
+                    );
+
                     authController.loginWithEmail(
                       email: _emailController.text.trim(),
                       password: _passwordController.text.trim(),

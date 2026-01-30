@@ -1,9 +1,11 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/models/chat_user.dart';
 import 'package:chatify/widgets/dialog_textfield.dart';
 import 'package:chatify/widgets/profile_avatar.dart';
 import 'package:chatify/widgets/profile_tile.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../controllers/profile_controller.dart';
@@ -140,6 +142,10 @@ class EditProfileScreen extends StatelessWidget {
                                   TextField(
                                     controller: firstNameController,
                                     cursorColor: AppColors.primary,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                          RegExp(r'[a-zA-Z ]')),
+                                    ],
                                     decoration: InputDecoration(
                                       labelText: "First Name",
                                       labelStyle: TextStyle(
@@ -161,6 +167,10 @@ class EditProfileScreen extends StatelessWidget {
                                   ),
                                   TextField(
                                     controller: lastNameController,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                          RegExp(r'[a-zA-Z ]')),
+                                    ],
                                     decoration: InputDecoration(
                                       labelText: "Last Name",
                                       labelStyle: TextStyle(
@@ -200,9 +210,9 @@ class EditProfileScreen extends StatelessWidget {
                                           .editProfile(updatedUser);
 
                                       if (success) {
-                                        Get.snackbar("Success", "Name updated");
+                                        CustomSnackbar.success("Success", "Name updated");
                                       } else {
-                                        Get.snackbar(
+                                        CustomSnackbar.error(
                                             "Error", "Failed to update name");
                                       }
                                       profileController.fetchUserProfile();
@@ -290,9 +300,9 @@ class EditProfileScreen extends StatelessWidget {
                                         .editProfile(updatedUser);
 
                                     if (success) {
-                                      Get.snackbar("Success", "DOB updated");
+                                      CustomSnackbar.success("Success", "DOB updated");
                                     } else {
-                                      Get.snackbar(
+                                      CustomSnackbar.error(
                                           "Error", "Failed to update dob");
                                     }
                                     profileController.fetchUserProfile();
@@ -311,25 +321,29 @@ class EditProfileScreen extends StatelessWidget {
                     () => ProfileTile(
                         title: "Email",
                         image: "assets/images/profile_email.png",
+                        edit: false,
                         onTap: () {
-                          Dialogs.editProfile(
-                              context, emailController, "Email", () async {
-                            ChatUser updatedUser = ChatUser(
-                              email: emailController.text.trim(),
-                            );
 
-                            bool success = await profileController
-                                .editProfile(updatedUser);
-
-                            if (success) {
-                              Get.snackbar("Success", "Email updated");
-                            } else {
-                              Get.snackbar("Error", "Failed to update email");
-                            }
-                            profileController.fetchUserProfile();
-                            Navigator.pop(context);
-                          });
                         },
+                        // onTap: () {
+                        //   Dialogs.editProfile(
+                        //       context, emailController, "Email", () async {
+                        //     ChatUser updatedUser = ChatUser(
+                        //       email: emailController.text.trim(),
+                        //     );
+                        //
+                        //     bool success = await profileController
+                        //         .editProfile(updatedUser);
+                        //
+                        //     if (success) {
+                        //       CustomSnackbar.success("Success", "Email updated");
+                        //     } else {
+                        //       CustomSnackbar.error("Error", "Failed to update email");
+                        //     }
+                        //     profileController.fetchUserProfile();
+                        //     Navigator.pop(context);
+                        //   });
+                        // },
                         subtitle: "${profileController.user.value?.email}"),
                   ),
                   Obx(
@@ -347,9 +361,9 @@ class EditProfileScreen extends StatelessWidget {
                                 .editProfile(updatedUser);
 
                             if (success) {
-                              Get.snackbar("Success", "About updated");
+                              CustomSnackbar.success("Success", "About updated");
                             } else {
-                              Get.snackbar("Error", "Failed to update about");
+                              CustomSnackbar.error("Error", "Failed to update about");
                             }
                             profileController.fetchUserProfile();
 

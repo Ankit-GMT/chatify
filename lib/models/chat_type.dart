@@ -9,12 +9,13 @@ class ChatType {
   String? backgroundImageUrl;
   String? createdAt;
   String? lastMessage;
-  int? unreadCount;
+  // int? unreadCount;
   List<Members>? members;
   //
   int? pinOrder;
-  String? lastMessageAt;
-  String? lastMessageContent;
+  RxInt unreadCount = 0.obs;
+  RxString lastMessageAt = ''.obs;
+  RxString lastMessageContent = ''.obs;
   String? lastMessageType;
   int? lastSenderId;
   String? lastSenderName;
@@ -30,18 +31,23 @@ class ChatType {
         this.backgroundImageUrl,
         this.createdAt,
         this.lastMessage,
-        this.unreadCount,
+        // this.unreadCount,
         this.members,
         this.pinOrder,
-        this.lastMessageAt,
-        this.lastMessageContent,
+        int? unreadCount,
+        String? lastMessageAt,
+        String? lastMessageContent,
         this.lastMessageType,
         this.lastSenderId,
         this.lastSenderName,
         // this.pinned,
         // this.muted,
         // this.locked,
-      });
+      }){
+    this.unreadCount.value = unreadCount ?? 0;
+    this.lastMessageAt.value = lastMessageAt ?? '';
+    this.lastMessageContent.value = lastMessageContent ?? '';
+  }
 
   ChatType.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -51,11 +57,11 @@ class ChatType {
     backgroundImageUrl = json['backgroundImageUrl'];
     createdAt = json['createdAt'];
     lastMessage = json['lastMessage'];
-    unreadCount = json['unreadCount'];
+    // unreadCount = (json['unreadCount'] as int).obs;
     pinOrder = json['pinOrder'];
-    lastMessageAt = json['lastMessageAt'];
-    lastMessageContent = json['lastMessageContent'];
-    lastMessageType = json['lastMessageType'];
+    unreadCount = (json['unreadCount'] as int? ?? 0).obs;
+    lastMessageAt = (json['lastMessageAt'] as String? ?? '').obs;
+    lastMessageContent = (json['lastMessageContent']as String? ?? '').obs;
     lastSenderId = json['lastSenderId'];
     lastSenderName = json['lastSenderName'];
     pinned = (json['pinned'] == true).obs;

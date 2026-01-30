@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:chatify/Screens/chat_background_preview.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:flutter/material.dart';
@@ -69,10 +70,9 @@ class ChatBackgroundController extends GetxController {
         selectedCategory.value = categories.first;
       }
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Unable to load wallpapers",
-        snackPosition: SnackPosition.BOTTOM,
       );
       print("fetchGallery error: $e");
     } finally {
@@ -103,10 +103,9 @@ class ChatBackgroundController extends GetxController {
         list.map((e) => ChatBackground.fromJson(e)).toList(),
       );
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Unable to load $category wallpapers",
-        snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
       isLoading.value = false;
@@ -147,12 +146,11 @@ class ChatBackgroundController extends GetxController {
       });
 
       Get.back(); // close picker
-      Get.snackbar("Success", "Chat Background Applied");
+      CustomSnackbar.success("Success", "Chat Background Applied");
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Failed to apply wallpaper",
-        snackPosition: SnackPosition.BOTTOM,
       );
       print("applyBackground error: $e");
     } finally {
@@ -222,12 +220,11 @@ class ChatBackgroundController extends GetxController {
 
       Get.back(); // preview
       Get.back(); // picker
-      Get.snackbar("Success", "Custom Chat Background Applied");
+      CustomSnackbar.success("Success", "Custom Chat Background Applied");
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
-        "Failed to upload background",colorText: AppColors.white,
-        backgroundColor: Colors.red
+        "Failed to upload background",
       );
       // print("uploadGalleryBackground error: $e");
     } finally {
@@ -274,12 +271,11 @@ class ChatBackgroundController extends GetxController {
 
       Get.back(); // close preview
       Get.back(); // close picker
-      Get.snackbar("Success", "Default Chat Background Applied");
+      CustomSnackbar.success("Success", "Default Chat Background Applied");
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Failed to reset chat background",
-        snackPosition: SnackPosition.BOTTOM,
       );
       // print("resetToDefaultBackground error: $e");
     } finally {

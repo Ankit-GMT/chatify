@@ -1,4 +1,5 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/controllers/theme_controller.dart';
 import 'package:flutter/material.dart';
@@ -46,13 +47,13 @@ class BroadcastScreen extends StatelessWidget {
                             controller.messageController.text.trim();
 
                         if (message.isEmpty) {
-                          Get.snackbar("Error", "Message cannot be empty");
+                          CustomSnackbar.error("Error", "Message cannot be empty");
                           return;
                         }
 
                         if (controller.isScheduled.value) {
                           if (controller.scheduledAt.value == null) {
-                            Get.snackbar("Error", "Select date & time");
+                            CustomSnackbar.error("Error", "Select date & time");
                             return;
                           }
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:http_parser/http_parser.dart'; // <= Important
@@ -36,7 +37,7 @@ class GroupController extends GetxController {
     required int currentUserId,
   }) async {
     if (memberIds.isEmpty) {
-      Get.snackbar("Error", "Select at least 1 contact");
+      CustomSnackbar.error("Error", "Select at least 1 contact");
       return;
     }
 
@@ -102,10 +103,10 @@ class GroupController extends GetxController {
       debugPrint("BODY: $responseBody");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar("Success", "Group created successfully");
+        CustomSnackbar.success("Success", "Group created successfully");
         Get.offAll(() => MainScreen());
       } else {
-        Get.snackbar("Error", "Failed: ${response.statusCode}");
+        CustomSnackbar.error("Error", "Failed: ${response.statusCode}");
       }
     } catch (e) {
       isLoading.value = false;
@@ -160,12 +161,12 @@ class GroupController extends GetxController {
       print("STATUS: ${response.statusCode}");
       print("BODY: ${responseData.body}");
       if (response.statusCode == 200) {
-        Get.snackbar(
+        CustomSnackbar.success(
           "Success",
           "Group updated successfully",
         );
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Error",
           "Failed to update group",
         );
@@ -173,7 +174,7 @@ class GroupController extends GetxController {
     } catch (e) {
       print("EXCEPTION: $e");
 
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         e.toString(),
       );
@@ -219,7 +220,7 @@ class GroupController extends GetxController {
 
       isLoading.value = false;
       if (response.statusCode == 200) {
-        Get.snackbar("Success", "Members added successfully");
+        CustomSnackbar.success("Success", "Members added successfully");
         selectedContacts.clear();
         Navigator.pop(Get.context!);
       } else {
@@ -227,7 +228,7 @@ class GroupController extends GetxController {
       }
     } catch (e) {
       isLoading.value = false;
-      Get.snackbar("Error", "Something went wrong");
+      CustomSnackbar.error("Error", "Something went wrong");
     }
   }
 
@@ -243,14 +244,14 @@ class GroupController extends GetxController {
 
       isLoading.value = false;
       if (response.statusCode == 200) {
-        Get.snackbar("Success", "Group deleted successfully");
+        CustomSnackbar.success("Success", "Group deleted successfully");
         Get.offAll(() => MainScreen());
       } else {
-        Get.snackbar("Error", "Failed to delete group: ${response.body}");
+        CustomSnackbar.error("Error", "Failed to delete group: ${response.body}");
       }
     } catch (e) {
       isLoading.value = false;
-      Get.snackbar("Error", "Something went wrong");
+      CustomSnackbar.error("Error", "Something went wrong");
     }
   }
 
@@ -267,16 +268,16 @@ class GroupController extends GetxController {
       isLoading.value = false;
 
       if (response.statusCode == 200) {
-        Get.snackbar("Success", "Member removed");
+        CustomSnackbar.success("Success", "Member removed");
         Navigator.pop(Get.context!);
         // Get.offAll(() => MainScreen());
       } else {
-        Get.snackbar("Error", "Failed to remove member");
+        CustomSnackbar.error("Error", "Failed to remove member");
       }
     } catch (e) {
       isLoading.value = false;
       print("Delete Member Error: $e");
-      Get.snackbar("Error", "Something went wrong");
+      CustomSnackbar.error("Error", "Something went wrong");
     }
   }
 
@@ -293,14 +294,14 @@ class GroupController extends GetxController {
 
       isLoading.value = false;
       if (response.statusCode == 200) {
-        Get.snackbar("Success", "You have left the group successfully");
+        CustomSnackbar.success("Success", "You have left the group successfully");
         Get.offAll(() => MainScreen());
       } else {
-        Get.snackbar("Error", "Failed to exit group: ${response.body}");
+        CustomSnackbar.error("Error", "Failed to exit group: ${response.body}");
       }
     } catch (e) {
       isLoading.value = false;
-      Get.snackbar("Error", "Something went wrong");
+      CustomSnackbar.error("Error", "Something went wrong");
     }
   }
 

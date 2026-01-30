@@ -3,6 +3,7 @@ import 'package:chatify/constants/time_format.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/chat_user.dart';
+import 'package:chatify/services/presence_socket_service.dart';
 import 'package:chatify/widgets/profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -37,6 +38,15 @@ class _ChatUserCardState extends State<ChatUserCard> {
     final type = widget.chatType?.type ?? '';
     final myId = profileController.user.value?.id;
 
+    final socket = Get.find<SocketService>();
+    final members = widget.chatType?.members;
+
+// Calculate the other user's ID
+    int? otherUserId;
+    if (type != "GROUP" && members != null && members.length >= 2) {
+      otherUserId = (myId == members[0].userId) ? members[1].userId : members[0].userId;
+    }
+
     return ListTile(
       tileColor: widget.isSelected
           ? AppColors.primary.withAlpha(35)
@@ -44,17 +54,27 @@ class _ChatUserCardState extends State<ChatUserCard> {
       onTap: widget.onTap,
       leading: InkWell(
         onTap: () {},
-        child: Badge(
-          backgroundColor: Colors.green,
-          smallSize: 10,
-          child: ProfileAvatar(
-              imageUrl: type == "GROUP"
-                  ? widget.chatType?.groupImageUrl ?? ''
-                  : myId == widget.chatType?.members?[0].userId
-                      ? (widget.chatType?.members?[1].profileImageUrl) ?? ''
-                      : widget.chatType?.members?[0].profileImageUrl ?? '',
-              radius: 20),
-        ),
+        child: Obx(() {
+          // Check status from the global socket map
+          final _ = socket.isConnected.value;
+          bool isOnline = false;
+          if (otherUserId != null) {
+            isOnline = socket.onlineUsers[otherUserId] == true;
+          }
+
+          return Badge(
+            // Only show green if online, otherwise transparent or grey
+            backgroundColor: isOnline ? Colors.green : Colors.transparent,
+            smallSize: 10,
+            child: ProfileAvatar(
+                imageUrl: type == "GROUP"
+                    ? widget.chatType?.groupImageUrl ?? ''
+                    : myId == widget.chatType?.members?[0].userId
+                    ? (widget.chatType?.members?[1].profileImageUrl) ?? ''
+                    : widget.chatType?.members?[0].profileImageUrl ?? '',
+                radius: 20),
+          );
+        }),
       ),
 
       title: widget.isSearch
@@ -67,80 +87,93 @@ class _ChatUserCardState extends State<ChatUserCard> {
                   : ("${widget.chatType?.members?[0].firstName} ${widget.chatType?.members?[0].lastName}") ??
                       ''),
 
-      subtitle: Row(
-        children: [
-          widget.chatType?.lastSenderId == myId
-              ? const Icon(Icons.done_all_rounded, color: Colors.blue, size: 15)
-          :SizedBox.shrink(),
-              // : const Icon(Icons.done_all, color: Colors.white, size: 15),
-          SizedBox(
-            width: 5,
-          ),
-          SizedBox(
-            width: Get.width * 0.35,
-            child: Text(widget.chatType!.lastMessageContent ?? '',
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(fontSize: 12,fontWeight: widget.chatType?.unreadCount == 0 ? FontWeight.w400 : FontWeight.w600),
-                maxLines: 1),
-          ),
-        ],
-      ),
+      subtitle:Obx(() {
+        //  Check for typing status from the socket
+        final isTyping = socket.typingUsers[otherUserId ?? 0] == true;
 
-      //last message time
-      trailing: Obx(
-        () => Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          spacing: 4,
+        if (isTyping) {
+          return Text(
+            "Typing...",
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          );
+        }
+
+        return Row(
           children: [
-            widget.chatType!.unreadCount == 0 ? SizedBox() :
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              // width: 34,
-              // height: 24,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withAlpha(100),
-                borderRadius: BorderRadius.circular(15),
-              ),
+            widget.chatType?.lastSenderId == myId
+                ? const Icon(Icons.done_all_rounded, color: Colors.blue, size: 15)
+                : const SizedBox.shrink(),
+            const SizedBox(width: 5),
+            SizedBox(
+              width: Get.width * 0.35,
               child: Text(
-                widget.chatType!.unreadCount.toString(),
+                //  Use .value for the RxString
+                widget.chatType?.lastMessageContent.value ?? '',
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
-                    fontSize: 14, fontWeight: FontWeight.w400),
+                  fontSize: 12,
+                  //  Bold text if there are unread messages
+                  fontWeight: (widget.chatType?.unreadCount.value ?? 0) == 0
+                      ? FontWeight.w400
+                      : FontWeight.w700,
+                ),
+                maxLines: 1,
               ),
             ),
-            Column(
-              spacing: 5,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                widget.chatType!.lastMessageAt != null ? Text(
-                  // TimeFormat.getFormattedTime(context: context, time: widget.chatType!.lastMessageAt),
-                  TimeFormat.formatTime(widget.chatType!.lastMessageAt),
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, fontWeight: FontWeight.w400),
-                ) : SizedBox.shrink(),
+          ],
+        );
+      }),
 
+      //last message time
+      trailing: Obx(() {
+        final unreadCount = widget.chatType?.unreadCount.value ?? 0;
+        final lastTime = widget.chatType?.lastMessageAt.value;
+        print("Lasttime :- $lastTime");
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (unreadCount > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  unreadCount.toString(),
+                  style: const TextStyle(color: Colors.white, fontSize: 11),
+                ),
+              ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (lastTime != '')
+                  Text(
+                    TimeFormat.formatTime(lastTime),
+                    style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey),
+                  ),
+                const SizedBox(height: 4),
                 Row(
-                  spacing: 5,
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    widget.chatType!.muted.value
-                        ? const Icon(Icons.volume_off, color: Colors.grey, size: 18)
-                        : const SizedBox(),
-                    widget.chatType!.pinned.value
-                        ? const Icon(
-                      Icons.push_pin,
-                      color: Colors.grey,
-                      size: 18,
-                    )
-                        : SizedBox(),
+                    if (widget.chatType!.muted.value)
+                      const Icon(Icons.volume_off, color: Colors.grey, size: 14),
+                    if (widget.chatType!.pinned.value)
+                      const Icon(Icons.push_pin, color: Colors.grey, size: 14),
                   ],
                 ),
-
               ],
             ),
           ],
-        ),
-      ),
+        );
+      }),
     );
   }
 }

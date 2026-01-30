@@ -1,7 +1,9 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -113,11 +115,22 @@ class CreateAccountScreen extends StatelessWidget {
                   children: [
                     CustomTextfield(
                         controller: _firstNameController,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
+                        ],
                         hintText: "First Name"),
                     CustomTextfield(
-                        controller: _lastNameController, hintText: "Last Name"),
+                        controller: _lastNameController,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
+                        ],
+                        hintText: "Last Name"),
                     CustomTextfield(
                         controller: _phoneController,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
                         isPhone: true,
                         hintText: "Mobile Number"),
                     CustomTextfield(
@@ -194,7 +207,7 @@ class CreateAccountScreen extends StatelessWidget {
                           //first name and last name
                           if (!nameRegex
                               .hasMatch(_firstNameController.text.trim())) {
-                            Get.snackbar(
+                            CustomSnackbar.error(
                               "Error",
                               "First name should contain only letters",
                             );
@@ -203,7 +216,7 @@ class CreateAccountScreen extends StatelessWidget {
 
                           if (!nameRegex
                               .hasMatch(_lastNameController.text.trim())) {
-                            Get.snackbar(
+                            CustomSnackbar.error(
                               "Error",
                               "Last name should contain only letters",
                             );
@@ -211,13 +224,13 @@ class CreateAccountScreen extends StatelessWidget {
                           }
                           //email validation
                           if (!GetUtils.isEmail(_emailController.text.trim())) {
-                            Get.snackbar("Error", "Enter a valid email");
+                            CustomSnackbar.error("Error", "Enter a valid email");
                             return;
                           }
                           if (_phoneController.text.trim().length != 10 &&
                               !GetUtils.isPhoneNumber(
                                   _phoneController.text.trim())) {
-                            Get.snackbar(
+                            CustomSnackbar.error(
                                 "Error", "Enter a valid mobile number");
                             return;
                           }
@@ -241,7 +254,7 @@ class CreateAccountScreen extends StatelessWidget {
                               // profileImageFile: authController.pickedImage.value!
                             );
                           } else {
-                            Get.snackbar(
+                            CustomSnackbar.error(
                                 "Error", "Please fill all the required fields");
                           }
                         },

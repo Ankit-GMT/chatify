@@ -10,8 +10,10 @@ import 'package:chatify/Screens/login_screen.dart';
 import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/Screens/otp_screen.dart';
 import 'package:chatify/constants/apis.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/controllers/user_controller.dart';
+import 'package:chatify/services/presence_socket_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -25,6 +27,7 @@ class AuthController extends GetxController {
   final String baseUrl = APIs.url;
 
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+
 
   //for token storing
   final box = GetStorage();
@@ -66,19 +69,19 @@ class AuthController extends GetxController {
 
       if (data['success']) {
         startTimer();
-        Get.snackbar("OTP Sent", "Check your phone for the code.");
+        CustomSnackbar.normal("OTP Sent", "Check your phone for the code.");
         otp.value = data['otp'];
 
         Get.to(() => OtpScreen());
       } else {
         if (data['newUser']) {
-          Get.snackbar("Not Registered", "Please create an account first");
+          CustomSnackbar.normal("Not Registered", "Please create an account first");
         } else {
-          Get.snackbar("Error", data['error'] ?? "Something went wrong");
+          CustomSnackbar.error("Error", data['error'] ?? "Something went wrong");
         }
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -111,17 +114,17 @@ class AuthController extends GetxController {
         await box.write("refreshToken", data['refreshToken']);
         await box.write("userId", data['userId']);
 
-        Get.snackbar("Success", "Login successful!");
+        CustomSnackbar.success("Success", "Login successful!");
         Get.offAll(() => MainScreen());
       }
       // else if (data['message'] == "OTP verified. Please register.") {
       //   Get.off(() => UserRegisterScreen());
       // }
       else {
-        Get.snackbar("Invalid OTP", data['error'] ?? "Try again");
+        CustomSnackbar.error("Invalid OTP", data['error'] ?? "Try again");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -144,13 +147,13 @@ class AuthController extends GetxController {
       if (data['success']) {
 
         startTimer();
-        Get.snackbar("OTP Sent", "Check your phone for the code.");
+        CustomSnackbar.normal("OTP Sent", "Check your phone for the code.");
         otp.value = data['otp'];
       } else {
-        Get.snackbar("Error", data['error'] ?? "Something went wrong");
+        CustomSnackbar.error("Error", data['error'] ?? "Something went wrong");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -188,18 +191,18 @@ class AuthController extends GetxController {
         await box.write("refreshToken", data['refreshToken']);
         await box.write("userId", data['userId']);
 
-        Get.snackbar("Success", "Login successful");
+        CustomSnackbar.success("Success", "Login successful");
         Get.offAll(() => MainScreen());
       }
       else {
 
-        Get.snackbar(
+        CustomSnackbar.error(
           "Login Failed",
           data["message"] ?? "Invalid credentials",
         );
       }
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Something went wrong. Please try again.",
       );
@@ -207,6 +210,28 @@ class AuthController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  // For saving email and password locally
+
+  RxBool rememberMe = false.obs;
+
+  void toggleRemember(bool value) {
+    rememberMe.value = value;
+    box.write('remember_me', value);
+  }
+
+  void saveLogin(String email, String password) {
+    if (rememberMe.value) {
+      box.write('saved_email', email);
+      box.write('saved_password', password);
+    }
+  }
+
+  void clearSavedLogin() {
+    box.remove('saved_email');
+    box.remove('saved_password');
+    box.write('remember_me', false);
   }
 
   // Forgot Password
@@ -247,19 +272,19 @@ class AuthController extends GetxController {
       if (data['success']) {
         forgotOtp.value = data['otp'];
         startTimer();
-        Get.snackbar(
+        CustomSnackbar.success(
           "Success",
           data["message"] ?? "OTP sent to your mobile number",
         );
         Get.to(()=> PasswordResetOtpScreen(resetType: resetType));
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Failed",
           data["message"] ?? "Unable to send OTP",
         );
       }
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Something went wrong. Please try again.",
       );
@@ -305,18 +330,18 @@ class AuthController extends GetxController {
       if (data['success']) {
         forgotOtp.value = data['otp'];
         startTimer();
-        Get.snackbar(
+        CustomSnackbar.success(
           "Success",
           data["message"] ?? "OTP sent to your mobile number",
         );
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Failed",
           data["message"] ?? "Unable to send OTP",
         );
       }
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Something went wrong. Please try again.",
       );
@@ -363,17 +388,17 @@ class AuthController extends GetxController {
 
       if (data['success']) {
 
-        Get.snackbar("OTP verified successfully", "You can now reset your password");
+        CustomSnackbar.success("OTP verified successfully", "You can now reset your password");
         Get.off(() => ConfirmPasswordScreen(resetType: resetType,));
       }
       else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Failed",
           data["message"] ?? "Invalid OTP",
         );
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -420,7 +445,7 @@ class AuthController extends GetxController {
       debugPrint("reset password response: $data");
 
       if (data['success']) {
-        Get.snackbar(
+        CustomSnackbar.success(
           "Success",
           data["message"] ?? "Password reset successfully",
         );
@@ -428,13 +453,13 @@ class AuthController extends GetxController {
         // Navigate to login screen
         Get.offAll(() => LoginEmailScreen());
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Failed",
           data["message"] ?? "Unable to reset password",
         );
       }
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Something went wrong. Please try again.",
       );
@@ -525,12 +550,12 @@ class AuthController extends GetxController {
 
       if (data['success']) {
         Get.to(()=> MobileVerificationScreen());
-        Get.snackbar("Success", data['message'] ?? 'Account Created Successfully, Please verify mobile number');
+        CustomSnackbar.success("Success", data['message'] ?? 'Account Created Successfully, Please verify mobile number');
       } else {
-        Get.snackbar("Error", data['message'] ?? "Something went wrong");
+        CustomSnackbar.error("Error", data['message'] ?? "Something went wrong");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -563,19 +588,19 @@ class AuthController extends GetxController {
       if (data['success']) {
         startTimer();
         isOtpSent.value = true;
-        Get.snackbar(
+        CustomSnackbar.success(
           "Success",
           data["message"] ?? "OTP sent successfully",
         );
         createOtp.value = data['otp'];
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Failed",
           data["message"] ?? "Failed to send OTP",
         );
       }
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Something went wrong. Please try again.",
       );
@@ -610,7 +635,7 @@ class AuthController extends GetxController {
       print("verify mobile otp response: $data");
 
       if (data['success']) {
-        Get.snackbar(
+        CustomSnackbar.success(
           "Success",
           data["message"] ?? "Mobile number verified successfully",
         );
@@ -618,13 +643,13 @@ class AuthController extends GetxController {
         Get.off(()=> EmailVerificationScreen());
 
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Failed",
           data["message"] ?? "Invalid OTP",
         );
       }
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Something went wrong. Please try again.",
       );
@@ -658,19 +683,19 @@ class AuthController extends GetxController {
 
       if (data['success']) {
         startTimer();
-        Get.snackbar(
+        CustomSnackbar.success(
           "Success",
           data["message"] ?? "OTP sent successfully",
         );
         createOtp.value = data['otp'];
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Failed",
           data["message"] ?? "Failed to resend OTP",
         );
       }
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Something went wrong. Please try again.",
       );
@@ -707,19 +732,19 @@ class AuthController extends GetxController {
       if (data['success']) {
         startTimer();
         isOtpSent.value = true;
-        Get.snackbar(
+        CustomSnackbar.success(
           "Success",
           data["message"] ?? "OTP sent successfully",
         );
         createOtp.value = data['otp'];
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Failed",
           data["message"] ?? "Failed to send OTP",
         );
       }
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Something went wrong. Please try again.",
       );
@@ -755,7 +780,7 @@ class AuthController extends GetxController {
       print("verify email otp response: $data");
 
       if (data['success']) {
-        Get.snackbar(
+        CustomSnackbar.success(
           "Success",
           data["message"] ?? "Email verified successfully",
         );
@@ -765,13 +790,13 @@ class AuthController extends GetxController {
         Get.offAll(()=> MainScreen());
         isOtpSent.value = false;
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Failed",
           data["message"] ?? "Invalid OTP",
         );
       }
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Something went wrong. Please try again.",
       );
@@ -805,19 +830,19 @@ class AuthController extends GetxController {
 
       if (data['success']) {
         startTimer();
-        Get.snackbar(
+        CustomSnackbar.success(
           "Success",
           data["message"] ?? "OTP sent successfully",
         );
         createOtp.value = data['otp'];
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Failed",
           data["message"] ?? "Failed to resend OTP",
         );
       }
     } catch (e) {
-      Get.snackbar(
+      CustomSnackbar.error(
         "Error",
         "Something went wrong. Please try again.",
       );
@@ -859,7 +884,7 @@ class AuthController extends GetxController {
         await box.remove("userId");
         await box.remove("userName");
 
-        Get.snackbar("Logged out", "You have been logged out successfully.");
+        CustomSnackbar.success("Logged out", "You have been logged out successfully.");
 
         Get.delete<UserController>();
         Get.delete<ProfileController>();
@@ -867,10 +892,10 @@ class AuthController extends GetxController {
 
         Get.offAll(() => LoginScreen());
       } else {
-        Get.snackbar("Error", data['error'] ?? "Logout failed");
+        CustomSnackbar.error("Error", data['error'] ?? "Logout failed");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -880,6 +905,7 @@ class AuthController extends GetxController {
   void onInit() async {
     // TODO: implement onInit
     super.onInit();
+    rememberMe.value = box.read('remember_me') ?? false;
     fcmToken = (await _fcm.getToken())!;
   }
 }

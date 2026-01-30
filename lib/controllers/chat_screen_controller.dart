@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:chatify/constants/apis.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
+import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/message.dart';
 import 'package:chatify/services/api_service.dart';
+import 'package:chatify/services/presence_socket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:media_scanner/media_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -21,9 +25,19 @@ class ChatScreenController extends GetxController {
   var chatType = Rxn<ChatType>();
   var type = ''.obs;
 
+  final socket = Get.find<SocketService>();
+  final box = GetStorage();
+
   RxList<Message> messages = <Message>[].obs;
 
   var isLoading = true.obs;
+
+  int? get otherUserId {
+    final members = chatType.value?.members;
+    if (members == null || members.length < 2) return null;
+    final myId = box.read("userId");
+    return (myId == members[0].userId) ? members[1].userId : members[0].userId;
+  }
 
   Future<void> loadMessages(int id) async {
     final data = await fetchMessages(id);
@@ -67,7 +81,7 @@ class ChatScreenController extends GetxController {
 
       if (res.statusCode == 200) {
         final List data = jsonDecode(res.body);
-        // print("-=-= $data");
+        print("-=-= $data");
         // log(data.toString());
         return data.map((e) => Message.fromJson(e)).toList();
       } else {
@@ -221,7 +235,7 @@ class ChatScreenController extends GetxController {
       debugPrint("Lock Chat Response: $data");
 
       if (res.statusCode == 200 && data['success'] == true) {
-        Get.snackbar(
+        CustomSnackbar.success(
           "Chat Locked",
           "This chat is now protected with a PIN",
         );
@@ -233,14 +247,14 @@ class ChatScreenController extends GetxController {
         Navigator.pop(Get.context!);
 
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Error",
           data['message'] ?? "Failed to lock chat",
         );
       }
     } catch (e) {
       debugPrint("Lock Chat Error: $e");
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -261,7 +275,7 @@ class ChatScreenController extends GetxController {
       debugPrint("Unlock Chat Response: $data");
 
       if (res.statusCode == 200 && data['success'] == true) {
-        Get.snackbar("Chat Unlocked", "Chat lock removed successfully");
+        CustomSnackbar.success("Chat Unlocked", "Chat lock removed successfully");
 
         // Update local state if needed
         chatType.value?.locked.value = false;
@@ -269,13 +283,13 @@ class ChatScreenController extends GetxController {
 
         Navigator.of(Get.context!).pop();
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Error",
           data['message'] ?? "Failed to unlock chat",
         );
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -304,8 +318,39 @@ class ChatScreenController extends GetxController {
   void onInit() {
     // TODO: implement onInit
     super.onInit();
+    ever(chatType, (value) {
+      if (value != null) {
+        final otherId = otherUserId; // using your getter
+        if (otherId != null) {
+
+          // Subscribe now that we finally have the ID
+          socket.subscribeToUserStatus(otherId);
+          socket.subscribeTyping(chatId); // Subscribe to typing too
+
+          debugPrint("📡 Successfully subscribed to User: $otherId");
+        }
+      }
+    });
+    ever(messages, (List<Message> messageList) {
+      if (messageList.isNotEmpty) {
+        final lastMessage = messageList.first; // Usually first if list is reversed
+        final myId = box.read("userId");
+
+        // Only send if the last message came from the OTHER person
+        if (lastMessage.senderId != myId) {
+          socket.sendReadReceipt(chatId, lastMessage.id);
+        }
+      }
+    });
+    Get.find<MessageController>().subscribeToTyping(chatId);
 
     fetchChatType(chatId);
     loadMessages(chatId);
+  }
+  @override
+  void onClose() {
+    // TODO: implement onClose
+    // socket.unsubscribeFromTyping();
+    super.onClose();
   }
 }

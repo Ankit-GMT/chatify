@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/models/chat_user.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:flutter/material.dart';
@@ -130,12 +131,12 @@ class ProfileController extends GetxController {
       debugPrint("Profile image update response: $data");
 
       if (response.statusCode == 200) {
-        Get.snackbar("Success", "Profile image updated!");
+        CustomSnackbar.success("Success", "Profile image updated!");
       } else {
-        Get.snackbar("Error", data["message"] ?? "Could not update image");
+        CustomSnackbar.error("Error", data["message"] ?? "Could not update image");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }

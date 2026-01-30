@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:android_pip/android_pip.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/video_call_controller.dart';
 import 'package:chatify/services/notification_service.dart';
 import 'package:flutter/material.dart';
@@ -130,14 +131,9 @@ class _VideoCallScreen1State extends State<VideoCallScreen1>
       debugPrint("Screenshot error: $e");
 
       // Error
-      Get.snackbar(
+      CustomSnackbar.error(
         "Failed",
         "Could not save screenshot",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(10),
-        duration: const Duration(seconds: 2),
       );
     }
   }

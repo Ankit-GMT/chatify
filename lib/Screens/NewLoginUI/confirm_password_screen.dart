@@ -1,4 +1,5 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
@@ -125,18 +126,18 @@ class ConfirmPasswordScreen extends StatelessWidget {
                       ? null
                       : () {
                           if (_passwordController.text.trim().length < 8) {
-                            Get.snackbar("Error",
+                            CustomSnackbar.error("Error",
                                 "Password must be at least 8 characters");
                             return;
                           }
                           if (_passwordController.text.isEmpty ||
                               _confirmPasswordController.text.isEmpty) {
-                            Get.snackbar("Error", "Please fill in all fields");
+                            CustomSnackbar.error("Error", "Please fill in all fields");
                             return;
                           }
                           if (_passwordController.text.trim() !=
                               _confirmPasswordController.text.trim()) {
-                            Get.snackbar("Error", "Passwords do not match");
+                            CustomSnackbar.error("Error", "Passwords do not match");
                             return;
                           }
                           controller.resetPassword(

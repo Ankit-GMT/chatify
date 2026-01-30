@@ -1,7 +1,9 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -18,6 +20,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final authController = Get.find<AuthController>();
 
   final _controller = TextEditingController();
+
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +136,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           selectedType = ForgotType.email;
                           _controller.clear();
                         });
+
+                        _focusNode.unfocus();
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          _focusNode.requestFocus();
+                        });
                       },
                     ),
                     SizedBox(width: Get.width * 0.04),
@@ -134,6 +151,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         setState(() {
                           selectedType = ForgotType.mobile;
                           _controller.clear();
+                        });
+
+                        _focusNode.unfocus();
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          _focusNode.requestFocus();
                         });
                       },
                     ),
@@ -150,6 +172,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   children: [
                     CustomTextfield(
                       controller: _controller,
+                      focusNode: _focusNode,
+                      inputFormatters: [
+                        if (selectedType == ForgotType.mobile)
+                          FilteringTextInputFormatter.digitsOnly,
+                      ],
                       isEmail: selectedType == ForgotType.email,
                       isPhone: selectedType == ForgotType.mobile,
                       hintText: selectedType == ForgotType.email
@@ -171,18 +198,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         : () {
                             if (_controller.text.trim().isEmpty &&
                                 selectedType == ForgotType.email) {
-                              Get.snackbar("Error", "Email is required");
+                              CustomSnackbar.error("Error", "Email is required");
                               return;
                             }
 
                             if (!GetUtils.isEmail(_controller.text.trim()) &&
                                 selectedType == ForgotType.email) {
-                              Get.snackbar("Error", "Enter a valid email");
+                              CustomSnackbar.error("Error", "Enter a valid email");
                               return;
                             }
                             if (_controller.text.trim().isEmpty &&
                                 selectedType == ForgotType.mobile) {
-                              Get.snackbar(
+                              CustomSnackbar.error(
                                   "Error", "Mobile number is required");
                               return;
                             }
@@ -190,7 +217,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 !GetUtils.isPhoneNumber(
                                     _controller.text.trim()) &&
                                 selectedType == ForgotType.mobile) {
-                              Get.snackbar(
+                              CustomSnackbar.error(
                                   "Error", "Enter a valid mobile number");
                               return;
                             }

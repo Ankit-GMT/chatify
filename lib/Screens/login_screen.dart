@@ -3,6 +3,7 @@ import 'package:chatify/Screens/NewLoginUI/login_email_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
@@ -110,7 +111,10 @@ class LoginScreen extends StatelessWidget {
                       initialCountryCode: 'IN',
                       autofocus: true,
                       cursorWidth: 1,
-                      keyboardType: TextInputType.phone,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly
+                      ],
                       dropdownTextStyle: TextStyle(
                           color: AppColors.black.withAlpha(180),
                           fontWeight: FontWeight.bold),

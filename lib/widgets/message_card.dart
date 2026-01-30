@@ -13,26 +13,33 @@ import 'package:open_filex/open_filex.dart';
 
 class MessageCard extends StatelessWidget {
   final Message message;
+  final Message? previousMessage;
   final bool isMe;
   final Function()? onDownload;
 
   const MessageCard({
     super.key,
     required this.message,
+    required this.previousMessage,
     required this.isMe,
     this.onDownload,
   });
 
   @override
   Widget build(BuildContext context) {
+
     if (message.type == "SYSTEM_BACKGROUND_CHANGE") {
       return _buildSystemMessage();
     }
+
+    final showDateSeparator = _shouldShowDateSeparator();
 
     return Column(
       crossAxisAlignment:
           isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
+        if (showDateSeparator)
+          _buildTimelineMessage(),
         isMe
             ? SizedBox()
             : Row(
@@ -100,6 +107,21 @@ class MessageCard extends StatelessWidget {
     );
   }
 
+  bool _shouldShowDateSeparator() {
+    // If no previous message (first message in list), show separator
+    if (previousMessage == null) {
+      return true;
+    }
+
+    // If dateLabel changed from previous message, show separator
+    if (previousMessage!.dateLabel != message.dateLabel) {
+      return true;
+    }
+
+    // Otherwise, don't show separator
+    return false;
+  }
+
   // for other messages
   Widget _buildSystemMessage() {
     return Padding(
@@ -113,6 +135,29 @@ class MessageCard extends StatelessWidget {
           ),
           child: Text(
             message.content,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.white70,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  //for time,day
+  Widget _buildTimelineMessage() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.grey,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            message.dateLabel ?? "",
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 11,

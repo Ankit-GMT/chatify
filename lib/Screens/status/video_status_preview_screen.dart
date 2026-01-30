@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
@@ -76,7 +77,7 @@ class _VideoStatusPreviewScreenState
 
     } else {
       Get.back();
-      Get.snackbar("Error", "Failed to upload status",backgroundColor: Colors.red,colorText: AppColors.white);
+      CustomSnackbar.error("Error", "Failed to upload status");
     }
   }
 

@@ -1,11 +1,16 @@
 import 'package:chatify/constants/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CustomTextfield extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
   final VoidCallback? onTap;
   final ValueChanged<String>? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
+  final FocusNode? focusNode;
+
+
 
   // email & password options
   final bool isEmail;
@@ -22,6 +27,8 @@ class CustomTextfield extends StatelessWidget {
     required this.hintText,
     this.onTap,
     this.onChanged,
+    this.inputFormatters,
+    this.focusNode,
     this.isEmail = false,
     this.isPassword = false,
     this.isPhone = false,
@@ -49,6 +56,9 @@ class CustomTextfield extends StatelessWidget {
         maxLength:isPhone ? 10 : null,
         keyboardType: isPhone ? TextInputType.number :
         isEmail ? TextInputType.emailAddress : TextInputType.text,
+        inputFormatters: inputFormatters,
+        focusNode: focusNode,
+        cursorColor: AppColors.primary,
         style: TextStyle(color: AppColors.black),
         decoration: InputDecoration(
           fillColor: AppColors.white,

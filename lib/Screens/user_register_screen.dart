@@ -1,4 +1,5 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
@@ -197,7 +198,7 @@ class UserRegisterScreen extends StatelessWidget {
                         RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
                     if (email.isNotEmpty && !emailRegex.hasMatch(email)) {
-                      Get.snackbar("Invalid Email",
+                      CustomSnackbar.error("Invalid Email",
                           "Please enter a valid email address");
                       return;
                     }
@@ -216,7 +217,7 @@ class UserRegisterScreen extends StatelessWidget {
                       //     // profileImageFile: authController.pickedImage.value!
                       // );
                     } else {
-                      Get.snackbar(
+                      CustomSnackbar.error(
                           "Error", "Please fill all the required fields");
                     }
                   },

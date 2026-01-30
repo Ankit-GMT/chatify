@@ -1,6 +1,7 @@
 import 'package:chatify/Screens/chat_background_picker.dart';
 import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/chat_background_controller.dart';
 import 'package:chatify/controllers/chat_screen_controller.dart';
 import 'package:chatify/controllers/message_controller.dart';
@@ -441,12 +442,12 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   onPressed: () async{
                     if (pin?.length != 4) {
-                      Get.snackbar("Error", "PIN must be 4 digits");
+                      CustomSnackbar.error("Error", "PIN must be 4 digits");
                       return;
                     }
 
                     if (pin != confirmPin) {
-                      Get.snackbar("Error", "PINs do not match");
+                      CustomSnackbar.error("Error", "PINs do not match");
                       return;
                     }
 

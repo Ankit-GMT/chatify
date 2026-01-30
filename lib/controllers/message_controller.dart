@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,11 +8,13 @@ import 'package:chatify/Screens/media_preview_screen.dart';
 import 'package:chatify/Screens/video_call_screen1.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:chatify/constants/apis.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/chat_screen_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/message.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:chatify/services/notification_service.dart';
+import 'package:chatify/services/presence_socket_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,67 +32,25 @@ class MessageController extends GetxController {
 
   //For  web sockets
 
-  late StompClient stompClient;
+  final socket = Get.find<SocketService>();
 
-  var isSocketConnected = false.obs;
-  var typingUsers = <int, bool>{}.obs;
+  void _handleIncomingMessage(Map<String,dynamic> data) {
+    final message = Message.fromJson(data);
 
-  void connectSocket() {
-    final token = box.read("accessToken");
+    if (Get.isRegistered<ChatScreenController>()) {
+      final chatController = Get.find<ChatScreenController>();
 
-    final wsUrl = "${baseUrl.replaceFirst("http", "ws")}/ws";
-
-    stompClient = StompClient(
-      config: StompConfig(
-        url: wsUrl,
-        stompConnectHeaders: {
-          "Authorization": "Bearer $token",
-        },
-        webSocketConnectHeaders: {
-          "Authorization": "Bearer $token",
-        },
-        onConnect: onSocketConnected,
-        onWebSocketError: (error) {
-          debugPrint("❌ Socket error: $error");
-        },
-        onStompError: (frame) {
-          debugPrint("❌ STOMP error: ${frame.body}");
-        },
-        onDisconnect: (frame) {
-          debugPrint("🔌 Socket disconnected");
-        },
-      ),
-    );
-
-    stompClient.activate();
+      if (message.roomId == chatController.chatId &&
+          !chatController.messages.any((m) => m.id == message.id)) {
+        chatController.messages.add(message);
+        chatController.messages.refresh();
+      }
+    }
   }
-
-
-
-  void onSocketConnected(StompFrame frame) {
-    isSocketConnected.value = true;
-    debugPrint("✅ Socket connected");
-
-    stompClient.subscribe(
-      destination: "/user/queue/messages",
-      callback: (frame) {
-        final data = jsonDecode(frame.body!);
-        final message = Message.fromJson(data);
-
-        final chatController = Get.find<ChatScreenController>();
-
-        //  add only if belongs to current chat
-        if (message.roomId == chatController.chatId) {
-          // prevent duplicates
-          if (!chatController.messages.any((m) => m.id == message.id)) {
-            chatController.messages.add(message);
-            chatController.messages.refresh();
-          }
-        }
-      },
-    );
-  }
-
+  void sendOnlineStatus(bool online) => socket.sendOnline(online);
+  void sendTyping(int chatId, bool typing) => socket.sendTyping(chatId, typing);
+  void subscribeToTyping(int chatId) => socket.subscribeTyping(chatId);
+  void subscribeToUserStatus(int userId) => socket.subscribeToUserStatus(userId);
 
 
   Future<bool> sendMessageWs({
@@ -98,30 +59,229 @@ class MessageController extends GetxController {
     required String content,
     String type = "TEXT",
   }) async {
-    if (!isSocketConnected.value) return false;
-
-    stompClient.send(
-      destination: "/app/send",
-      body: jsonEncode({
-        "roomId": chatId,
-        "recipientId": recipientId,
-        "content": content,
-        "type": type,
-      }),
-    );
+    socket.sendMessage({
+      "roomId": chatId,
+      "recipientId": recipientId,
+      "content": content,
+      "type": type,
+    });
 
     return true;
   }
 
-
-  void sendTyping(int chatId) {
-    if (!isSocketConnected.value) return;
-
-    stompClient.send(
-      destination: "/app/chat.typing/$chatId",
-      body: jsonEncode({"typing": true}),
-    );
+  void onUserLoggedIn(int myId) {
+    socket.connect();
+    socket.subscribeMyMessages(myId, _handleIncomingMessage);
   }
+
+  // var lastRawMsg = "None".obs;
+  // late StompClient stompClient;
+  //
+  // var isSocketConnected = false.obs;
+  // var typingUsers = <int, bool>{}.obs;
+  //
+  // void connectSocket() {
+  //   final token = box.read("accessToken");
+  //
+  //   final wsUrl = "${baseUrl.replaceFirst("http", "ws")}/ws";
+  //
+  //   stompClient = StompClient(
+  //     config: StompConfig(
+  //       url: wsUrl,
+  //       stompConnectHeaders: {
+  //         "Authorization": "Bearer $token",
+  //       },
+  //       webSocketConnectHeaders: {
+  //         "Authorization": "Bearer $token",
+  //       },
+  //       onConnect: onSocketConnected,
+  //       onWebSocketError: (error) {
+  //         debugPrint("❌ Socket error: $error");
+  //       },
+  //       onStompError: (frame) {
+  //         debugPrint("❌ STOMP error: ${frame.body}");
+  //       },
+  //       onDisconnect: (frame) {
+  //         debugPrint("🔌 Socket disconnected");
+  //       },
+  //     ),
+  //   );
+  //
+  //   stompClient.activate();
+  // }
+  //
+  //
+  //
+  // void onSocketConnected(StompFrame frame) {
+  //   isSocketConnected.value = true;
+  //   debugPrint("✅ SOCKET CONNECTED SUCCESSFULLY");
+  //
+  //   final myId = box.read("userId");
+  //   final subscriptionPath = "/topic/chat/user/$myId";
+  //
+  //   debugPrint("📡 ATTEMPTING SUBSCRIPTION TO: $subscriptionPath");
+  //
+  //   stompClient.subscribe(
+  //     destination: subscriptionPath,
+  //     callback: (frame) {
+  //       lastRawMsg.value = frame.body ?? "Empty Frame";
+  //       debugPrint("📩 RAW DATA RECEIVED FROM SERVER: ${frame.body}");
+  //
+  //       if (frame.body == null) {
+  //         debugPrint("⚠️ Received empty frame body");
+  //         return;
+  //       }
+  //
+  //       try {
+  //         final data = jsonDecode(frame.body!);
+  //         final message = Message.fromJson(data);
+  //         debugPrint("📦 PARSED MESSAGE: ID ${message.id} from Room ${message.roomId}");
+  //
+  //         // Use Get.isRegistered to ensure the controller exists
+  //         if (Get.isRegistered<ChatScreenController>()) {
+  //           final chatController = Get.find<ChatScreenController>();
+  //           debugPrint("🔍 CURRENT UI CHAT ID: ${chatController.chatId}");
+  //
+  //           if (message.roomId == chatController.chatId) {
+  //             bool isDuplicate = chatController.messages.any((m) => m.id == message.id);
+  //             if (!isDuplicate) {
+  //               chatController.messages.add(message);
+  //               chatController.messages.refresh();
+  //               debugPrint("✨ MESSAGE ADDED TO UI LIST");
+  //             } else {
+  //               debugPrint("⏭️ MESSAGE IGNORED (Duplicate)");
+  //             }
+  //           } else {
+  //             debugPrint("🌑 MESSAGE FOR DIFFERENT ROOM (Background)");
+  //             // You can show a local notification here
+  //           }
+  //         } else {
+  //           debugPrint("❌ ChatScreenController NOT FOUND. User is likely not in a chat screen.");
+  //         }
+  //       } catch (e) {
+  //         debugPrint("🚨 ERROR PARSING MESSAGE: $e");
+  //       }
+  //     },
+  //   );
+  //
+  // }
+  //
+  // StompUnsubscribe? _statusSubscription;
+  //
+  // void subscribeToUserStatus(int otherUserId) {
+  //   // 1. Clear previous subscription
+  //   _statusSubscription?.call();
+  //
+  //   // 2. Subscribe to the specific user's status topic defined in your backend
+  //   _statusSubscription = stompClient.subscribe(
+  //     destination: "/topic/user/$otherUserId/status",
+  //     callback: (frame) {
+  //       if (frame.body == null) return;
+  //       final data = jsonDecode(frame.body!);
+  //
+  //       final int userId = int.parse(data["userId"].toString());
+  //       final bool isOnline = data["online"] ?? false;
+  //
+  //       onlineUsers[userId] = isOnline;
+  //       onlineUsers.refresh();
+  //       debugPrint("👤 User Status Update: $userId is ${isOnline ? 'Online' : 'Offline'}");
+  //     },
+  //   );
+  // }
+  // void sendOnlineStatus(bool isOnline, String myId) {
+  //   if (!isSocketConnected.value) return;
+  //
+  //   stompClient.send(
+  //     destination: "/app/user.status",
+  //     body: jsonEncode({
+  //       "userId": myId,
+  //       "isOnline": isOnline,
+  //     }),
+  //   );
+  // }
+
+  // void sendOnlineStatus(bool isOnline) {
+  //   if (!isSocketConnected.value) return;
+  //
+  //   stompClient.send(
+  //     destination: "/app/user.status",
+  //     body: jsonEncode({
+  //       "online": isOnline, // Match the field name in your OnlineStatusMessage DTO
+  //     }),
+  //   );
+  // }
+  //
+  //
+  //
+  //
+  // Future<bool> sendMessageWs({
+  //   required int chatId,
+  //   required int recipientId,
+  //   required String content,
+  //   String type = "TEXT",
+  // }) async {
+  //   if (!isSocketConnected.value) return false;
+  //
+  //   stompClient.send(
+  //     destination: "/app/send",
+  //     body: jsonEncode({
+  //       "roomId": chatId,
+  //       "recipientId": recipientId,
+  //       "content": content,
+  //       "type": type,
+  //     }),
+  //   );
+  //
+  //   return true;
+  // }
+
+  // Timer? _typingTimer;
+  //
+  // void sendTyping(int chatId, bool isTyping) {
+  //   if (!isSocketConnected.value) return;
+  //
+  //   _typingTimer?.cancel();
+  //
+  //   stompClient.send(
+  //     destination: "/app/chat.typing/$chatId",
+  //     body: jsonEncode({"isTyping": isTyping}),
+  //   );
+  //   if (isTyping) {
+  //     _typingTimer = Timer(const Duration(seconds: 1), () {
+  //       sendTyping(chatId, false);
+  //     });
+  //   }
+  // }
+  // StompUnsubscribe? _typingSubscription;
+  //
+  // void subscribeToTyping(int chatId) {
+  //   // Unsubscribe from previous if exists
+  //   _typingSubscription?.call();
+  //
+  //   _typingSubscription = stompClient.subscribe(
+  //     destination: "/topic/chat/$chatId/typing",
+  //     callback: (frame) {
+  //       final data = jsonDecode(frame.body!);
+  //       final userId = data["userId"];
+  //       final isTyping = data["typing"] as bool;
+  //
+  //       // Don't show "typing" for myself
+  //       final myId = box.read("userId");
+  //       if (userId.toString() != myId.toString()) {
+  //         typingUsers[userId] = isTyping;
+  //         typingUsers.refresh();
+  //       }
+  //     },
+  //   );
+  // }
+  //
+  // void unsubscribeFromTyping() {
+  //   _typingSubscription?.call();
+  //   _typingSubscription = null;
+  //   typingUsers.clear();
+  // }
+  //
+  // var onlineUsers = <int, bool>{}.obs;
 
 
 
@@ -557,11 +717,11 @@ class MessageController extends GetxController {
         // Optionally update chat messages list
       } else {
         print("$type SEND FAILED: ${res.body}");
-        Get.snackbar("Error", "Failed to send $type");
+        CustomSnackbar.error("Error", "Failed to send $type");
       }
     } catch (e) {
       print("SEND $type ERROR: $e");
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isSending.value = false;
     }
@@ -647,10 +807,19 @@ class MessageController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    connectSocket();
-    // int chatId = Get.arguments ?? 10;
-    // fetchChatType(chatId);
-    // loadMessages(chatId);
+    // socket.connect();
+
+    final dynamic myId = box.read("userId");
+
+    if (myId != null) {
+
+      socket.subscribeMyMessages(myId, _handleIncomingMessage);
+    } else {
+      debugPrint("⚠️ Socket not subscribed: userId is null (not logged in yet)");
+    }
+
+
+    // connectSocket();
 
     // When keyboard opens, hide emoji picker
     focusNode.addListener(() {
@@ -663,7 +832,51 @@ class MessageController extends GetxController {
   @override
   void onClose() {
     // TODO: implement onClose
-    stompClient.deactivate();
+    // sendOnlineStatus(false);
+    // stompClient.deactivate();
     super.onClose();
   }
 }
+
+// class SocketDebugOverlay extends StatelessWidget {
+//   const SocketDebugOverlay({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final msgController = Get.find<MessageController>();
+//
+//     return Obx(() => Container(
+//       padding: EdgeInsets.all(8),
+//       margin: EdgeInsets.all(10),
+//       decoration: BoxDecoration(
+//         color: Colors.black87,
+//         borderRadius: BorderRadius.circular(8),
+//       ),
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Row(
+//             children: [
+//               CircleAvatar(
+//                 radius: 5,
+//                 backgroundColor: msgController.isSocketConnected.value ? Colors.green : Colors.red,
+//               ),
+//               SizedBox(width: 8),
+//               Text("Socket: ${msgController.isSocketConnected.value ? 'CONNECTED' : 'DISCONNECTED'}",
+//                   style: TextStyle(color: Colors.white, fontSize: 10)),
+//             ],
+//           ),
+//           Text("User ID in Box: ${GetStorage().read('userId')}",
+//               style: TextStyle(color: Colors.white70, fontSize: 10)),
+//           Divider(color: Colors.white24),
+//           Text("Last Raw Message:", style: TextStyle(color: Colors.yellow, fontSize: 10)),
+//           // We'll add a 'lastRawMsg' variable to MessageController to show here
+//           Text(msgController.lastRawMsg.value,
+//               style: TextStyle(color: Colors.white, fontSize: 9),
+//               maxLines: 3, overflow: TextOverflow.ellipsis),
+//         ],
+//       ),
+//     ));
+//   }
+// }

@@ -8,6 +8,7 @@ import 'package:chatify/TabView%20Screens/contacts_screen.dart';
 import 'package:chatify/TabView%20Screens/group_chats.dart';
 import 'package:chatify/TabView%20Screens/unread_chats.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/controllers/birthday_controller.dart';
 import 'package:chatify/controllers/broadcast_controller.dart';
@@ -136,10 +137,8 @@ class HomeScreen extends StatelessWidget {
                                   // )
                                 ),
                                 onPressed: () {
-                                  Get.snackbar(
-                                      "Record", "Long press to start recording",
-                                      backgroundColor: AppColors.primary,
-                                      colorText: AppColors.white);
+                                  CustomSnackbar.normal(
+                                      "Record", "Long press to start recording");
                                 },
                               ),
                             ),
@@ -725,7 +724,7 @@ class HomeScreen extends StatelessWidget {
                     ),
 
                     const Text(
-                      "Messages",
+                      "Broadcast Message",
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                     ),
@@ -818,9 +817,21 @@ class HomeScreen extends StatelessWidget {
                           if (controller.messageController.text
                               .trim()
                               .isEmpty) {
-                            Get.snackbar("Error", "Message cannot be empty");
+                            CustomSnackbar.error("Error", "Message cannot be empty");
                             return;
                           }
+                          if (controller.selectedDate.value == null || controller.selectedTime.value == null) {
+                            CustomSnackbar.error("Error", "Date & Time cannot be empty");
+                            return;
+                          }
+                          controller.scheduledAt.value = DateTime(
+                            controller.selectedDate.value!.year,
+                            controller.selectedDate.value!.month,
+                            controller.selectedDate.value!.day,
+                            controller.selectedTime.value!.hour,
+                            controller.selectedTime.value!.minute,
+                          );
+                          controller.content.value = controller.messageController.text.trim();
 
                           Get.back();
                           openContactSelectionSheet(context);
@@ -844,8 +855,7 @@ class HomeScreen extends StatelessWidget {
       controller.messageController.clear();
       controller.selectedDate.value = null;
       controller.selectedTime.value = null;
-      controller.selectedUserIds.clear();
-    });;
+    });
   }
 
   void openContactSelectionSheet(BuildContext context) {
@@ -936,9 +946,10 @@ class HomeScreen extends StatelessWidget {
                         onPressed: controller.selectedUserIds.isEmpty
                             ? null
                             : () {
-                                controller.sendBroadcastMessage(
+                                controller.sendScheduledBroadcast(
+                                  scheduledAt: controller.scheduledAt.value!,
                                   content:
-                                      controller.messageController.text.trim(),
+                                      controller.content.value,
                                   recipientIds:
                                       controller.selectedUserIds.toList(),
                                 );

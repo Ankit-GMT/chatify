@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/theme_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -57,7 +58,7 @@ class _VoiceRecorderScreenState extends State<VoiceRecorderScreen> {
 
       setState(() => _isRecording = true);
     } else {
-      Get.snackbar("Permission denied", "Microphone access is required");
+      CustomSnackbar.error("Permission denied", "Microphone access is required");
     }
   }
 

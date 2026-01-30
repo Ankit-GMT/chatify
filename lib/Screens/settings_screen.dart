@@ -1,5 +1,6 @@
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/theme_controller.dart';
 import 'package:chatify/widgets/custom_text_screen.dart';
 import 'package:chatify/widgets/custom_tile.dart';
@@ -106,7 +107,7 @@ class SettingsScreen extends StatelessWidget {
               image: "assets/images/setting_invite.png",
               onTap: () {
                 if (kIsWeb) {
-                  Get.snackbar('Not supported', 'Sharing is not supported on web');
+                  CustomSnackbar.error('Not supported', 'Sharing is not supported on web');
                 } else {
                   Share.share(
                     'Check out Chatify https://example.com',

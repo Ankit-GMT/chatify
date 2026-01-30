@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:ui';
-import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/services/floating_call_bubble_service.dart';
 import 'package:chatify/sound_manager.dart';
 import 'package:flutter/gestures.dart';

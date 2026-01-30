@@ -7,7 +7,9 @@ import 'package:chatify/controllers/theme_controller.dart';
 import 'package:chatify/controllers/voice_call_controller.dart';
 import 'package:chatify/firebase_options.dart';
 import 'package:chatify/services/floating_call_bubble_service.dart';
+import 'package:chatify/services/life_observer.dart';
 import 'package:chatify/services/notification_service.dart';
+import 'package:chatify/services/presence_socket_service.dart';
 import 'package:chatify/theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -30,8 +32,11 @@ void main() async {
   if (!await Permission.contacts.isGranted) {
     await Permission.contacts.request();
   }
-
+  Get.put(SocketService(), permanent: true);
   Get.put(AuthController(), permanent: true);
+
+
+
   Get.put(ThemeController(), permanent: true);
   Get.put(FloatingCallBubbleService());
 
@@ -42,6 +47,7 @@ void main() async {
 
   final box = GetStorage();
   debugPrint("accessToken: ${box.read("accessToken")}");
+  WidgetsBinding.instance.addObserver(LifeObserver());
 
   runApp(MyApp(
     notificationService: notificationService,

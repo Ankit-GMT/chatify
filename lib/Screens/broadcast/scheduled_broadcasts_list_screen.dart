@@ -1,4 +1,5 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/theme_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -73,7 +74,7 @@ class ScheduledBroadcastsListScreen extends StatelessWidget {
                       await controller.deleteScheduledBroadcast(item['id']);
 
                       if (success) {
-                        Get.snackbar("Deleted", "Scheduled broadcast deleted");
+                        CustomSnackbar.success("Deleted", "Scheduled broadcast deleted");
                       }
 
                     },

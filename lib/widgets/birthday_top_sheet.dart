@@ -1,4 +1,5 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -112,7 +113,7 @@ class BirthdayTopSheet extends StatelessWidget {
                                             message: msgController.text.trim());
                                     // Get.back();
                                   } else {
-                                    Get.snackbar(
+                                    CustomSnackbar.error(
                                         "Empty", "Please enter a message");
                                   }
                                 },
@@ -138,7 +139,7 @@ class BirthdayTopSheet extends StatelessWidget {
                               Navigator.pop(context);
                             }
                           } else {
-                            Get.snackbar("Empty", "Please enter a message");
+                            CustomSnackbar.error("Empty", "Please enter a message");
                           }
                         },
                   child: Obx(

@@ -1,6 +1,7 @@
 import 'package:chatify/Screens/group_profile_screen.dart';
 import 'package:chatify/Screens/profile_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/time_format.dart';
 import 'package:chatify/controllers/chat_screen_controller.dart';
 import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/models/message.dart';
@@ -15,6 +16,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../services/presence_socket_service.dart';
+
 final GlobalKey attachKey = GlobalKey();
 
 class ChatScreen extends StatelessWidget {
@@ -24,11 +27,12 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     final chatController = Get.put(ChatScreenController(chatId: chatId!));
     final messageController = Get.put(MessageController());
+    final socket = Get.find<SocketService>();
 
     TextEditingController msgController = TextEditingController();
-
 
     void showAttachmentMenu(BuildContext context, GlobalKey key) {
       final RenderBox renderBox =
@@ -80,17 +84,15 @@ class ChatScreen extends StatelessWidget {
       final box = GetStorage();
       final myId = box.read("userId");
 
-      final receiverId = (myId ==
-          chatController.chatType.value
-              ?.members?[0].userId)
-          ? (chatController.chatType.value
-          ?.members?[1].userId!)
-          : (chatController.chatType.value
-          ?.members?[0].userId!);
+      final receiverId =
+          (myId == chatController.chatType.value?.members?[0].userId)
+              ? (chatController.chatType.value?.members?[1].userId!)
+              : (chatController.chatType.value?.members?[0].userId!);
 
       bool ok = await messageController.sendMessageWs(
         chatId: chatId!,
-        content: msgController.text.trim(), recipientId: receiverId!,
+        content: msgController.text.trim(),
+        recipientId: receiverId!,
       );
 
       if (ok) {
@@ -147,11 +149,13 @@ class ChatScreen extends StatelessWidget {
         ),
         body: Stack(
           children: [
-            Obx(() => Positioned.fill(
-              child: chatBackground(
-                chatController.chatType.value?.backgroundImageUrl,
+            Obx(
+              () => Positioned.fill(
+                child: chatBackground(
+                  chatController.chatType.value?.backgroundImageUrl,
+                ),
               ),
-            ),),
+            ),
 
             // for bright background
             Positioned.fill(
@@ -172,7 +176,9 @@ class ChatScreen extends StatelessWidget {
                         bottomRight: Radius.circular(20),
                       )),
                   child: Obx(
-                    () => Row(
+                    () {
+                      return
+                      Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
@@ -189,8 +195,8 @@ class ChatScreen extends StatelessWidget {
                                 ? shimmerHeader()
                                 : InkWell(
                                     onTap: () {
-                                      Get.to(
-                                          () => chatController.type.value == "GROUP"
+                                      Get.to(() =>
+                                          chatController.type.value == "GROUP"
                                               ? GroupProfileScreen()
                                               : ProfileScreen(
                                                   id: myId ==
@@ -209,15 +215,19 @@ class ChatScreen extends StatelessWidget {
                                                           .value
                                                           ?.members?[0]
                                                           .userId!),
-                                            isFromGroup: false,
+                                                  isFromGroup: false,
                                                 ));
                                     },
-                                    child:
-                                        Row(spacing: Get.width * 0.04, children: [
-                                      ProfileAvatar(
-                                          imageUrl:
-                                              chatController.type.value == "GROUP"
-                                                  ? chatController.chatType.value
+                                    child: Row(
+                                        spacing: Get.width * 0.04,
+                                        children: [
+                                          ProfileAvatar(
+                                              imageUrl: chatController
+                                                          .type.value ==
+                                                      "GROUP"
+                                                  ? chatController
+                                                          .chatType
+                                                          .value
                                                           ?.groupImageUrl ??
                                                       ''
                                                   : myId ==
@@ -238,62 +248,92 @@ class ChatScreen extends StatelessWidget {
                                                               ?.members?[0]
                                                               .profileImageUrl ??
                                                           '',
-                                          radius: 25),
-                                      // SizedBox(
-                                      //   width: Get.width * 0.04,
-                                      // ),
-                                      Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          SizedBox(
-                                            width: Get.width * 0.25,
-                                            child: chatController.type.value ==
-                                                    "GROUP"
-                                                ? Text(
-                                                    chatController
-                                                            .chatType.value?.name ??
-                                                        '',
-                                                    maxLines: 1,
-                                                    style: TextStyle(
-                                                        fontWeight: FontWeight.w500,
-                                                        fontSize: 16,
-                                                        overflow:
-                                                            TextOverflow.ellipsis,
-                                                        color: AppColors.white),
-                                                  )
-                                                : Text(
-                                                    myId ==
-                                                            chatController
-                                                                .chatType
-                                                                .value
-                                                                ?.members?[0]
-                                                                .userId
-                                                        ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
-                                                            ''
-                                                        : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
+                                              radius: 25),
+                                          // SizedBox(
+                                          //   width: Get.width * 0.04,
+                                          // ),
+                                          Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              SizedBox(
+                                                width: Get.width * 0.25,
+                                                child: chatController
+                                                            .type.value ==
+                                                        "GROUP"
+                                                    ? Text(
+                                                        chatController.chatType
+                                                                .value?.name ??
                                                             '',
-                                                    maxLines: 1,
-                                                    style: TextStyle(
-                                                        fontWeight: FontWeight.w500,
-                                                        fontSize: 16,
-                                                        overflow:
-                                                            TextOverflow.ellipsis,
-                                                        color: AppColors.white),
+                                                        maxLines: 1,
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            fontSize: 16,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            color: AppColors
+                                                                .white),
+                                                      )
+                                                    : Text(
+                                                        myId ==
+                                                                chatController
+                                                                    .chatType
+                                                                    .value
+                                                                    ?.members?[
+                                                                        0]
+                                                                    .userId
+                                                            ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
+                                                                ''
+                                                            : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
+                                                                '',
+                                                        maxLines: 1,
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            fontSize: 16,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            color: AppColors
+                                                                .white),
+                                                      ),
+                                              ),
+
+                                              Obx(() {
+                                                final otherId = chatController.otherUserId;
+                                                if (otherId == null) return const SizedBox.shrink();
+
+                                                final bool isOnline = socket.onlineUsers[otherId] == true;
+                                                // Get the timestamp from our new map
+                                                final DateTime? lastSeen = socket.lastSeenTimes[otherId];
+
+                                                return Text(
+                                                  isOnline ? "Online" : TimeFormat.formatLastSeen(lastSeen),
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w300,
+                                                    fontSize: 12,
+                                                    // Change color based on status
+                                                    color: isOnline ? Colors.greenAccent : Colors.white.withAlpha(180),
                                                   ),
+                                                );
+                                              }),
+
+                                              // Text(
+                                              //   "Online",
+                                              //   style: TextStyle(
+                                              //     fontWeight: FontWeight.w300,
+                                              //     fontSize: 12,
+                                              //     color: AppColors.white
+                                              //         .withAlpha(220),
+                                              //   ),
+                                              // ),
+                                            ],
                                           ),
-                                          Text(
-                                            "Online",
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w300,
-                                              fontSize: 12,
-                                              color: AppColors.white.withAlpha(220),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ]),
+                                        ]),
                                   ),
                           ],
                         ),
@@ -311,17 +351,24 @@ class ChatScreen extends StatelessWidget {
                                       : InkWell(
                                           onTap: () {
                                             final channelId = chatId;
-                                            debugPrint('StartCAll :-   $channelId');
+                                            debugPrint(
+                                                'StartCAll :-   $channelId');
                                             final receiverId = (myId ==
-                                                    chatController.chatType.value
-                                                        ?.members?[0].userId)
+                                                    chatController
+                                                        .chatType
+                                                        .value
+                                                        ?.members?[0]
+                                                        .userId)
                                                 ? (chatController.chatType.value
                                                     ?.members?[1].userId!)
                                                 : (chatController.chatType.value
                                                     ?.members?[0].userId!);
                                             final receiverName = myId ==
-                                                    chatController.chatType.value
-                                                        ?.members?[0].userId
+                                                    chatController
+                                                        .chatType
+                                                        .value
+                                                        ?.members?[0]
+                                                        .userId
                                                 ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
                                                     ''
                                                 : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
@@ -355,17 +402,24 @@ class ChatScreen extends StatelessWidget {
                                       : InkWell(
                                           onTap: () {
                                             final channelId = chatId;
-                                            debugPrint('StartCAll :-   $channelId');
+                                            debugPrint(
+                                                'StartCAll :-   $channelId');
                                             final receiverId = (myId ==
-                                                    chatController.chatType.value
-                                                        ?.members?[0].userId)
+                                                    chatController
+                                                        .chatType
+                                                        .value
+                                                        ?.members?[0]
+                                                        .userId)
                                                 ? (chatController.chatType.value
                                                     ?.members?[1].userId!)
                                                 : (chatController.chatType.value
                                                     ?.members?[0].userId!);
                                             final receiverName = myId ==
-                                                    chatController.chatType.value
-                                                        ?.members?[0].userId
+                                                    chatController
+                                                        .chatType
+                                                        .value
+                                                        ?.members?[0]
+                                                        .userId
                                                 ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
                                                     ''
                                                 : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
@@ -390,88 +444,129 @@ class ChatScreen extends StatelessWidget {
                                 ],
                               )
                       ],
-                    ),
+                    );
+      }
                   ),
                 ),
                 Expanded(
                   child: Obx(
-                    () =>
-                        ListView.builder(
-                          itemCount: chatController.messages.length,
-                          reverse: true,
-                          padding: EdgeInsets.only(
-                              top: Get.height * .01,
-                              left: Get.width * 0.05,
-                              right: Get.width * 0.05),
-                          physics: AlwaysScrollableScrollPhysics(),
-                          itemBuilder: (context, index) {
-
-                            final isMyMessage = chatController
+                    () => ListView.builder(
+                      itemCount: chatController.messages.length,
+                      reverse: true,
+                      padding: EdgeInsets.only(
+                          top: Get.height * .01,
+                          left: Get.width * 0.05,
+                          right: Get.width * 0.05),
+                      physics: AlwaysScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        final isMyMessage = chatController
                                 .messages[
-                            chatController.messages.length - index - 1]
+                                    chatController.messages.length - index - 1]
                                 .senderId ==
-                                myId;
-                            // debugPrint("Index ${index}");
-                            return GestureDetector(
-                              onDoubleTap: isMyMessage &&
-                                  chatController.messages[chatController.messages.length - index - 1]
+                            myId;
+                        // debugPrint("Index ${index}");
+                        return GestureDetector(
+                          onDoubleTap: isMyMessage &&
+                                  chatController
+                                      .messages[chatController.messages.length -
+                                          index -
+                                          1]
                                       .sentAt
-                                      .isAfter(DateTime.now().subtract(const Duration(minutes: 5)))
-                                  ? () {
-                                editMessage(chatController.messages[
-                                chatController.messages.length - index - 1]);
-                              } : null,
-                              onLongPress: isMyMessage ? () {
-                                showCupertinoModalPopup(
-                                  // barrierDismissible: false,
-                                  context: context,
-                                  builder: (context) {
-                                    return CupertinoActionSheet(
-                                      title: Text("Delete Message"),
-                                      message: Text(
-                                          "Are you sure you want to delete this message?"),
-                                      actions: [
-                                        CupertinoActionSheetAction(
-                                          child: Text(
-                                            "Delete",
-                                            style: TextStyle(color: Colors.red),
+                                      .isAfter(DateTime.now()
+                                          .subtract(const Duration(minutes: 5)))
+                              ? () {
+                                  editMessage(chatController.messages[
+                                      chatController.messages.length -
+                                          index -
+                                          1]);
+                                }
+                              : null,
+                          onLongPress: isMyMessage
+                              ? () {
+                                  showCupertinoModalPopup(
+                                    // barrierDismissible: false,
+                                    context: context,
+                                    builder: (context) {
+                                      return CupertinoActionSheet(
+                                        title: Text("Delete Message"),
+                                        message: Text(
+                                            "Are you sure you want to delete this message?"),
+                                        actions: [
+                                          CupertinoActionSheetAction(
+                                            child: Text(
+                                              "Delete",
+                                              style:
+                                                  TextStyle(color: Colors.red),
+                                            ),
+                                            onPressed: () {
+                                              deleteMessage(chatController
+                                                      .messages.length -
+                                                  index -
+                                                  1);
+                                              Navigator.pop(context);
+                                            },
                                           ),
-                                          onPressed: () {
-                                            deleteMessage(
-                                                chatController.messages.length -
-                                                    index -
-                                                    1);
-                                            Navigator.pop(context);
-                                          },
-                                        ),
-                                        CupertinoActionSheetAction(
-                                          child: Text("Cancel"),
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              }: null,
-                              child: MessageCard(
-                                message: chatController.messages[
+                                          CupertinoActionSheetAction(
+                                            child: Text("Cancel"),
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                }
+                              : null,
+                          child: MessageCard(
+                            message: chatController.messages[
                                 chatController.messages.length - index - 1],
-                                isMe: chatController
-                                    .messages[
-                                chatController.messages.length - index - 1]
+                            previousMessage: (chatController.messages.length - index - 1) < chatController.messages.length - 1
+                                ? chatController.messages[(chatController.messages.length - index - 1) + 1]
+                                : null,
+                            isMe: chatController
+                                    .messages[chatController.messages.length -
+                                        index -
+                                        1]
                                     .senderId ==
-                                    myId,
-                                onDownload: () => chatController.downloadMedia(
-                                    chatController.messages[
-                                    chatController.messages.length - index - 1]),
-                              ),
-                            );
-                          },
-                        ),
+                                myId,
+                            onDownload: () => chatController.downloadMedia(
+                                chatController.messages[
+                                    chatController.messages.length -
+                                        index -
+                                        1]),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
+                // Example in AppBar title
+                Obx(() {
+                  final otherUserId = (myId ==
+                          chatController.chatType.value?.members?[0].userId)
+                      ? (chatController.chatType.value?.members?[1].userId!)
+                      : (chatController.chatType.value?.members?[0].userId!);
+                  if(socket.typingUsers.isNotEmpty){
+                    if (socket.typingUsers[otherUserId] == true) {
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 20, bottom: 4),
+                          child: Text(
+                            "Typing...",
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                  return SizedBox.shrink();
+                }),
                 Padding(
                   padding: EdgeInsets.symmetric(
                       horizontal: Get.width * 0.05, vertical: 5),
@@ -489,13 +584,20 @@ class ChatScreen extends StatelessWidget {
                             maxLines: 5,
                             minLines: 1,
                             cursorColor: AppColors.white,
+                            onChanged: (value) {
+                              messageController.sendTyping(chatId!, true);
+                            },
+                            onEditingComplete: () {
+                              messageController.sendTyping(chatId!, false);
+                            },
                             decoration: InputDecoration(
                                 isDense: true,
                                 filled: true,
                                 fillColor: AppColors.primary,
                                 prefixIcon: IconButton(
                                   padding: EdgeInsets.only(bottom: 0),
-                                  onPressed: messageController.toggleEmojiPicker,
+                                  onPressed:
+                                      messageController.toggleEmojiPicker,
                                   icon: Icon(
                                     Icons.emoji_emotions_outlined,
                                     color: AppColors.white.withAlpha(200),
@@ -603,6 +705,8 @@ class ChatScreen extends StatelessWidget {
                     )),
               ],
             ),
+            // for websocket working or not
+            // SocketDebugOverlay(),
           ],
         ),
       ),
@@ -700,3 +804,48 @@ Widget chatBackground(String? bgUrl) {
     },
   );
 }
+// class SocketDebugOverlay extends StatelessWidget {
+//   final Widget child;
+//   const SocketDebugOverlay({super.key, required this.child});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final socket = Get.find<SocketService>();
+//
+//     return Stack(
+//       children: [
+//         child, // Your actual ChatScreen
+//         Positioned(
+//           top: 100,
+//           right: 10,
+//           child: Obx(() => Container(
+//             padding: const EdgeInsets.all(8),
+//             decoration: BoxDecoration(
+//               color: Colors.black.withOpacity(0.8),
+//               borderRadius: BorderRadius.circular(8),
+//               border: Border.all(color: socket.isConnected.value ? Colors.green : Colors.red),
+//             ),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               mainAxisSize: MainAxisSize.min,
+//               children: [
+//                 Text(
+//                   socket.isConnected.value ? "🟢 Connected" : "🔴 Disconnected",
+//                   style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+//                 ),
+//                 const Divider(color: Colors.white24),
+//                 const Text("Live Online Map:", style: TextStyle(color: Colors.yellow, fontSize: 10)),
+//                 ...socket.onlineUsers.entries.map((e) => Text(
+//                   "User ${e.key}: ${e.value ? 'ONLINE' : 'OFFLINE'}",
+//                   style: const TextStyle(color: Colors.white, fontSize: 10),
+//                 )),
+//                 if (socket.onlineUsers.isEmpty)
+//                   const Text("Map is empty...", style: TextStyle(color: Colors.white54, fontSize: 10)),
+//               ],
+//             ),
+//           )),
+//         ),
+//       ],
+//     );
+//   }
+// }

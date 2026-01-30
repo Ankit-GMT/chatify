@@ -30,6 +30,7 @@ class Message {
   double downloadProgress; // 0 - 1 value
 
   bool get isDownloaded => localPath != null;
+  final String? dateLabel;
 
   Message({
     required this.id,
@@ -56,6 +57,7 @@ class Message {
     // default values
     this.localPath,
     this.downloadProgress = 0.0,
+    this.dateLabel = "",
 
   });
 
@@ -85,6 +87,7 @@ class Message {
       deleted: json['deleted'] ?? false,
       edited: json['edited'] ?? false,
       editedAt: json['editedAt'] != null ? DateTime.parse(json['editedAt']) : null,
+      dateLabel: json['dateLabel'],
     );
   }
 }

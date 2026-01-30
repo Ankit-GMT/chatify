@@ -1,4 +1,5 @@
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/broadcast_controller.dart';
 import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/controllers/theme_controller.dart';
@@ -57,7 +58,7 @@ class VoiceBroadcastScreen extends StatelessWidget {
                     : () {
                         if (controller.isScheduled.value) {
                           if (controller.scheduledAt.value == null) {
-                            Get.snackbar("Error", "Select date & time");
+                            CustomSnackbar.error("Error", "Select date & time");
                             return;
                           }
 

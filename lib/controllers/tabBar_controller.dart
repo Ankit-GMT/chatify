@@ -6,11 +6,13 @@ import 'package:chatify/Screens/broadcast/broadcast_media_preview_screen.dart';
 import 'package:chatify/Screens/broadcast/voice_broadcast_screen.dart';
 import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/chat_type.dart';
 import 'package:chatify/models/contact_model.dart';
+import 'package:chatify/services/presence_socket_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
@@ -24,6 +26,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class TabBarController extends GetxController {
   final String baseUrl = APIs.url;
+  final socket = Get.find<SocketService>();
 
   var isLoading1 = false.obs;
   var isLoading2 = false.obs;
@@ -33,6 +36,25 @@ class TabBarController extends GetxController {
   final isListening = false.obs;
 
   final box = GetStorage();
+
+  // Inside your Controller that fetches the chat list
+  void onChatsLoaded(List<ChatType> chats) {
+    final socket = Get.find<SocketService>();
+    final myId = GetStorage().read("userId");
+
+    for (var chat in chats) {
+      if (chat.type != "GROUP") {
+        final otherId = (myId == chat.members?[0].userId)
+            ? (chat.members?[1].userId)
+            : chat.members?[0].userId;
+        print("onChAtsLoaded:_ $otherId");
+
+        if (otherId != null) {
+          socket.subscribeToUserStatus(otherId);
+        }
+      }
+    }
+  }
 
   // for local storing
   void saveContactsToLocal() {
@@ -105,10 +127,56 @@ class TabBarController extends GetxController {
 
   final ProfileController profileController = Get.put(ProfileController());
 
+  void _handleIncomingSocketMessage(Map<String, dynamic> data) {
+    final int? chatId = data['chatId'];
+    if (chatId == null) return;
+
+    int index = allChats.indexWhere((chat) => chat.id == chatId);
+
+    if (index != -1) {
+      var chat = allChats[index];
+
+      // 1. Update text content
+      chat.lastMessageContent.value = data['content'] ?? '';
+
+      // 2. FIXED: Assign DateTime correctly (Don't cast as String?)
+      chat.lastMessageAt.value = data['sentAt'] != null
+          ? DateTime.parse(data['sentAt']).toIso8601String()
+          : DateTime.now().toIso8601String();
+
+      chat.lastSenderId = data['senderId'];
+
+      // 3. FIXED: Handle null-safety for unreadCount
+      final myId = box.read("userId");
+      if (data['senderId'] != myId) {
+        // If null, start at 1, otherwise increment
+        chat.unreadCount.value++;
+      }
+
+      // 4. Move to top
+      allChats.removeAt(index);
+      allChats.insert(0, chat);
+
+      // 5. Refresh GetX lists
+      allChats.refresh();
+      filterChats();
+    } else {
+      getAllChats();
+    }
+  }
+
   @override
   void onInit() async {
     super.onInit();
+    socket.connect();
     _speech = stt.SpeechToText();
+
+    final myId = box.read("userId");
+    if (myId != null) {
+      socket.subscribeMyMessages(myId, (data) {
+        _handleIncomingSocketMessage(data);
+      });
+    }
     // Listen to search query changes
     await getAllChats();
     await getUnreadChats();
@@ -148,13 +216,14 @@ class TabBarController extends GetxController {
         // debugPrint(
         //     "Group chats: ${groupChats().map((chat) =>
         //         chat.members!.map((d) => d.userId).toList()).toList()}");
+        onChatsLoaded(allChats);
 
         filterChats();
       } else {
-        Get.snackbar("Error", data['error'] ?? "No chats found");
+        CustomSnackbar.error("Error", data['error'] ?? "No chats found");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
       debugPrint(e.toString());
     } finally {
       isLoading1.value = false;
@@ -181,10 +250,10 @@ class TabBarController extends GetxController {
         print("$unreadChats");
         filterChats();
       } else {
-        Get.snackbar("Error", data['error'] ?? "No unread chats found");
+        CustomSnackbar.error("Error", data['error'] ?? "No unread chats found");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
       debugPrint(e.toString());
     } finally {
       isLoading3.value = false;
@@ -583,9 +652,9 @@ class TabBarController extends GetxController {
       await getAllChats();
       await getUnreadChats();
 
-      Get.snackbar("Muted", "Selected chats have been muted");
+      CustomSnackbar.error("Muted", "Selected chats have been muted");
     } else {
-      Get.snackbar("Error", "Failed to mute chats");
+      CustomSnackbar.error("Error", "Failed to mute chats");
     }
   }
 
@@ -644,9 +713,9 @@ class TabBarController extends GetxController {
       await getAllChats();
       await getUnreadChats();
 
-      Get.snackbar("UnMuted", "Selected chats have been Unmuted");
+      CustomSnackbar.success("UnMuted", "Selected chats have been Unmuted");
     } else {
-      Get.snackbar("Error", "Failed to Unmute chats");
+      CustomSnackbar.error("Error", "Failed to Unmute chats");
     }
   }
 
@@ -712,9 +781,9 @@ class TabBarController extends GetxController {
       await getAllChats();
       await getUnreadChats();
 
-      Get.snackbar("Pinned", "Selected chats have been pinned");
+      CustomSnackbar.success("Pinned", "Selected chats have been pinned");
     } else {
-      Get.snackbar("Error", "Failed to pin chats");
+      CustomSnackbar.error("Error", "Failed to pin chats");
     }
   }
 
@@ -773,9 +842,9 @@ class TabBarController extends GetxController {
       await getAllChats();
       await getUnreadChats();
 
-      Get.snackbar("UnPinned", "Selected chats have been Unpinned");
+      CustomSnackbar.success("UnPinned", "Selected chats have been Unpinned");
     } else {
-      Get.snackbar("Error", "Failed to Unpin chats");
+      CustomSnackbar.error("Error", "Failed to Unpin chats");
     }
   }
 
@@ -801,6 +870,7 @@ class TabBarController extends GetxController {
   }
 
   void handleChatOpen(ChatType chat) {
+
     if (chat.locked.value == true) {
       showUnlockChatSheet(chat.id!);
     } else {
@@ -809,6 +879,13 @@ class TabBarController extends GetxController {
   }
 
   void openChat(int chatId) {
+
+    int index = allChats.indexWhere((c) => c.id == chatId);
+    if (index != -1) {
+      allChats[index].unreadCount.value = 0;
+      allChats.refresh();
+    }
+
     Get.to(
       () => ChatScreen(chatId: chatId),
       arguments: chatId,
@@ -903,7 +980,7 @@ class TabBarController extends GetxController {
                       child: Text("Unlock"),
                       onPressed: () async {
                         if (otpCode?.length != 4) {
-                          Get.snackbar("Error", "Enter valid PIN");
+                          CustomSnackbar.error("Error", "Enter valid PIN");
                           return;
                         }
                         final success = await tabController.verifyChatPin(
@@ -913,7 +990,7 @@ class TabBarController extends GetxController {
                           Get.back();
                           openChat(chatId);
                         } else {
-                          Get.snackbar("Wrong PIN", "Please try again");
+                          CustomSnackbar.error("Wrong PIN", "Please try again");
                         }
                       },
                     ),
@@ -982,19 +1059,19 @@ class TabBarController extends GetxController {
       debugPrint("Birthday Message Response: $data");
 
       if (res.statusCode == 200 && data['success'] == true) {
-        Get.snackbar(
+        CustomSnackbar.success(
           "Sent",
           data['message'] ?? "Birthday wish sent successfully",
         );
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Error",
           data['message'] ?? "Failed to send birthday message",
         );
       }
     } catch (e) {
       debugPrint("sendBirthdayMessage Error: $e");
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading4.value = false;
     }
@@ -1020,19 +1097,19 @@ class TabBarController extends GetxController {
       debugPrint("Birthday Message To All Response: $data");
 
       if (res.statusCode == 200 && data['success'] == true) {
-        Get.snackbar(
+        CustomSnackbar.success(
           "Sent",
           data['message'] ?? "Birthday wishes sent successfully",
         );
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Error",
           data['message'] ?? "Failed to send birthday wishes",
         );
       }
     } catch (e) {
       debugPrint("sendBirthdayMessageToAll Error: $e");
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading5.value = false;
     }

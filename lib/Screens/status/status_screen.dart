@@ -8,6 +8,7 @@ import 'package:chatify/Screens/status/video_status_editor_screen.dart';
 import 'package:chatify/Screens/status/video_status_preview_screen.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/constants/app_colors.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/status_controller.dart';
 import 'package:chatify/models/status_user.dart';
 import 'package:flutter/material.dart';
@@ -338,10 +339,9 @@ class StatusScreen extends StatelessWidget {
                   await controller.deleteScheduledStatus(status.id);
 
               if (success) {
-                Get.snackbar(
+                CustomSnackbar.normal(
                   "Cancelled",
                   "Scheduled status deleted",
-                  snackPosition: SnackPosition.BOTTOM,
                 );
               }
             },
@@ -615,8 +615,7 @@ Future<DateTime?> _pickScheduleDateTime(BuildContext context) async {
   if (time == null) return null;
 
   if (date.isBefore(DateTime.now()) && time.isBefore(TimeOfDay.now())) {
-    Get.snackbar("Error", "Scheduled time cannot be in the past",
-        backgroundColor: Colors.red, colorText: AppColors.white);
+    CustomSnackbar.error("Error", "Scheduled time cannot be in the past",);
     return null;
   }
   return DateTime(

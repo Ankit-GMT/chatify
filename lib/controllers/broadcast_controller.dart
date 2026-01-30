@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/constants/apis.dart';
+import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -15,6 +16,7 @@ class BroadCastController extends GetxController{
 
   final isScheduled = false.obs;
   final scheduledAt = Rxn<DateTime>();
+  final content = "".obs;
 
 
   final messageController = TextEditingController();
@@ -37,6 +39,7 @@ class BroadCastController extends GetxController{
     scheduledAt.value = null;
     recordedFilePath.value = "";
     recordedDuration.value = 0;
+    content.value = "";
   }
 
   Rx<DateTime?> selectedDate = Rx<DateTime?>(null);
@@ -69,7 +72,7 @@ class BroadCastController extends GetxController{
       debugPrint("Broadcast Response: $data");
 
       if (res.statusCode == 200) {
-        Get.snackbar(
+        CustomSnackbar.success(
           "Broadcast Sent",
           "Message sent to ${recipientIds.length} recipients",
         );
@@ -78,14 +81,14 @@ class BroadCastController extends GetxController{
         messageController.clear();
         Navigator.pop(Get.context!);
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Error",
           data['message'] ?? "Failed to send broadcast",
         );
       }
     } catch (e) {
       debugPrint("Broadcast Error: $e");
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -144,7 +147,7 @@ class BroadCastController extends GetxController{
       debugPrint("Voice Broadcast Response: $data");
 
       if (response.statusCode == 200) {
-        Get.snackbar(
+        CustomSnackbar.success(
           "Voice Broadcast Sent",
           "Sent to ${recipientIds.length} recipients",
         );
@@ -152,14 +155,14 @@ class BroadCastController extends GetxController{
         clearBroadcast();
         Navigator.pop(Get.context!);
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Error",
           data['message'] ?? "Failed to send voice broadcast",
         );
       }
     } catch (e) {
       debugPrint("Voice Broadcast Error: $e");
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -193,14 +196,14 @@ class BroadCastController extends GetxController{
       final data = jsonDecode(res.body);
 
       if (res.statusCode == 200) {
-        Get.snackbar("Scheduled", "Broadcast scheduled successfully");
+        CustomSnackbar.success("Scheduled", "Broadcast scheduled successfully");
         clearBroadcast();
         Navigator.pop(Get.context!);
       } else {
-        Get.snackbar("Error", data['message'] ?? "Failed to schedule broadcast");
+        CustomSnackbar.error("Error", data['message'] ?? "Failed to schedule broadcast");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -253,21 +256,21 @@ class BroadCastController extends GetxController{
       debugPrint("Scheduled Voice Broadcast Response: $data");
 
       if (response.statusCode == 200) {
-        Get.snackbar(
+        CustomSnackbar.success(
           "Scheduled", "Broadcast scheduled successfully",
         );
 
         clearBroadcast();
         Navigator.pop(Get.context!);
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Error",
           data['message'] ?? "Failed to schedule broadcast",
         );
       }
     } catch (e) {
       debugPrint("Scheduled Voice Broadcast Error: $e");
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -321,7 +324,7 @@ class BroadCastController extends GetxController{
       debugPrint("Media Broadcast Response: $data");
 
       if (response.statusCode == 200) {
-        Get.snackbar(
+        CustomSnackbar.success(
           "Broadcast Sent",
           "${type.toLowerCase()} sent to ${recipientIds.length} users",
         );
@@ -329,14 +332,14 @@ class BroadCastController extends GetxController{
         clearBroadcast();
         Get.offAll(()=> MainScreen());
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Error",
           data['message'] ?? "Failed to send media broadcast",
         );
       }
     } catch (e) {
       debugPrint("Media Broadcast Error: $e");
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -393,21 +396,21 @@ class BroadCastController extends GetxController{
       debugPrint("Media Broadcast Response: $data");
 
       if (response.statusCode == 200) {
-        Get.snackbar(
+        CustomSnackbar.success(
           "Scheduled", "Broadcast scheduled successfully",
         );
 
         clearBroadcast();
         Get.offAll(()=> MainScreen());
       } else {
-        Get.snackbar(
+        CustomSnackbar.error(
           "Error",
           data['message'] ?? "Failed to scheduled media broadcast",
         );
       }
     } catch (e) {
       debugPrint("Scheduled Media Broadcast Error: $e");
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -439,11 +442,11 @@ class BroadCastController extends GetxController{
         /// API returns DIRECT LIST
         scheduledBroadcasts.value = data;
       } else {
-        Get.snackbar("Error", "Failed to load scheduled broadcasts");
+        CustomSnackbar.error("Error", "Failed to load scheduled broadcasts");
       }
     } catch (e) {
       debugPrint("Fetch Scheduled Error: $e");
-      Get.snackbar("Error", e.toString());
+      CustomSnackbar.error("Error", e.toString());
     } finally {
       isFetchingScheduled.value = false;
     }
