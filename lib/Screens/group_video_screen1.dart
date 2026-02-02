@@ -126,8 +126,55 @@ class _GroupVideoCallScreen1State extends State<GroupVideoCallScreen1> with Widg
                       ),
                     ),
                   )),
+                Obx(() {
+                  if (c.isScreenSharing.value) {
+                    return Positioned.fill(
+                      child: Container(
+                        color: Colors.black.withOpacity(0.9),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.cast_connected, size: 80, color: Colors.blue),
+                            const SizedBox(height: 20),
+                            const Text("You're sharing your screen",
+                                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () => c.stopScreenShare(),
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                              child: const Text("Stop Sharing",style: TextStyle(color: Colors.white),),
+                            )
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
 
                 !isPipMode.value ? _topBar(c): SizedBox.shrink(),
+                // Inside _bottomControls Row
+                Positioned(
+                  bottom: 150,
+                  left: 0,
+                  right: 0,
+                  child: SizedBox(
+                    width: Get.width*0.2,
+                    child: IconButton(
+                      icon: Icon(
+                        c.isScreenSharing.value ? Icons.stop_screen_share : Icons.screen_share,
+                        color: c.isScreenSharing.value ? Colors.blueAccent : Colors.white,
+                      ),
+                      onPressed: () {
+                        if (c.isScreenSharing.value) {
+                          c.stopScreenShare();
+                        } else {
+                          c.startScreenShare();
+                        }
+                      },
+                    ),
+                  ),
+                ),
                 !isPipMode.value ? _bottomControls(c): SizedBox.shrink(),
               ],
             ),
@@ -138,16 +185,20 @@ class _GroupVideoCallScreen1State extends State<GroupVideoCallScreen1> with Widg
   }
 
   Widget _localVideo(GroupVideoCallController c) {
-    if (c.isVideoOff.value) {
-      return const Center(
-        child: Icon(Icons.videocam_off, color: Colors.white),
-      );
-    }
-    return AgoraVideoView(
-      controller: VideoViewController(
-        rtcEngine: c.engine,
-        canvas: const VideoCanvas(uid: 0),
-      ),
+    return Obx(
+      () {
+        if (c.isVideoOff.value) {
+          return const Center(
+            child: Icon(Icons.videocam_off, color: Colors.white),
+          );
+        }
+        return AgoraVideoView(
+          controller: VideoViewController(
+            rtcEngine: c.engine,
+            canvas: const VideoCanvas(uid: 0),
+          ),
+        );
+      },
     );
   }
 
@@ -173,7 +224,7 @@ class _GroupVideoCallScreen1State extends State<GroupVideoCallScreen1> with Widg
           : AgoraVideoView(
         controller: VideoViewController.remote(
           rtcEngine: c.engine,
-          canvas: VideoCanvas(uid: uid),
+          canvas: VideoCanvas(uid: uid, sourceType: VideoSourceType.videoSourceRemote),
           connection: RtcConnection(channelId: c.channelId),
         ),
       );
@@ -241,40 +292,43 @@ class _GroupVideoCallScreen1State extends State<GroupVideoCallScreen1> with Widg
       bottom: 40,
       left: 0,
       right: 0,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(40),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              icon: Icon(
-                c.isMuted.value ? Icons.mic_off : Icons.mic,
-                color: Colors.white,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(40),
+          ),
+          child: Row(
+            // mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(
+                  c.isMuted.value ? Icons.mic_off : Icons.mic,
+                  color: Colors.white,
+                ),
+                onPressed: c.toggleMute,
               ),
-              onPressed: c.toggleMute,
-            ),
-            IconButton(
-              icon: const Icon(Icons.call_end, color: Colors.red),
-              onPressed: c.endCall,
-            ),
-            IconButton(
-              icon: const Icon(Icons.cameraswitch, color: Colors.white),
-              onPressed: c.switchCamera,
-            ),
-            IconButton(
-              icon: Icon(
-                c.isVideoOff.value
-                    ? Icons.videocam_off
-                    : Icons.videocam,
-                color: Colors.white,
+              IconButton(
+                icon: const Icon(Icons.call_end, color: Colors.red),
+                onPressed: c.endCall,
               ),
-              onPressed: c.toggleVideo,
-            ),
-          ],
+              IconButton(
+                icon: const Icon(Icons.cameraswitch, color: Colors.white),
+                onPressed: c.switchCamera,
+              ),
+              IconButton(
+                icon: Icon(
+                  c.isVideoOff.value
+                      ? Icons.videocam_off
+                      : Icons.videocam,
+                  color: Colors.white,
+                ),
+                onPressed: c.toggleVideo,
+              ),
+            ],
+          ),
         ),
       ),
     ): c.callUIState.value == CallUIState.timeout ?

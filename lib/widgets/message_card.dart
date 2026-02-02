@@ -27,7 +27,6 @@ class MessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     if (message.type == "SYSTEM_BACKGROUND_CHANGE") {
       return _buildSystemMessage();
     }
@@ -38,14 +37,15 @@ class MessageCard extends StatelessWidget {
       crossAxisAlignment:
           isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
-        if (showDateSeparator)
+        if (showDateSeparator && message.dateLabel != null && message.dateLabel!.isNotEmpty)
           _buildTimelineMessage(),
         isMe
             ? SizedBox()
             : Row(
                 children: [
                   ProfileAvatar(
-                      imageUrl: message.senderProfileImageUrl ?? '', radius: 10),
+                      imageUrl: message.senderProfileImageUrl ?? '',
+                      radius: 10),
                   SizedBox(width: 5),
                   Text("${message.senderFirstName} ${message.senderLastName}",
                       style: TextStyle(fontSize: 10)),
@@ -77,7 +77,6 @@ class MessageCard extends StatelessWidget {
                     if (message.type == "VIDEO") buildVideoMessage(),
                     if (message.type == "DOCUMENT") buildDocumentMessage(),
                     if (message.type == "TEXT") buildTextMessage(),
-
                     SizedBox(height: 6),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -93,8 +92,14 @@ class MessageCard extends StatelessWidget {
                         ),
                         SizedBox(width: 4),
                         isMe
-                            ? Icon(Icons.done_all, size: 12, color: Colors.blue)
-                            : SizedBox()
+                            ? Obx(() => Icon(
+                                  Icons.done_all,
+                                  size: 12,
+                                  color: message.isRead.value
+                                      ? Colors.blue
+                                      : Colors.grey,
+                                ))
+                            : const SizedBox()
                       ],
                     )
                   ],
@@ -108,18 +113,11 @@ class MessageCard extends StatelessWidget {
   }
 
   bool _shouldShowDateSeparator() {
-    // If no previous message (first message in list), show separator
-    if (previousMessage == null) {
-      return true;
-    }
+    // First message in whole list (oldest)
+    if (previousMessage == null) return true;
 
-    // If dateLabel changed from previous message, show separator
-    if (previousMessage!.dateLabel != message.dateLabel) {
-      return true;
-    }
-
-    // Otherwise, don't show separator
-    return false;
+    // If day is different from the OLDER message
+    return message.dateLabel != previousMessage!.dateLabel;
   }
 
   // for other messages
@@ -145,6 +143,7 @@ class MessageCard extends StatelessWidget {
       ),
     );
   }
+
   //for time,day
   Widget _buildTimelineMessage() {
     return Padding(
@@ -171,187 +170,193 @@ class MessageCard extends StatelessWidget {
 
   // For image
   Widget buildImageMessage() {
-    return Stack(
+    return Obx(() => Stack(
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: isMe
               ? Image.file(
-                  File(message.localPath ?? ""),
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.cover,
-                )
+            File(message.localPath.value ?? ""),
+            width: 200,
+            height: 200,
+            fit: BoxFit.cover,
+          )
               : Image.network(
-                  message.thumbnailUrl ?? message.fileUrl!,
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.cover,
-                ),
+            message.thumbnailUrl ?? message.fileUrl!,
+            width: 200,
+            height: 200,
+            fit: BoxFit.cover,
+          ),
         ),
-        if (!message.isDownloaded && !isMe)
+        if (message.localPath.value != null && !isMe)
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
                   color: Colors.black45,
                   borderRadius: BorderRadius.circular(8)),
               child: Center(
-                child: message.downloadProgress == 0
+                child: message.downloadProgress.value == 0
                     ? IconButton(
-                        icon:
-                            Icon(Icons.download, color: Colors.white, size: 32),
-                        onPressed: () {
-                          debugPrint("Download tapped");
-                          onDownload?.call();
-                        },
-                      )
+                  icon:
+                  Icon(Icons.download, color: Colors.white, size: 32),
+                  onPressed: () {
+                    debugPrint("Download tapped");
+                    onDownload?.call();
+                  },
+                )
                     : SizedBox(
-                        width: 35,
-                        height: 35,
-                        child: CircularProgressIndicator(
-                          value: message.downloadProgress,
-                          strokeWidth: 3,
-                          color: AppColors.primary,
-                        ),
-                      ),
+                  width: 35,
+                  height: 35,
+                  child: CircularProgressIndicator(
+                    value: message.downloadProgress.value,
+                    strokeWidth: 3,
+                    color: AppColors.primary,
+                  ),
+                ),
               ),
             ),
           ),
-        if (message.isDownloaded || isMe)
+        if (message.localPath.value != null || isMe)
           Positioned.fill(
             child: InkWell(
-              onTap: () =>
-                  Get.to(() => FullImageViewer(imageUrl: message.localPath!)),
+              onTap: () => Get.to(
+                      () => FullImageViewer(imageUrl: message.localPath.value!)),
               child: Container(color: Colors.transparent),
             ),
           ),
       ],
-    );
+    ),);
   }
 
   Widget buildAudioMessage() {
-    return Stack(
-      children: [
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white.withAlpha(25),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              (!message.isDownloaded && !isMe)
-                  ? message.downloadProgress == 0
-                      ? GestureDetector(
-                          onTap: onDownload,
-                          child: Icon(Icons.download,
-                              color: Colors.white, size: 22),
-                        )
-                      : CircularProgressIndicator(
-                          value: message.downloadProgress,
-                          strokeWidth: 3,
-                          color: AppColors.primary,
-                        )
-                  : Icon(Icons.audiotrack, color: Colors.white, size: 22),
-              SizedBox(width: 10),
-              Text(
-                message.fileName ?? "Audio File",
-                style: TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-        // if (!message.isDownloaded)
-        //   Positioned.fill(
-        //     child: Center(
-        //       child: message.downloadProgress == 0
-        //           ? IconButton(
-        //               icon: Icon(Icons.download, color: Colors.white, size: 28),
-        //               onPressed: onDownload)
-        //           : CircularProgressIndicator(
-        //               value: message.downloadProgress,
-        //               strokeWidth: 3,
-        //               color: AppColors.primary,
-        //             ),
-        //     ),
-        //   ),
-        if (message.isDownloaded || isMe)
-          Positioned.fill(
-            child: InkWell(
-              onTap: () {
-                openAudioPlayerSheet(
-                    Get.context!, message.localPath ?? message.fileUrl!, message.fileName!);
-              },
-              child: Container(color: Colors.transparent),
+    return Obx(
+      () => Stack(
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(25),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                (message.localPath.value != null && !isMe)
+                    ? message.downloadProgress.value == 0
+                        ? GestureDetector(
+                            onTap: onDownload,
+                            child: Icon(Icons.download,
+                                color: Colors.white, size: 22),
+                          )
+                        : CircularProgressIndicator(
+                            value: message.downloadProgress.value,
+                            strokeWidth: 3,
+                            color: AppColors.primary,
+                          )
+                    : Icon(Icons.audiotrack, color: Colors.white, size: 22),
+                SizedBox(width: 10),
+                Text(
+                  message.fileName ?? "Audio File",
+                  style: TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ],
             ),
           ),
-      ],
+          // if (!message.localPath.value != null)
+          //   Positioned.fill(
+          //     child: Center(
+          //       child: message.downloadProgress.value == 0
+          //           ? IconButton(
+          //               icon: Icon(Icons.download, color: Colors.white, size: 28),
+          //               onPressed: onDownload)
+          //           : CircularProgressIndicator(
+          //               value: message.downloadProgress.value,
+          //               strokeWidth: 3,
+          //               color: AppColors.primary,
+          //             ),
+          //     ),
+          //   ),
+          if (message.localPath.value != null || isMe)
+            Positioned.fill(
+              child: InkWell(
+                onTap: () {
+                  openAudioPlayerSheet(
+                      Get.context!,
+                      message.localPath.value ?? message.fileUrl!,
+                      message.fileName!);
+                },
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
   // for Video message
   Widget buildVideoMessage() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: message.thumbnailUrl != null || message.localPath != null
-              ? Image.network(
-                  isMe ? message.localPath! : message.thumbnailUrl!,
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.cover,
-                )
-              : Container(
-                  width: 200,
-                  height: 200,
-                  color: Colors.black26,
+    return Obx(() => Stack(
+          alignment: Alignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: message.thumbnailUrl != null ||
+                      message.localPath.value != null
+                  ? Image.network(
+                      isMe ? message.localPath.value! : message.thumbnailUrl!,
+                      width: 200,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      width: 200,
+                      height: 200,
+                      color: Colors.black26,
+                    ),
+            ),
+
+            // if downloading show progress
+            if (message.downloadProgress.value > 0 && message.downloadProgress.value < 1)
+              CircularProgressIndicator(
+                value: message.downloadProgress.value,
+                strokeWidth: 3,
+                color: AppColors.primary,
+              ),
+
+            // if downloaded => play button
+            if (message.localPath.value != null || isMe)
+              GestureDetector(
+                onTap: () {
+                  Get.to(() =>
+                      VideoPlayerScreen(videoUrl: message.localPath.value!));
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black45,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: EdgeInsets.all(10),
+                  child: Icon(Icons.play_arrow, color: Colors.white, size: 32),
                 ),
-        ),
-
-        // if downloading show progress
-        if (message.downloadProgress > 0 && message.downloadProgress < 1)
-          CircularProgressIndicator(
-            value: message.downloadProgress,
-            strokeWidth: 3,
-            color: AppColors.primary,
-          ),
-
-        // if downloaded => play button
-        if (message.localPath != null || isMe)
-          GestureDetector(
-            onTap: () {
-              Get.to(() => VideoPlayerScreen(videoUrl: message.localPath!));
-            },
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black45,
-                shape: BoxShape.circle,
               ),
-              padding: EdgeInsets.all(10),
-              child: Icon(Icons.play_arrow, color: Colors.white, size: 32),
-            ),
-          ),
 
-        // if NOT downloaded => download icon
-        if (message.localPath == null &&
-            (message.downloadProgress == 0) &&
-            !isMe)
-          GestureDetector(
-            onTap: onDownload,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black45,
-                shape: BoxShape.circle,
+            // if NOT downloaded => download icon
+            if (message.localPath.value == null &&
+                (message.downloadProgress.value == 0) &&
+                !isMe)
+              GestureDetector(
+                onTap: onDownload,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black45,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: EdgeInsets.all(10),
+                  child: Icon(Icons.download, color: Colors.white, size: 28),
+                ),
               ),
-              padding: EdgeInsets.all(10),
-              child: Icon(Icons.download, color: Colors.white, size: 28),
-            ),
-          ),
-      ],
-    );
+          ],
+        ));
   }
 
   Widget buildDocumentMessage() {
@@ -363,49 +368,51 @@ class MessageCard extends StatelessWidget {
             color: Colors.white.withAlpha(25),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              (!message.isDownloaded && !isMe)
-                  ? message.downloadProgress == 0
-                      ? GestureDetector(
-                          onTap: onDownload,
-                          child: Icon(Icons.download,
-                              color: Colors.white, size: 22))
-                      : CircularProgressIndicator(
-                          value: message.downloadProgress,
-                          strokeWidth: 3,
-                        )
-                  : Icon(Icons.insert_drive_file,
-                      color: Colors.white, size: 22),
-              SizedBox(width: 10),
-              Text(
-                message.fileName ?? "Document",
-                style: TextStyle(color: Colors.white),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+          child: Obx(
+            () => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                (message.localPath.value != null && !isMe)
+                    ? message.downloadProgress.value == 0
+                        ? GestureDetector(
+                            onTap: onDownload,
+                            child: Icon(Icons.download,
+                                color: Colors.white, size: 22))
+                        : CircularProgressIndicator(
+                            value: message.downloadProgress.value,
+                            strokeWidth: 3,
+                          )
+                    : Icon(Icons.insert_drive_file,
+                        color: Colors.white, size: 22),
+                SizedBox(width: 10),
+                Text(
+                  message.fileName ?? "Document",
+                  style: TextStyle(color: Colors.white),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ),
-        // if (!message.isDownloaded)
+        // if (!message.localPath.value != null)
         //   Positioned.fill(
         //     child: Center(
-        //       child: message.downloadProgress == 0
+        //       child: message.downloadProgress.value == 0
         //           ? IconButton(
         //               icon: Icon(Icons.download, color: Colors.white, size: 28),
         //               onPressed: onDownload,
         //             )
         //           : CircularProgressIndicator(
-        //               value: message.downloadProgress,
+        //               value: message.downloadProgress.value,
         //               strokeWidth: 3,
         //             ),
         //     ),
         //   ),
-        if (message.isDownloaded || isMe)
+        if (message.localPath.value != null || isMe)
           Positioned.fill(
             child: InkWell(
               onTap: () async {
-                await OpenFilex.open(message.localPath!);
+                await OpenFilex.open(message.localPath.value!);
               },
               child: Container(color: Colors.transparent),
             ),

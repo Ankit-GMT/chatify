@@ -710,7 +710,7 @@ class MessageController extends GetxController {
         await scanFileToGallery(file.path);
 
         //for storing local
-        message.localPath = file.path;
+        message.localPath.value = file.path;
         await prefs.setString("msgFile_${message.id}", file.path);
 
         print("$type SEND SUCCESS: $data");

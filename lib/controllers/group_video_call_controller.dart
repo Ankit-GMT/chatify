@@ -61,6 +61,62 @@ class GroupVideoCallController extends GetxController {
 
   final callUIState = CallUIState.calling.obs;
 
+  // Add this inside GroupVideoCallController class
+
+  final isScreenSharing = false.obs;
+
+  Future<void> startScreenShare() async {
+    try {
+      // 1. Start screen capture with desired parameters
+      await engine.startScreenCapture(
+        const ScreenCaptureParameters2(
+          captureAudio: true,
+          captureVideo: true,
+          videoParams: ScreenVideoParameters(
+            dimensions: VideoDimensions(width: 720, height: 1280),
+            frameRate: 15,
+            bitrate: 2000,
+          ),
+        ),
+      );
+
+      // 2. Update channel media options to publish the screen track instead of camera
+      await engine.updateChannelMediaOptions(
+        const ChannelMediaOptions(
+          publishCameraTrack: false,         // Stop publishing camera
+          publishMicrophoneTrack: true,      // Keep audio active
+          publishScreenCaptureVideo: true,   // Publish screen video
+          publishScreenCaptureAudio: true,   // Publish screen audio (if needed)
+        ),
+      );
+
+      isScreenSharing.value = true;
+    } catch (e) {
+      debugPrint("Error starting screen share: $e");
+    }
+  }
+
+  Future<void> stopScreenShare() async {
+    try {
+      // 1. Stop the capture
+      await engine.stopScreenCapture();
+
+      // 2. Revert media options back to the camera
+      await engine.updateChannelMediaOptions(
+        const ChannelMediaOptions(
+          publishCameraTrack: true,          // Resume camera
+          publishMicrophoneTrack: true,
+          publishScreenCaptureVideo: false,
+          publishScreenCaptureAudio: false,
+        ),
+      );
+
+      isScreenSharing.value = false;
+    } catch (e) {
+      debugPrint("Error stopping screen share: $e");
+    }
+  }
+
   // ===== Lifecycle =====
   @override
   void onInit() {

@@ -42,6 +42,15 @@ class ChatScreenController extends GetxController {
   Future<void> loadMessages(int id) async {
     final data = await fetchMessages(id);
     messages.value = data;
+
+    // Trigger receipts for the other user for any message they sent that I haven't read
+    final myId = box.read("userId");
+    for (var msg in messages) {
+      if (msg.senderId != myId && !msg.isRead.value) {
+        socket.sendReadReceipt(chatId, msg.id, msg.senderId);
+      }
+    }
+
     await markChatAsRead(id);
     await initializeDownloads();
   }
@@ -112,7 +121,7 @@ class ChatScreenController extends GetxController {
 
 
   Future<void> downloadMedia(Message message) async {
-    message.downloadProgress = 0;
+    message.downloadProgress.value = 0;
     messages.refresh();
 
     final folder = await getDownloadFolder();
@@ -139,7 +148,7 @@ class ChatScreenController extends GetxController {
     final file = File(savePath);
 
     if (file.existsSync()) {
-      message.localPath = savePath;
+      message.localPath.value = savePath;
       messages.refresh();
       return;
     }
@@ -150,7 +159,7 @@ class ChatScreenController extends GetxController {
 
     await response.stream.listen((chunk) {
       received += chunk.length;
-      message.downloadProgress = received / totalBytes;
+      message.downloadProgress.value = received / totalBytes;
       messages.refresh();
       sink.add(chunk);
     }).asFuture();
@@ -158,7 +167,7 @@ class ChatScreenController extends GetxController {
     await sink.close();
 
     print("FILE SAVED: $savePath");
-    message.localPath = savePath;
+    message.localPath.value = savePath;
 
     //For gallary
     await scanFileToGallery(savePath);
@@ -176,7 +185,7 @@ class ChatScreenController extends GetxController {
       final savedPath = await getLocalSavedPath(msg.id);
 
       if (savedPath != null && File(savedPath).existsSync()) {
-        msg.localPath = savedPath;
+        msg.localPath.value = savedPath;
         continue;
       }
 
@@ -187,7 +196,7 @@ class ChatScreenController extends GetxController {
         final localPath = "${folder.path}/$fileName";
 
         if (File(localPath).existsSync()) {
-          msg.localPath = localPath;
+          msg.localPath.value = localPath;
           await saveLocalPath(msg.id, localPath); // save to preferences
         }
       }
@@ -318,39 +327,41 @@ class ChatScreenController extends GetxController {
   void onInit() {
     // TODO: implement onInit
     super.onInit();
+    box.write("activeChatId", chatId);
     ever(chatType, (value) {
-      if (value != null) {
-        final otherId = otherUserId; // using your getter
-        if (otherId != null) {
+      if (value != null && otherUserId != null) {
+        socket.subscribeToUserStatus(otherUserId!);
+        socket.subscribeTyping(chatId);
 
-          // Subscribe now that we finally have the ID
-          socket.subscribeToUserStatus(otherId);
-          socket.subscribeTyping(chatId); // Subscribe to typing too
-
-          debugPrint("📡 Successfully subscribed to User: $otherId");
-        }
+        // Subscribe to receipts from the OTHER person
       }
     });
-    ever(messages, (List<Message> messageList) {
+
+    // 2. Logic to send READ receipts when new messages arrive
+    debounce(messages, (List<Message> messageList) {
       if (messageList.isNotEmpty) {
-        final lastMessage = messageList.first; // Usually first if list is reversed
+        final lastMessage = messageList.last;
         final myId = box.read("userId");
 
-        // Only send if the last message came from the OTHER person
-        if (lastMessage.senderId != myId) {
-          socket.sendReadReceipt(chatId, lastMessage.id);
+        if (lastMessage.senderId != myId && !lastMessage.isRead.value) {
+          socket.sendReadReceipt(chatId, lastMessage.id, lastMessage.senderId);
+          socket.sendDeliveryReceipt(chatId, lastMessage.id, lastMessage.senderId);
         }
       }
-    });
+    }, time: const Duration(milliseconds: 300));
+
     Get.find<MessageController>().subscribeToTyping(chatId);
 
     fetchChatType(chatId);
     loadMessages(chatId);
   }
+
+
   @override
   void onClose() {
     // TODO: implement onClose
     // socket.unsubscribeFromTyping();
+    box.remove("activeChatId");
     super.onClose();
   }
 }

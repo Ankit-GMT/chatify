@@ -105,7 +105,7 @@ class _ChatUserCardState extends State<ChatUserCard> {
         return Row(
           children: [
             widget.chatType?.lastSenderId == myId
-                ? const Icon(Icons.done_all_rounded, color: Colors.blue, size: 15)
+                ?  Icon(Icons.done_all_rounded, color:widget.chatType?.unreadCount.value == 0 ?  Colors.blue : Colors.grey, size: 15)
                 : const SizedBox.shrink(),
             const SizedBox(width: 5),
             SizedBox(
@@ -155,7 +155,7 @@ class _ChatUserCardState extends State<ChatUserCard> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                if (lastTime != '')
+                if (lastTime != null && lastTime.isNotEmpty)
                   Text(
                     TimeFormat.formatTime(lastTime),
                     style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey),

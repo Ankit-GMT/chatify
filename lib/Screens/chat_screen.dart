@@ -105,7 +105,7 @@ class ChatScreen extends StatelessWidget {
       bool ok = await messageController.deleteMessage(
           chatId!, chatController.messages[index].id);
       if (ok) {
-        // chatController.loadMessages(chatId!); // reload after delete
+        chatController.loadMessages(chatId!); // reload after delete
       }
     }
 
@@ -124,7 +124,7 @@ class ChatScreen extends StatelessWidget {
           );
           if (ok) {
             Get.back();
-            // chatController.loadMessages(chatId!); // reload messages
+            chatController.loadMessages(chatId!); // reload messages
           }
         },
       );
@@ -459,11 +459,20 @@ class ChatScreen extends StatelessWidget {
                           right: Get.width * 0.05),
                       physics: AlwaysScrollableScrollPhysics(),
                       itemBuilder: (context, index) {
-                        final isMyMessage = chatController
-                                .messages[
-                                    chatController.messages.length - index - 1]
-                                .senderId ==
-                            myId;
+                        final int realIndex =
+                            chatController.messages.length - index - 1;
+
+                        final Message message =
+                        chatController.messages[realIndex];
+
+                      // OLDER message (one step back in time)
+                        final Message? previousMessage =
+                        (realIndex > 0)
+                            ? chatController.messages[realIndex - 1]
+                            : null;
+
+
+                        final isMyMessage = message.senderId == myId;
                         // debugPrint("Index ${index}");
                         return GestureDetector(
                           onDoubleTap: isMyMessage &&
@@ -521,9 +530,10 @@ class ChatScreen extends StatelessWidget {
                           child: MessageCard(
                             message: chatController.messages[
                                 chatController.messages.length - index - 1],
-                            previousMessage: (chatController.messages.length - index - 1) < chatController.messages.length - 1
-                                ? chatController.messages[(chatController.messages.length - index - 1) + 1]
-                                : null,
+                            previousMessage: previousMessage,
+                            // (chatController.messages.length - index - 1) < chatController.messages.length - 1
+                            //     ? chatController.messages[(chatController.messages.length - index - 1) + 1]
+                            //     : null,
                             isMe: chatController
                                     .messages[chatController.messages.length -
                                         index -

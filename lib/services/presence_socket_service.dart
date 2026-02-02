@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:chatify/constants/apis.dart';
+import 'package:chatify/controllers/chat_screen_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -25,6 +26,37 @@ class SocketService extends GetxService {
 
   StompClient get client => _client;
 
+  Timer? _heartbeatTimer;
+
+  void startHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      // THE FIX: Check if the client is physically connected before sending
+      if (isConnected.value && _client.connected) {
+        try {
+          sendOnline(true);
+
+          for (var userId in onlineUsers.keys) {
+            requestUserStatus(userId);
+          }
+          debugPrint("Status Heartbeat: Syncing all user states");
+        } catch (e) {
+          debugPrint("Heartbeat failed: $e");
+          // If a transmit fails, it's safer to stop the heartbeat until reconnect
+          stopHeartbeat();
+        }
+      } else {
+        // If we are not connected, stop the timer to prevent more errors
+        stopHeartbeat();
+      }
+    });
+  }
+
+  void stopHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
+  }
+
   void connect() {
     if (isConnected.value || _connecting) return;
 
@@ -48,6 +80,8 @@ class SocketService extends GetxService {
           isConnected.value = true;
           _connecting = false;
           sendOnline(true);
+          subscribeToReceipts();
+          startHeartbeat();
           for (final action in _pendingSubscriptions) {
             action();
           }
@@ -57,10 +91,13 @@ class SocketService extends GetxService {
         onDisconnect: (_) {
           isConnected.value = false;
           _connecting = false;
+          stopHeartbeat();
+          Future.delayed(const Duration(seconds: 3), connect);
           debugPrint("🔌 GLOBAL SOCKET DISCONNECTED");
         },
         onWebSocketError: (e) {
           _connecting = false;
+          Future.delayed(const Duration(seconds: 3), connect);
           debugPrint("❌ WS ERROR $e");
         },
       ),
@@ -78,7 +115,11 @@ class SocketService extends GetxService {
 
   // -------- PRESENCE --------
   void sendOnline(bool status) {
-    if (!isConnected.value) return;
+    if (!isConnected.value) {
+      // If not connected yet, queue it for when onConnect fires
+      _pendingSubscriptions.add(() => sendOnline(status));
+      return;
+    }
     _client.send(
       destination: "/app/user.status",
       body: jsonEncode({"isOnline": status}),
@@ -111,9 +152,95 @@ class SocketService extends GetxService {
 
           onlineUsers.refresh();
           lastSeenTimes.refresh();
-          requestUserStatus(userId);
 
           debugPrint("📥 Received Status: User $receivedId is $status");
+        },
+      );
+      Future.delayed(const Duration(milliseconds: 500), () {
+        requestUserStatus(userId);
+      });
+    });
+  }
+
+  void subscribeToReceipts() {
+    // 1. Listen for Delivery Receipts
+    _client.subscribe(
+      destination: '/user/queue/receipts/delivered',
+      callback: (frame) {
+        if (frame.body != null) {
+          final data = jsonDecode(frame.body!);
+          _handleReceiptUpdate(
+            data['messageId'],
+            'DELIVERED',
+            data['deliveredAt'],
+            data['chatId'],
+          );
+
+        }
+      },
+    );
+
+    // 2. Listen for Read Receipts
+    _client.subscribe(
+      destination: '/user/queue/receipts/read',
+      callback: (frame) {
+        if (frame.body != null) {
+          final data = jsonDecode(frame.body!);
+          _handleReceiptUpdate(
+            data['messageId'],
+            'READ',
+            data['readAt'],
+            data['chatId'],
+          );
+
+        }
+      },
+    );
+  }
+
+  void _handleReceiptUpdate(int messageId, String status, String timestamp,dynamic chatId) {
+    final activeChatId = box.read("activeChatId");
+    if (activeChatId == null || activeChatId != chatId) return;
+
+    if (!Get.isRegistered<ChatScreenController>()) return;
+
+    final chatController = Get.find<ChatScreenController>();
+
+    final int id = int.parse(messageId.toString());
+
+    final msg = chatController.messages.firstWhereOrNull(
+          (m) => m.id == id,
+    );
+
+
+    if (msg == null) return;
+
+    final parsedTime = DateTime.tryParse(timestamp);
+
+    if (status == 'DELIVERED') {
+      msg.isDelivered.value = true;
+      if (parsedTime != null) msg.deliveredAt.value = parsedTime;
+    }
+
+    if (status == 'READ') {
+      msg.isRead.value = true;
+      if (parsedTime != null) msg.readAt.value = parsedTime;
+    }
+  }
+
+  void subscribeGroupReceipts(int chatId) {
+    _safeSubscribe(() {
+      _client.subscribe(
+        destination: '/topic/chat/$chatId/receipts/read',
+        callback: (frame) {
+          final data = jsonDecode(frame.body!);
+          _handleReceiptUpdate(
+            data['messageId'],
+            'READ',
+            data['readAt'],
+            data['chatId'],
+          );
+
         },
       );
     });
@@ -154,7 +281,12 @@ class SocketService extends GetxService {
           final isTyping = data["typing"] as bool;
           final myId = box.read("userId");
           if (userId.toString() != myId.toString()) {
-            typingUsers[userId] = isTyping;
+            if (isTyping) {
+              typingUsers[userId] = true;
+            } else {
+              // Remove the key entirely when they stop typing
+              typingUsers.remove(userId);
+            }
             typingUsers.refresh();
           }
         },
@@ -180,7 +312,12 @@ class SocketService extends GetxService {
       );
     });
   }
-  void _safeSubscribe(VoidCallback action) {
+  void _safeSubscribe(VoidCallback action) async{
+    int retry = 0;
+    while (!isConnected.value && retry < 10) {
+      await Future.delayed(Duration(milliseconds: 200));
+      retry++;
+    }
     if (isConnected.value) {
       action();
     } else {
@@ -194,18 +331,28 @@ class SocketService extends GetxService {
     }
 
   // -------- MESSAGE READ STATUS --------
-  void sendReadReceipt(int chatId, int messageId) {
-    if (!isConnected.value) return;
-
-    // We send the chatId so the server knows which conversation was read
+  void sendDeliveryReceipt(int chatId, int messageId, int senderId) {
+    final Map<String, dynamic> payload = {
+      "chatId": chatId,
+      "messageId": messageId,
+      "senderId": senderId,
+    };
     _client.send(
-      destination: "/app/message.read",
-      body: jsonEncode({
-        "messageId": messageId,
-        "chatId": chatId
-      }),
+      destination: '/app/message.delivered',
+      body: jsonEncode(payload),
     );
-    debugPrint("📤 Sent Read Receipt for Chat: $chatId");
+  }
+
+  void sendReadReceipt(int chatId, int messageId, int senderId) {
+    final Map<String, dynamic> payload = {
+      "chatId": chatId,
+      "messageId": messageId,
+      "senderId": senderId,
+    };
+    _client.send(
+      destination: '/app/message.read.new',
+      body: jsonEncode(payload),
+    );
   }
   void subscribeReadStatus(int messageId) {
     _safeSubscribe(() {
@@ -221,5 +368,12 @@ class SocketService extends GetxService {
         },
       );
     });
+  }
+
+  @override
+  void onClose() {
+    // TODO: implement onClose
+    stopHeartbeat();
+    super.onClose();
   }
 }

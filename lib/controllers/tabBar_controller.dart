@@ -131,37 +131,38 @@ class TabBarController extends GetxController {
     final int? chatId = data['chatId'];
     if (chatId == null) return;
 
-    int index = allChats.indexWhere((chat) => chat.id == chatId);
+    final myId = box.read("userId");
+
+    int index = allChats.indexWhere((c) => c.id == chatId);
 
     if (index != -1) {
-      var chat = allChats[index];
+      final old = allChats[index];
 
-      // 1. Update text content
-      chat.lastMessageContent.value = data['content'] ?? '';
-
-      // 2. FIXED: Assign DateTime correctly (Don't cast as String?)
-      chat.lastMessageAt.value = data['sentAt'] != null
+      old.lastMessageContent.value = data['content'] ?? '';
+      old.lastMessageAt.value = data['sentAt'] != null
           ? DateTime.parse(data['sentAt']).toIso8601String()
           : DateTime.now().toIso8601String();
+      old.unreadCount.value++;
 
-      chat.lastSenderId = data['senderId'];
-
-      // 3. FIXED: Handle null-safety for unreadCount
-      final myId = box.read("userId");
-      if (data['senderId'] != myId) {
-        // If null, start at 1, otherwise increment
-        chat.unreadCount.value++;
-      }
-
-      // 4. Move to top
       allChats.removeAt(index);
-      allChats.insert(0, chat);
-
-      // 5. Refresh GetX lists
+      allChats.insert(0, old);
       allChats.refresh();
-      filterChats();
     } else {
       getAllChats();
+    }
+
+    _syncFilteredLists();
+  }
+
+  void _syncFilteredLists() {
+    if (searchQuery.isEmpty) {
+      filteredChatsList.assignAll(allChats);
+      filteredGroupsList
+          .assignAll(allChats.where((c) => c.type == "GROUP").toList());
+      filteredUnreadList
+          .assignAll(allChats.where((c) => c.unreadCount.value > 0).toList());
+    } else {
+      filterChats();
     }
   }
 
@@ -171,12 +172,16 @@ class TabBarController extends GetxController {
     socket.connect();
     _speech = stt.SpeechToText();
 
-    final myId = box.read("userId");
-    if (myId != null) {
-      socket.subscribeMyMessages(myId, (data) {
-        _handleIncomingSocketMessage(data);
-      });
-    }
+    ever(socket.isConnected, (bool connected) {
+      if (connected) {
+        final myId = box.read("userId");
+        if (myId != null) {
+          socket.subscribeMyMessages(myId, (data) {
+            _handleIncomingSocketMessage(data);
+          });
+        }
+      }
+    });
     // Listen to search query changes
     await getAllChats();
     await getUnreadChats();
@@ -870,7 +875,6 @@ class TabBarController extends GetxController {
   }
 
   void handleChatOpen(ChatType chat) {
-
     if (chat.locked.value == true) {
       showUnlockChatSheet(chat.id!);
     } else {
@@ -879,7 +883,6 @@ class TabBarController extends GetxController {
   }
 
   void openChat(int chatId) {
-
     int index = allChats.indexWhere((c) => c.id == chatId);
     if (index != -1) {
       allChats[index].unreadCount.value = 0;
@@ -1090,8 +1093,10 @@ class TabBarController extends GetxController {
         "message": message,
       };
 
-      final res = await ApiService.request(url: "$baseUrl/api/birthdays/send-message-to-all", method: "POST",body: body);
-
+      final res = await ApiService.request(
+          url: "$baseUrl/api/birthdays/send-message-to-all",
+          method: "POST",
+          body: body);
 
       final data = jsonDecode(res.body);
       debugPrint("Birthday Message To All Response: $data");
@@ -1126,12 +1131,14 @@ class TabBarController extends GetxController {
   void startRecording() async {
     if (await _audioRecorder.hasPermission()) {
       final dir = await getTemporaryDirectory();
-      _latestPath = "${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
+      _latestPath =
+          "${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
 
       await _audioRecorder.start(const RecordConfig(), path: _latestPath!);
       isRecording.value = true;
       recordDuration.value = 0;
-      _recordTimer = Timer.periodic(const Duration(seconds: 1), (t) => recordDuration.value++);
+      _recordTimer = Timer.periodic(
+          const Duration(seconds: 1), (t) => recordDuration.value++);
     }
   }
 
@@ -1147,7 +1154,6 @@ class TabBarController extends GetxController {
       });
     }
   }
-
 }
 
 class ContactsResult {
