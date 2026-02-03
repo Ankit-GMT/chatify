@@ -7,6 +7,7 @@ import 'package:chatify/Screens/broadcast/voice_broadcast_screen.dart';
 import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/constants/custom_snackbar.dart';
+import 'package:chatify/controllers/chat_screen_controller.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/profile_controller.dart';
@@ -128,29 +129,56 @@ class TabBarController extends GetxController {
   final ProfileController profileController = Get.put(ProfileController());
 
   void _handleIncomingSocketMessage(Map<String, dynamic> data) {
-    final int? chatId = data['chatId'];
-    if (chatId == null) return;
+    final int? incomingChatId = data['roomId'] ?? data['chatId'];
+    if (incomingChatId == null) return;
 
-    final myId = box.read("userId");
+    // --- NEW: Check if this is the active chat ---
+    final activeChatId = box.read("activeChatId");
 
-    int index = allChats.indexWhere((c) => c.id == chatId);
+    // If the user is currently IN this chat, we don't update the "Last Message"
+    // on the home screen card for this specific notification.
+    bool isCurrentChat = activeChatId != null && activeChatId.toString() == incomingChatId.toString();
+    debugPrint("Socket Msg for: $incomingChatId | Currently in: $activeChatId | Block Update: $isCurrentChat");
 
+    // --- NEW: Handle Read Status Update ---
+    if (data['type'] == 'READ_RECEIPT' || data['messageType'] == 'READ') {
+      int index = allChats.indexWhere((c) => c.id == incomingChatId);
+      if (index != -1) {
+        allChats[index].unreadCount.value = 0;
+        allChats.refresh();
+        _syncFilteredLists();
+      }
+      return;
+    }
+
+    // --- Existing Message Logic ---
+    int index = allChats.indexWhere((c) => c.id == incomingChatId);
     if (index != -1) {
-      final old = allChats[index];
+      final chat = allChats[index];
+      if (!isCurrentChat) {
+        print("isCurrent :- false");
+        chat.lastMessageContent.value = data['content'] ?? '';
+        chat.lastMessageAt.value = data['sentAt'] ?? DateTime.now().toIso8601String();
 
-      old.lastMessageContent.value = data['content'] ?? '';
-      old.lastMessageAt.value = data['sentAt'] != null
-          ? DateTime.parse(data['sentAt']).toIso8601String()
-          : DateTime.now().toIso8601String();
-      old.unreadCount.value++;
+        final myId = box.read("userId");
+        if (data['senderId'] != myId) {
+          chat.unreadCount.value++;
+        }
+      }
+      else{
+        print("isCurrent :- true");
+        print("isCurrent :- ${Get.isRegistered<ChatScreenController>()}");
+        if (Get.isRegistered<ChatScreenController>()) {
+          final chatController = Get.find<ChatScreenController>();
+          chatController.markChatAsRead(activeChatId);
+        }
+      }
 
       allChats.removeAt(index);
-      allChats.insert(0, old);
-      allChats.refresh();
+      allChats.insert(0, chat);
     } else {
       getAllChats();
     }
-
     _syncFilteredLists();
   }
 
@@ -171,27 +199,40 @@ class TabBarController extends GetxController {
     super.onInit();
     socket.connect();
     _speech = stt.SpeechToText();
+    print("Active Chat ID;- ${box.read("activeChatId")}");
 
-    ever(socket.isConnected, (bool connected) {
-      if (connected) {
-        final myId = box.read("userId");
-        if (myId != null) {
-          socket.subscribeMyMessages(myId, (data) {
-            _handleIncomingSocketMessage(data);
-          });
-        }
-      }
-    });
-    // Listen to search query changes
+    // 1. Initial Data Load
     await getAllChats();
     await getUnreadChats();
     await _loadContacts();
-    // filterChats();
-    // filterContacts();
+
+    // 2. Setup socket listener IMMEDIATELY
+    // Don't wait for 'ever' if already connected
+    if (socket.isConnected.value) {
+      _setupMessageListener();
+    }
+
+    // 3. Keep listening for connection changes (like after a reconnect)
+    ever(socket.isConnected, (bool connected) {
+      if (connected) {
+        _setupMessageListener();
+      }
+    });
+
     ever(searchQuery, (_) {
       filterChats();
       filterContacts();
     });
+  }
+
+// Extract this to a separate method
+  void _setupMessageListener() {
+    final myId = box.read("userId");
+    if (myId != null) {
+      socket.subscribeMyMessages(myId, (data) {
+        _handleIncomingSocketMessage(data);
+      });
+    }
   }
 
   var allChats = <ChatType>[].obs;

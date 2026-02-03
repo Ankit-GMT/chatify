@@ -104,7 +104,7 @@ class _ChatUserCardState extends State<ChatUserCard> {
 
         return Row(
           children: [
-            widget.chatType?.lastSenderId == myId
+            widget.chatType?.lastSenderId == myId && widget.chatType?.unreadCount.value == 0
                 ?  Icon(Icons.done_all_rounded, color:widget.chatType?.unreadCount.value == 0 ?  Colors.blue : Colors.grey, size: 15)
                 : const SizedBox.shrink(),
             const SizedBox(width: 5),

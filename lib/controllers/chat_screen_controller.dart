@@ -328,10 +328,12 @@ class ChatScreenController extends GetxController {
     // TODO: implement onInit
     super.onInit();
     box.write("activeChatId", chatId);
+    print("Active Chat ID ;- ${box.read("activeChatId")}-= $chatId}");
     ever(chatType, (value) {
       if (value != null && otherUserId != null) {
         socket.subscribeToUserStatus(otherUserId!);
         socket.subscribeTyping(chatId);
+        socket.subscribeToReceipts();
 
         // Subscribe to receipts from the OTHER person
       }

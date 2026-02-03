@@ -23,9 +23,8 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:media_scanner/media_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:stomp_dart_client/stomp_dart_client.dart';
 
-class MessageController extends GetxController {
+class MessageController extends GetxController with WidgetsBindingObserver{
   final String baseUrl = APIs.url;
   final box = GetStorage();
   var isLoading = false.obs;
@@ -807,7 +806,7 @@ class MessageController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // socket.connect();
+    WidgetsBinding.instance.addObserver(this);
 
     final dynamic myId = box.read("userId");
 
@@ -834,9 +833,22 @@ class MessageController extends GetxController {
     // TODO: implement onClose
     // sendOnlineStatus(false);
     // stompClient.deactivate();
+    WidgetsBinding.instance.removeObserver(this);
     super.onClose();
   }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Logic to check if socket is still active, if not, reconnect
+      if (!socket.isConnected.value) {
+        debugPrint("🔄 App resumed: Reconnecting Socket...");
+        socket.connect();
+      }
+    }
+  }
 }
+
+
 
 // class SocketDebugOverlay extends StatelessWidget {
 //   const SocketDebugOverlay({super.key});

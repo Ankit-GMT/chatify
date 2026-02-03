@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
-class SocketService extends GetxService {
+class SocketService extends GetxService with WidgetsBindingObserver{
   final box = GetStorage();
 
   late StompClient _client;
@@ -30,7 +30,7 @@ class SocketService extends GetxService {
 
   void startHeartbeat() {
     _heartbeatTimer?.cancel();
-    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
       // THE FIX: Check if the client is physically connected before sending
       if (isConnected.value && _client.connected) {
         try {
@@ -80,14 +80,19 @@ class SocketService extends GetxService {
           isConnected.value = true;
           _connecting = false;
           sendOnline(true);
-          subscribeToReceipts();
+
           startHeartbeat();
+          subscribeToReceipts();
           for (final action in _pendingSubscriptions) {
             action();
           }
           _pendingSubscriptions.clear();
           debugPrint("✅ GLOBAL SOCKET CONNECTED");
         },
+        heartbeatOutgoing: const Duration(seconds: 10), // Ping server every 10s
+        heartbeatIncoming: const Duration(seconds: 10), // Expect pong from server every 10s
+
+        reconnectDelay: const Duration(seconds: 5),
         onDisconnect: (_) {
           isConnected.value = false;
           _connecting = false;
@@ -162,8 +167,44 @@ class SocketService extends GetxService {
     });
   }
 
+  // void subscribeToReceipts() {
+  //   // 1. Listen for Delivery Receipts
+  //   _client.subscribe(
+  //     destination: '/user/queue/receipts/delivered',
+  //     callback: (frame) {
+  //       if (frame.body != null) {
+  //         final data = jsonDecode(frame.body!);
+  //         _handleReceiptUpdate(
+  //           data['messageId'],
+  //           'DELIVERED',
+  //           data['deliveredAt'],
+  //           data['chatId'],
+  //         );
+  //
+  //       }
+  //     },
+  //   );
+  //
+  //   // 2. Listen for Read Receipts
+  //   _client.subscribe(
+  //     destination: '/user/queue/receipts/read',
+  //     callback: (frame) {
+  //       if (frame.body != null) {
+  //         final data = jsonDecode(frame.body!);
+  //         _handleReceiptUpdate(
+  //           data['messageId'],
+  //           'READ',
+  //           data['readAt'],
+  //           data['chatId'],
+  //         );
+  //
+  //       }
+  //     },
+  //   );
+  // }
+
   void subscribeToReceipts() {
-    // 1. Listen for Delivery Receipts
+    // Existing subscriptions for sender's receipts
     _client.subscribe(
       destination: '/user/queue/receipts/delivered',
       callback: (frame) {
@@ -175,12 +216,10 @@ class SocketService extends GetxService {
             data['deliveredAt'],
             data['chatId'],
           );
-
         }
       },
     );
 
-    // 2. Listen for Read Receipts
     _client.subscribe(
       destination: '/user/queue/receipts/read',
       callback: (frame) {
@@ -192,13 +231,51 @@ class SocketService extends GetxService {
             data['readAt'],
             data['chatId'],
           );
+        }
+      },
+    );
 
+    // 🆕 NEW: Subscribe to confirmations for the reader
+    _client.subscribe(
+      destination: '/user/queue/receipts/read-confirmation',
+      callback: (frame) {
+        print('🟢 READ CONFIRMATION received: ${frame.body}');
+        if (frame.body != null) {
+          final data = jsonDecode(frame.body!);
+          if (data['success'] == true) {
+            _handleReceiptUpdate(
+              data['messageId'],
+              'READ',
+              data['readAt'],
+              data['chatId'],
+            );
+          }
+        }
+      },
+    );
+
+    _client.subscribe(
+      destination: '/user/queue/receipts/delivered-confirmation',
+      callback: (frame) {
+        print('🟢 DELIVERY CONFIRMATION received: ${frame.body}');
+        if (frame.body != null) {
+          final data = jsonDecode(frame.body!);
+          if (data['success'] == true) {
+            _handleReceiptUpdate(
+              data['messageId'],
+              'DELIVERED',
+              data['deliveredAt'],
+              data['chatId'],
+            );
+          }
         }
       },
     );
   }
 
+
   void _handleReceiptUpdate(int messageId, String status, String timestamp,dynamic chatId) {
+    print('🟡 _handleReceiptUpdate called: messageId=$messageId, timestamp=$timestamp, chatId=$chatId');
     final activeChatId = box.read("activeChatId");
     if (activeChatId == null || activeChatId != chatId) return;
 
@@ -209,6 +286,7 @@ class SocketService extends GetxService {
     final int id = int.parse(messageId.toString());
 
     final msg = chatController.messages.firstWhereOrNull(
+
           (m) => m.id == id,
     );
 
@@ -344,6 +422,8 @@ class SocketService extends GetxService {
   }
 
   void sendReadReceipt(int chatId, int messageId, int senderId) {
+
+    print("send receipt -------");
     final Map<String, dynamic> payload = {
       "chatId": chatId,
       "messageId": messageId,
@@ -354,26 +434,43 @@ class SocketService extends GetxService {
       body: jsonEncode(payload),
     );
   }
-  void subscribeReadStatus(int messageId) {
-    _safeSubscribe(() {
-      _client.subscribe(
-        destination: "/topic/message/$messageId/read",
-        callback: (frame) {
-          final data = jsonDecode(frame.body!);
-          final readerId = data["userId"];
+  // void subscribeReadStatus(int messageId) {
+  //   _safeSubscribe(() {
+  //     _client.subscribe(
+  //       destination: "/topic/message/$messageId/read",
+  //       callback: (frame) {
+  //         final data = jsonDecode(frame.body!);
+  //         final readerId = data["userId"];
+  //
+  //         // Logic: Mark all messages sent by 'me' in this chat as 'read'
+  //         // This usually involves updating your chatController.messages list
+  //         debugPrint("📖 User $readerId read messages in chat $messageId");
+  //       },
+  //     );
+  //   });
+  // }
 
-          // Logic: Mark all messages sent by 'me' in this chat as 'read'
-          // This usually involves updating your chatController.messages list
-          debugPrint("📖 User $readerId read messages in chat $messageId");
-        },
-      );
-    });
+  @override
+  void onInit() {
+    super.onInit();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Force a reconnection check when user opens the app again
+      if (!isConnected.value || !_client.connected) {
+        debugPrint("🔄 App resumed - Force Reconnecting Socket");
+        connect();
+      }
+    }
   }
 
   @override
   void onClose() {
-    // TODO: implement onClose
-    stopHeartbeat();
+    WidgetsBinding.instance.removeObserver(this);
+    // stopHeartbeat();
     super.onClose();
   }
 }
