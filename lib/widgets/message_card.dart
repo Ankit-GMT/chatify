@@ -93,7 +93,8 @@ class MessageCard extends StatelessWidget {
                         SizedBox(width: 4),
                         isMe
                             ? Obx(() => Icon(
-                                  Icons.done_all,
+                          (message.isDelivered.value || message.isRead.value) ?
+                                  Icons.done_all : Icons.done,
                                   size: 12,
                                   color: message.isRead.value
                                       ? Colors.blue

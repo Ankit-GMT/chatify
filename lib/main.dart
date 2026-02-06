@@ -3,14 +3,17 @@ import 'package:chatify/Screens/splash_screen.dart';
 import 'package:chatify/Screens/voice_call_screen_1.dart';
 import 'package:chatify/controllers/auth_controller.dart';
 import 'package:chatify/controllers/group_voice_call_controller.dart';
+import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/controllers/theme_controller.dart';
 import 'package:chatify/controllers/voice_call_controller.dart';
 import 'package:chatify/firebase_options.dart';
 import 'package:chatify/services/floating_call_bubble_service.dart';
 import 'package:chatify/services/life_observer.dart';
+import 'package:chatify/services/network_controller.dart';
 import 'package:chatify/services/notification_service.dart';
 import 'package:chatify/services/presence_socket_service.dart';
 import 'package:chatify/theme.dart';
+import 'package:chatify/widgets/no_internet_view.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -32,8 +35,10 @@ void main() async {
   if (!await Permission.contacts.isGranted) {
     await Permission.contacts.request();
   }
+  Get.put(NetworkController(), permanent: true);
   Get.put(SocketService(), permanent: true);
   Get.put(AuthController(), permanent: true);
+  Get.put(MessageController(),permanent: true);
 
 
 
@@ -156,87 +161,103 @@ class _MyAppState extends State<MyApp> {
       home: const SplashScreen(),
 
       builder: (context, child) {
-        return Overlay(
-          initialEntries: [
-            OverlayEntry(
-              builder: (context) {
-                return Stack(
-                  children: [
-                    child ?? const SizedBox.shrink(),
-                    Obx(() {
-                      final bubble = FloatingCallBubbleService.to;
-                      if (!bubble.isVisible.value) return const SizedBox.shrink();
+        final network = Get.find<NetworkController>();
 
-                      final bool isGroup =
-                      Get.isRegistered<GroupVoiceCallController>();
+       return Obx(() {
+         if (!network.isOnline.value) {
+           return
+             PopScope(
+               canPop: false,
+               child: Material(
+               color: Colors.black,
+               child: NoInternetView(
+                 onRetry: () {},
+               ),
+                          ),
+             );
+         }
+          return Overlay(
+            initialEntries: [
+              OverlayEntry(
+                builder: (context) {
+                  return Stack(
+                    children: [
+                      child ?? const SizedBox.shrink(),
+                      Obx(() {
+                        final bubble = FloatingCallBubbleService.to;
+                        if (!bubble.isVisible.value) return const SizedBox.shrink();
 
-                      if (isGroup) {
-                        final c = Get.find<GroupVoiceCallController>();
+                        final bool isGroup =
+                        Get.isRegistered<GroupVoiceCallController>();
+
+                        if (isGroup) {
+                          final c = Get.find<GroupVoiceCallController>();
+
+                          return Positioned(
+                            left: c.bubbleX.value,
+                            top: c.bubbleY.value,
+                            child: Draggable(
+                              feedback: _buildGroupBubble(c, bubble),
+                              childWhenDragging: Opacity(
+                                opacity: 0.3,
+                                child: _buildGroupBubble(c, bubble),
+                              ),
+                              onDragEnd: (details) {
+                                double x = details.offset.dx;
+                                double y = details.offset.dy;
+
+                                if (x < Get.width / 2) {
+                                  x = 10;
+                                } else {
+                                  x = Get.width - 180;
+                                }
+
+                                c.bubbleX.value = x;
+                                c.bubbleY.value = y.clamp(40, Get.height - 180);
+                              },
+                              child: _buildGroupBubble(c, bubble),
+                            ),
+                          );
+                        }
+
+                        final c = Get.find<VoiceCallController>();
 
                         return Positioned(
                           left: c.bubbleX.value,
                           top: c.bubbleY.value,
                           child: Draggable(
-                            feedback: _buildGroupBubble(c, bubble),
+                            feedback: _buildBubble(c, bubble),
                             childWhenDragging: Opacity(
                               opacity: 0.3,
-                              child: _buildGroupBubble(c, bubble),
+                              child: _buildBubble(c, bubble),
                             ),
                             onDragEnd: (details) {
                               double x = details.offset.dx;
                               double y = details.offset.dy;
 
-                              if (x < Get.width / 2) {
+                              double screenWidth = Get.width;
+
+                              if (x < screenWidth / 2) {
                                 x = 10;
                               } else {
-                                x = Get.width - 180;
+                                x = screenWidth - 160;
                               }
 
                               c.bubbleX.value = x;
-                              c.bubbleY.value = y.clamp(40, Get.height - 180);
+                              c.bubbleY.value = y.clamp(40, Get.height - 160);
                             },
-                            child: _buildGroupBubble(c, bubble),
-                          ),
-                        );
-                      }
 
-                      final c = Get.find<VoiceCallController>();
-
-                      return Positioned(
-                        left: c.bubbleX.value,
-                        top: c.bubbleY.value,
-                        child: Draggable(
-                          feedback: _buildBubble(c, bubble),
-                          childWhenDragging: Opacity(
-                            opacity: 0.3,
                             child: _buildBubble(c, bubble),
                           ),
-                          onDragEnd: (details) {
-                            double x = details.offset.dx;
-                            double y = details.offset.dy;
-
-                            double screenWidth = Get.width;
-
-                            if (x < screenWidth / 2) {
-                              x = 10;
-                            } else {
-                              x = screenWidth - 160;
-                            }
-
-                            c.bubbleX.value = x;
-                            c.bubbleY.value = y.clamp(40, Get.height - 160);
-                          },
-
-                          child: _buildBubble(c, bubble),
-                        ),
-                      );
-                    }),
-                  ],
-                );
-              },
-            ),
-          ],
-        );
+                        );
+                      }),
+                    ],
+                  );
+                },
+              ),
+            ],
+          );
+        },);
       },
     );
   }

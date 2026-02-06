@@ -303,12 +303,22 @@ class ChatScreen extends StatelessWidget {
                                                       ),
                                               ),
 
+                                              chatController
+                                                  .type.value ==
+                                                  "GROUP"
+                                                  ? SizedBox.shrink():
                                               Obx(() {
-                                                final otherId = chatController.otherUserId;
-                                                if (otherId == null) return const SizedBox.shrink();
+                                                final chat = chatController.chatType.value;
+                                                if (chat == null || chat.members == null || chat.members!.length < 2) {
+                                                  return const SizedBox.shrink();
+                                                }
 
-                                                final bool isOnline = socket.onlineUsers[otherId] == true;
-                                                // Get the timestamp from our new map
+                                                final int otherId =
+                                                (myId == chat.members![0].userId)
+                                                    ? chat.members![1].userId!
+                                                    : chat.members![0].userId!;
+
+                                                final bool isOnline = socket.onlineUsers[otherId] ?? false;
                                                 final DateTime? lastSeen = socket.lastSeenTimes[otherId];
 
                                                 return Text(

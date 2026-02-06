@@ -129,7 +129,7 @@ class GroupVoiceCallScreen1 extends StatelessWidget {
                                   IconButton(
                                     icon: Icon(Icons.refresh),
                                     onPressed: () {
-                                      // controller.retryCall();
+                                      controller.retryCall();
                                     },
                                     color: AppColors.primary,
                                   ),

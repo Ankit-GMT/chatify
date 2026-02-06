@@ -224,7 +224,9 @@ class GroupController extends GetxController {
         selectedContacts.clear();
         Navigator.pop(Get.context!);
       } else {
+        final data = jsonDecode(response.body);
         print("Failed to add members: ${response.body}");
+        CustomSnackbar.error("Error", "${data["message"]}");
       }
     } catch (e) {
       isLoading.value = false;

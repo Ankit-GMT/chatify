@@ -11,6 +11,7 @@ import 'package:chatify/Screens/main_screen.dart';
 import 'package:chatify/Screens/otp_screen.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/constants/custom_snackbar.dart';
+import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/controllers/user_controller.dart';
 import 'package:chatify/services/presence_socket_service.dart';
@@ -35,6 +36,7 @@ class AuthController extends GetxController {
 
   String? get token => box.read("accessToken");
   final bottomController = Get.put(BottomController());
+  final socket = Get.find<SocketService>();
 
   var isLoading = false.obs;
   var isHide = true.obs;
@@ -113,6 +115,8 @@ class AuthController extends GetxController {
         await box.write("accessToken", data['accessToken']);
         await box.write("refreshToken", data['refreshToken']);
         await box.write("userId", data['userId']);
+        final msgController = Get.find<MessageController>();
+        msgController.onUserLoggedIn(data['userId']);
 
         CustomSnackbar.success("Success", "Login successful!");
         Get.offAll(() => MainScreen());
@@ -190,6 +194,8 @@ class AuthController extends GetxController {
         await box.write("accessToken", data['accessToken']);
         await box.write("refreshToken", data['refreshToken']);
         await box.write("userId", data['userId']);
+        final msgController = Get.find<MessageController>();
+        msgController.onUserLoggedIn(data['userId']);
 
         CustomSnackbar.success("Success", "Login successful");
         Get.offAll(() => MainScreen());
@@ -787,6 +793,8 @@ class AuthController extends GetxController {
         await box.write("accessToken", data['accessToken']);
         await box.write("refreshToken", data['refreshToken']);
         await box.write("userId", data['userId']);
+        final msgController = Get.find<MessageController>();
+        msgController.onUserLoggedIn(data['userId']);
         Get.offAll(()=> MainScreen());
         isOtpSent.value = false;
       } else {
@@ -883,6 +891,8 @@ class AuthController extends GetxController {
         await box.remove(notRegisteredKey);
         await box.remove("userId");
         await box.remove("userName");
+        socket.disconnect();
+
 
         CustomSnackbar.success("Logged out", "You have been logged out successfully.");
 

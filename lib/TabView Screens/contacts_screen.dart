@@ -2,10 +2,8 @@ import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/controllers/user_controller.dart';
-import 'package:chatify/models/chat_type.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pin_code_fields/pin_code_fields.dart';
 
 class ContactsScreen extends StatelessWidget {
   const ContactsScreen({super.key});

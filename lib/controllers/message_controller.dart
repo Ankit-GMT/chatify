@@ -11,6 +11,7 @@ import 'package:chatify/constants/apis.dart';
 import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/chat_screen_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
+import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/models/message.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:chatify/services/notification_service.dart';
@@ -33,19 +34,25 @@ class MessageController extends GetxController with WidgetsBindingObserver{
 
   final socket = Get.find<SocketService>();
 
-  void _handleIncomingMessage(Map<String,dynamic> data) {
-    final message = Message.fromJson(data);
+  void _handleIncomingMessage(dynamic raw) {
+    try {
+      final data = raw is String ? jsonDecode(raw) : raw;
+      final message = Message.fromJson(data);
 
-    if (Get.isRegistered<ChatScreenController>()) {
-      final chatController = Get.find<ChatScreenController>();
-
-      if (message.roomId == chatController.chatId &&
-          !chatController.messages.any((m) => m.id == message.id)) {
-        chatController.messages.add(message);
-        chatController.messages.refresh();
+      // Update chat list
+      if (Get.isRegistered<TabBarController>()) {
+        Get.find<TabBarController>().onGlobalMessage(message);
       }
+
+      // Update open chat UI
+      if (Get.isRegistered<ChatScreenController>()) {
+        Get.find<ChatScreenController>().onIncomingMessage(message);
+      }
+    } catch (e) {
+      debugPrint("❌ Socket parse error: $e");
     }
   }
+
   void sendOnlineStatus(bool online) => socket.sendOnline(online);
   void sendTyping(int chatId, bool typing) => socket.sendTyping(chatId, typing);
   void subscribeToTyping(int chatId) => socket.subscribeTyping(chatId);
@@ -68,10 +75,16 @@ class MessageController extends GetxController with WidgetsBindingObserver{
     return true;
   }
 
+  bool _subscribed = false;
+
   void onUserLoggedIn(int myId) {
     socket.connect();
-    socket.subscribeMyMessages(myId, _handleIncomingMessage);
+    if (!_subscribed) {
+      socket.subscribeMyMessages(myId, _handleIncomingMessage);
+      _subscribed = true;
+    }
   }
+
 
   // var lastRawMsg = "None".obs;
   // late StompClient stompClient;
@@ -569,6 +582,9 @@ class MessageController extends GetxController with WidgetsBindingObserver{
 
   // for group call
 
+  var isGroupVoiceCallOn = false.obs;
+  var isGroupVideoCallOn = false.obs;
+
   Future<void> startGroupCall(
       {required BuildContext context,
       required String channelId,
@@ -577,9 +593,17 @@ class MessageController extends GetxController with WidgetsBindingObserver{
       required bool isVideo,
       required List<String> receiverIds,
       required int groupId}) async {
+
     final callType = isVideo ? "VIDEO" : "VOICE";
+    if (isGroupVoiceCallOn.value || isGroupVideoCallOn.value) return;
     try {
       final url = Uri.parse("$baseUrl/api/call/group/invite");
+
+      if(isVideo){
+        isGroupVideoCallOn.value = true;
+      }else{
+        isGroupVoiceCallOn.value = true;
+      }
 
       final body = {
         "channelId": channelId,
@@ -627,6 +651,55 @@ class MessageController extends GetxController with WidgetsBindingObserver{
             ),
           );
         }
+      } else {
+        print("⚠️ Failed to start group call: ${response.body}");
+      }
+    } catch (e) {
+      print("❌ Error starting group call: $e");
+    }
+    finally{
+      isGroupVideoCallOn.value = false;
+      isGroupVoiceCallOn.value = false;
+    }
+  }
+
+  Future<void> reTryGroupCall(
+      {required BuildContext context,
+        required String channelId,
+        required String callerId,
+        required String callerName,
+        required bool isVideo,
+        required List<String> receiverIds,
+        required int groupId}) async {
+
+    final callType = isVideo ? "VIDEO" : "VOICE";
+    try {
+      final url = Uri.parse("$baseUrl/api/call/group/invite");
+
+
+      final body = {
+        "channelId": channelId,
+        "callerId": callerId,
+        "callerName": callerName,
+        "callType": callType,
+        "receiverIds": receiverIds,
+        "groupId": groupId,
+      };
+
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print(" Group call started: $data");
+
+        final agoraToken = data["agoraToken"];
+        final channel = data["channelId"];
+
+        // Navigate to call screen
       } else {
         print("⚠️ Failed to start group call: ${response.body}");
       }
@@ -808,14 +881,14 @@ class MessageController extends GetxController with WidgetsBindingObserver{
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
 
-    final dynamic myId = box.read("userId");
-
-    if (myId != null) {
-
-      socket.subscribeMyMessages(myId, _handleIncomingMessage);
-    } else {
-      debugPrint("⚠️ Socket not subscribed: userId is null (not logged in yet)");
-    }
+    // final dynamic myId = box.read("userId");
+    //
+    // if (myId != null) {
+    //
+    //   socket.subscribeMyMessages(myId, _handleIncomingMessage);
+    // } else {
+    //   debugPrint("⚠️ Socket not subscribed: userId is null (not logged in yet)");
+    // }
 
 
     // connectSocket();
@@ -843,6 +916,10 @@ class MessageController extends GetxController with WidgetsBindingObserver{
       if (!socket.isConnected.value) {
         debugPrint("🔄 App resumed: Reconnecting Socket...");
         socket.connect();
+        final myId = box.read("userId");
+        if (myId != null) {
+          socket.subscribeMyMessages(myId, _handleIncomingMessage);
+        }
       }
     }
   }

@@ -1,13 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/chat_screen_controller.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 class SocketService extends GetxService with WidgetsBindingObserver{
+
+  StreamSubscription? _connectivitySubscription;
+  int _reconnectAttempts = 0;
   final box = GetStorage();
 
   late StompClient _client;
@@ -22,6 +27,13 @@ class SocketService extends GetxService with WidgetsBindingObserver{
   final typingUsers = <int, bool>{}.obs;
   Timer? _typingTimer;
   final List<VoidCallback> _pendingSubscriptions = [];
+
+  int? _currentActiveChatId;
+
+  final Set<int> _deliveredCache = {};
+  final Set<int> _readCache = {};
+  final Set<String> _receiptCache = {};
+
 
 
   StompClient get client => _client;
@@ -57,18 +69,69 @@ class SocketService extends GetxService with WidgetsBindingObserver{
     _heartbeatTimer = null;
   }
 
+  // void connect() {
+  //   if (isConnected.value || _connecting) return;
+  //
+  //   final token = box.read("accessToken");
+  //   if (token == null) {
+  //     debugPrint("⛔ Socket connect skipped: no token");
+  //     _connecting = false; // 🔴 RESET
+  //     return;
+  //   }
+  //
+  //   _connecting = true;
+  //
+  //   final wsUrl = "${APIs.url.replaceFirst("http", "ws")}/ws";
+  //
+  //   _client = StompClient(
+  //     config: StompConfig(
+  //       url: wsUrl,
+  //       stompConnectHeaders: {"Authorization": "Bearer $token"},
+  //       webSocketConnectHeaders: {"Authorization": "Bearer $token"},
+  //       onConnect: (_) {
+  //         _reconnectAttempts = 0;
+  //         isConnected.value = true;
+  //         _connecting = false;
+  //         sendOnline(true);
+  //
+  //         startHeartbeat();
+  //         subscribeToReceipts();
+  //         for (final action in _pendingSubscriptions) {
+  //           action();
+  //         }
+  //         _pendingSubscriptions.clear();
+  //         debugPrint("✅ GLOBAL SOCKET CONNECTED");
+  //       },
+  //       heartbeatOutgoing: const Duration(seconds: 10), // Ping server every 10s
+  //       heartbeatIncoming: const Duration(seconds: 10), // Expect pong from server every 10s
+  //
+  //       reconnectDelay: _calculateBackoff(),
+  //       onDisconnect: (_) {
+  //         _handleCleanup();
+  //         Future.delayed(const Duration(seconds: 3), connect);
+  //         debugPrint("🔌 GLOBAL SOCKET DISCONNECTED");
+  //       },
+  //       onWebSocketError: (e) {
+  //         _handleCleanup();
+  //         Future.delayed(const Duration(seconds: 3), connect);
+  //         debugPrint("❌ WS ERROR $e");
+  //       },
+  //     ),
+  //   );
+  //
+  //   _client.activate();
+  // }
   void connect() {
     if (isConnected.value || _connecting) return;
 
     final token = box.read("accessToken");
     if (token == null) {
       debugPrint("⛔ Socket connect skipped: no token");
-      _connecting = false; // 🔴 RESET
+      _connecting = false;
       return;
     }
 
     _connecting = true;
-
     final wsUrl = "${APIs.url.replaceFirst("http", "ws")}/ws";
 
     _client = StompClient(
@@ -77,33 +140,39 @@ class SocketService extends GetxService with WidgetsBindingObserver{
         stompConnectHeaders: {"Authorization": "Bearer $token"},
         webSocketConnectHeaders: {"Authorization": "Bearer $token"},
         onConnect: (_) {
+          _reconnectAttempts = 0; // Reset counter on success
           isConnected.value = true;
           _connecting = false;
           sendOnline(true);
-
           startHeartbeat();
           subscribeToReceipts();
+
+          // Check if we need to restore active chat state after a crash/drop
+          if (_currentActiveChatId != null) {
+            setActiveChat(_currentActiveChatId!);
+          }
+
           for (final action in _pendingSubscriptions) {
             action();
           }
           _pendingSubscriptions.clear();
           debugPrint("✅ GLOBAL SOCKET CONNECTED");
         },
-        heartbeatOutgoing: const Duration(seconds: 10), // Ping server every 10s
-        heartbeatIncoming: const Duration(seconds: 10), // Expect pong from server every 10s
+        heartbeatOutgoing: const Duration(seconds: 10),
+        heartbeatIncoming: const Duration(seconds: 10),
 
-        reconnectDelay: const Duration(seconds: 5),
+        // Let the STOMP client handle the timing using your backoff function
+        reconnectDelay: _calculateBackoff(),
+
         onDisconnect: (_) {
-          isConnected.value = false;
-          _connecting = false;
-          stopHeartbeat();
-          Future.delayed(const Duration(seconds: 3), connect);
+          _handleCleanup();
           debugPrint("🔌 GLOBAL SOCKET DISCONNECTED");
+
         },
         onWebSocketError: (e) {
-          _connecting = false;
-          Future.delayed(const Duration(seconds: 3), connect);
+          _handleCleanup();
           debugPrint("❌ WS ERROR $e");
+
         },
       ),
     );
@@ -203,12 +272,51 @@ class SocketService extends GetxService with WidgetsBindingObserver{
   //   );
   // }
 
+  void _handleBulkReadUpdate(int chatId) {
+    if (!Get.isRegistered<ChatScreenController>()) return;
+
+    final ctrl = Get.find<ChatScreenController>();
+
+    for (final msg in ctrl.messages) {
+      if (msg.roomId == chatId && !msg.isRead.value) {
+        msg.isRead.value = true;
+      }
+    }
+  }
+
+
   void subscribeToReceipts() {
+
+    _client.subscribe(
+      destination: '/user/queue/messages/status',
+      callback: (frame) {
+        if (frame.body != null) {
+          print('🟢 MESSAGE STATUS UPDATE received: ${frame.body}');
+          final data = jsonDecode(frame.body!);
+          _handleFullMessageUpdate(data);
+        }
+      },
+    );
+
+    _client.subscribe(
+      destination: '/user/queue/receipts/chat-opened-confirmation',
+      callback: (frame) {
+        if (frame.body != null) {
+          final data = jsonDecode(frame.body!);
+          if (data['success'] == true) {
+            final chatId = data['chatId'];
+            _handleBulkReadUpdate(chatId);
+          }
+        }
+      },
+    );
+
     // Existing subscriptions for sender's receipts
     _client.subscribe(
       destination: '/user/queue/receipts/delivered',
       callback: (frame) {
         if (frame.body != null) {
+          print('🟢 DELIVERY received: ${frame.body}');
           final data = jsonDecode(frame.body!);
           _handleReceiptUpdate(
             data['messageId'],
@@ -224,6 +332,7 @@ class SocketService extends GetxService with WidgetsBindingObserver{
       destination: '/user/queue/receipts/read',
       callback: (frame) {
         if (frame.body != null) {
+          print('🟢 READ received: ${frame.body}');
           final data = jsonDecode(frame.body!);
           _handleReceiptUpdate(
             data['messageId'],
@@ -273,11 +382,52 @@ class SocketService extends GetxService with WidgetsBindingObserver{
     );
   }
 
+  void _handleFullMessageUpdate(Map<String, dynamic> data) {
+    final messageId = data['id'];
+
+    if (!Get.isRegistered<ChatScreenController>()) return;
+
+    final chatController = Get.find<ChatScreenController>();
+
+    final msg = chatController.messages.firstWhereOrNull(
+          (m) => m.id == messageId,
+    );
+
+    if (msg == null) return;
+
+    // Update all status fields from the fresh message data
+    msg.isDelivered.value = data['isDelivered'] ?? false;
+    msg.isRead.value = data['isRead'] ?? false;
+
+    if (data['deliveredAt'] != null) {
+      msg.deliveredAt.value = DateTime.tryParse(data['deliveredAt']);
+    }
+
+    if (data['readAt'] != null) {
+      msg.readAt.value = DateTime.tryParse(data['readAt']);
+    }
+
+    chatController.messages.refresh();
+
+    print('✅ Message $messageId status updated: delivered=${msg.isDelivered.value}, read=${msg.isRead.value}');
+  }
+
 
   void _handleReceiptUpdate(int messageId, String status, String timestamp,dynamic chatId) {
+
+    final key = "$messageId-$status-$timestamp";
+    if (_receiptCache.contains(key)) return;
+    _receiptCache.add(key);
+    if (_receiptCache.length > 2000) {
+      _receiptCache.remove(_receiptCache.first);
+    }
+
     print('🟡 _handleReceiptUpdate called: messageId=$messageId, timestamp=$timestamp, chatId=$chatId');
     final activeChatId = box.read("activeChatId");
-    if (activeChatId == null || activeChatId != chatId) return;
+    final isActive = activeChatId == chatId;
+    if (!isActive) {
+      debugPrint("📦 Receipt for background chat $chatId");
+    }
 
     if (!Get.isRegistered<ChatScreenController>()) return;
 
@@ -304,6 +454,8 @@ class SocketService extends GetxService with WidgetsBindingObserver{
       msg.isRead.value = true;
       if (parsedTime != null) msg.readAt.value = parsedTime;
     }
+    chatController.messages.refresh();
+
   }
 
   void subscribeGroupReceipts(int chatId) {
@@ -383,9 +535,38 @@ class SocketService extends GetxService with WidgetsBindingObserver{
         destination: "/topic/chat/user/$myId",
         callback: (frame) {
           if (frame.body == null) return;
+
           final Map<String, dynamic> data =
           jsonDecode(frame.body!) as Map<String, dynamic>;
+
+          final chatId = data['roomId'];
+          final senderId = data['senderId'];
+          final messageId = data['id'];
+
           onMessage(data);
+          if (senderId == myId) {
+            debugPrint("⚠️ Skipping receipt - this is my own message $messageId");
+            return;
+          }
+
+          if (_currentActiveChatId == chatId) {
+            if (!_deliveredCache.contains(messageId)) {
+              _deliveredCache.add(messageId);
+              sendDeliveryReceipt(chatId, messageId, senderId);
+            }
+
+            if (!_readCache.contains(messageId)) {
+              _readCache.add(messageId);
+              sendReadReceipt(chatId, messageId, senderId);
+            }
+          }
+          else {
+            if (!_deliveredCache.contains(messageId)) {
+              _deliveredCache.add(messageId);
+              sendDeliveryReceipt(chatId, messageId, senderId);
+            }
+          }
+
         },
       );
     });
@@ -422,53 +603,106 @@ class SocketService extends GetxService with WidgetsBindingObserver{
   }
 
   void sendReadReceipt(int chatId, int messageId, int senderId) {
-
-    print("send receipt -------");
-    final Map<String, dynamic> payload = {
-      "chatId": chatId,
-      "messageId": messageId,
-      "senderId": senderId,
-    };
     _client.send(
-      destination: '/app/message.read.new',
-      body: jsonEncode(payload),
+      destination: '/app/message.read',
+      body: jsonEncode({
+        "chatId": chatId,
+        "messageId": messageId,
+        "senderId": senderId,
+      }),
     );
   }
-  // void subscribeReadStatus(int messageId) {
-  //   _safeSubscribe(() {
-  //     _client.subscribe(
-  //       destination: "/topic/message/$messageId/read",
-  //       callback: (frame) {
-  //         final data = jsonDecode(frame.body!);
-  //         final readerId = data["userId"];
-  //
-  //         // Logic: Mark all messages sent by 'me' in this chat as 'read'
-  //         // This usually involves updating your chatController.messages list
-  //         debugPrint("📖 User $readerId read messages in chat $messageId");
-  //       },
-  //     );
-  //   });
-  // }
+
 
   @override
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+    _startConnectivityListener();
+  }
+
+  void _startConnectivityListener() {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      // connectivity_plus v6 returns a list. Check if any are valid.
+      bool hasInternet = !results.contains(ConnectivityResult.none);
+
+      if (hasInternet) {
+        debugPrint("🌐 Internet Restored: Attempting reconnect...");
+        if (!isConnected.value) {
+          connect();
+        }
+      } else {
+        debugPrint("🚫 Internet Lost: Marking socket as disconnected");
+        _handleCleanup(); // Use the cleanup method from previous step
+      }
+    });
+  }
+  void _handleCleanup() {
+    isConnected.value = false;
+    _connecting = false;
+    stopHeartbeat();
+  }
+
+  // --- Point 3: Exponential Backoff Implementation ---
+  Duration _calculateBackoff() {
+    _reconnectAttempts++;
+    // Calculation: 2^attempts (e.g., 2s, 4s, 8s, 16s...)
+    // .clamp(2, 60) ensures it never waits less than 2s or more than 60s
+    int seconds = math.pow(2, _reconnectAttempts).toInt().clamp(2, 60);
+    debugPrint("⏳ Backoff: Waiting $seconds seconds before next retry (Attempt #$_reconnectAttempts)");
+    return Duration(seconds: seconds);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
     if (state == AppLifecycleState.resumed) {
-      // Force a reconnection check when user opens the app again
+      debugPrint("🔄 App resumed - checking connection...");
+      // If client exists but isn't active, or isConnected is false, reconnect.
       if (!isConnected.value || !_client.connected) {
-        debugPrint("🔄 App resumed - Force Reconnecting Socket");
         connect();
       }
+    } else if (state == AppLifecycleState.paused) {
+      debugPrint("💤 App paused - closing socket to save battery/resources");
+      // Optionally disconnect here if you want to rely on FCM for background push
+      disconnect();
     }
   }
 
+  // 04-02-2026
+
+  void markChatAsOpened(int chatId) {
+    _client.send(
+      destination: '/app/chat.opened',
+      body: jsonEncode({"chatId": chatId}),
+    );
+  }
+
+
+  void setActiveChat(int chatId) {
+    _currentActiveChatId = chatId;
+    box.write("activeChatId", chatId);
+
+    _client.send(
+      destination: '/app/chat.setActive',
+      body: jsonEncode({"chatId": chatId}),
+    );
+
+    markChatAsOpened(chatId);
+  }
+
+  void clearActiveChat() {
+    _currentActiveChatId = null;
+    box.remove("activeChatId");
+
+    _client.send(destination: '/app/chat.clearActive');
+  }
+
+
   @override
   void onClose() {
+    _connectivitySubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     // stopHeartbeat();
     super.onClose();

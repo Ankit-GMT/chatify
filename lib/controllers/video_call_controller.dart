@@ -16,12 +16,14 @@ class VideoCallController extends GetxController {
   final String token;
   final String callerId;
   final String receiverId;
+  final String name;
 
   VideoCallController({
     required this.channelId,
     required this.token,
     required this.callerId,
     required this.receiverId,
+    required this.name,
   });
 
   late RtcEngine _engine;
@@ -250,7 +252,18 @@ class VideoCallController extends GetxController {
     }
   }
 
+  Future<void> retryCall() async {
+    callUIState.value = CallUIState.calling;
+    isConnected.value = false;
+    callDuration.value = Duration.zero;
 
+    await messageController.retryCall(
+      name: name,
+      receiverId: receiverId,
+      channelId: channelId,
+      isVideo: true,
+    );
+  }
 
 
 

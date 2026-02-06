@@ -88,10 +88,10 @@ class ChatType {
     data['backgroundImageUrl'] = backgroundImageUrl;
     data['createdAt'] = createdAt;
     data['lastMessage'] = lastMessage;
-    data['unreadCount'] = unreadCount;
+    data['unreadCount'] = unreadCount.value;
     data['pinOrder'] = pinOrder;
-    data['lastMessageAt'] = lastMessageAt;
-    data['lastMessageContent'] = lastMessageContent;
+    data['lastMessageAt'] = lastMessageAt.value;
+    data['lastMessageContent'] = lastMessageContent.value;
     data['lastMessageType'] = lastMessageType;
     data['lastSenderId'] = lastSenderId;
     data['lastSenderName'] = lastSenderName;

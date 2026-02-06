@@ -1,3 +1,4 @@
+import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/controllers/tabBar_controller.dart';
 import 'package:chatify/widgets/chat_user_card.dart';
 import 'package:chatify/widgets/empty_message_widget.dart';
@@ -15,50 +16,64 @@ class AllChats extends StatelessWidget {
       () => tabController.isLoading1.value
           ? const Center(child: CircularProgressIndicator())
           : tabController.allChats.isEmpty
-              ? EmptyMessagesWidget(
-                  onTap: () {
-                    tabController.currentIndex.value = 3;
+              ? RefreshIndicator(
+        color: AppColors.primary,
+                  onRefresh: () async {
+                    await tabController.getAllChats();
                   },
+                  child: EmptyMessagesWidget(
+                    onTap: () {
+                      tabController.currentIndex.value = 3;
+                    },
+                  ),
                 )
               : tabController.filteredChatsList.isEmpty
                   ? Center(
                       child: Text("No search result found"),
                     )
-                  : ListView.separated(
-                      padding: const EdgeInsets.only(bottom: 80),
-                      physics: const BouncingScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        final chat = tabController.filteredChatsList[index];
-                        final isSelected =
-                            tabController.selectedChats.contains(chat);
-                        return GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onLongPress: () =>
-                              tabController.toggleSelection(chat),
-                          child: ChatUserCard(
-                            index: index,
-                            onTap: () {
-                              if (tabController.isSelectionMode.value) {
-                                tabController.toggleSelection(chat);
-                              } else {
-                                tabController.handleChatOpen(chat);
-                              }
-                            },
-                            chatUser: null,
-                            chatType: tabController.filteredChatsList
-                                .elementAt(index),
-                            isSelected: isSelected,
-                          ),
-                        );
+                  : RefreshIndicator(
+                      color: AppColors.primary,
+                      onRefresh: () async {
+                        await tabController.getAllChats();
                       },
-                      separatorBuilder: (BuildContext context, int index) {
-                        return Divider(
-                          thickness: 1,
-                          indent: 15,
-                          endIndent: 15,
-                        );
-                      },
-                      itemCount: tabController.filteredChatsList.length,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.only(bottom: 80),
+                        physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
+                        itemBuilder: (context, index) {
+                          final chat = tabController.filteredChatsList[index];
+                          final isSelected =
+                              tabController.selectedChats.contains(chat);
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onLongPress: () =>
+                                tabController.toggleSelection(chat),
+                            child: ChatUserCard(
+                              index: index,
+                              onTap: () {
+                                if (tabController.isSelectionMode.value) {
+                                  tabController.toggleSelection(chat);
+                                } else {
+                                  tabController.handleChatOpen(chat);
+                                }
+                              },
+                              chatUser: null,
+                              chatType: tabController.filteredChatsList
+                                  .elementAt(index),
+                              isSelected: isSelected,
+                            ),
+                          );
+                        },
+                        separatorBuilder: (BuildContext context, int index) {
+                          return Divider(
+                            thickness: 1,
+                            indent: 15,
+                            endIndent: 15,
+                          );
+                        },
+                        itemCount: tabController.filteredChatsList.length,
+                      ),
                     ),
     );
   }

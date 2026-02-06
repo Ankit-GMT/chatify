@@ -1,6 +1,5 @@
 import 'package:chatify/Screens/add_group_members_screen.dart';
 import 'package:chatify/Screens/chat_background_picker.dart';
-import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/Screens/edit_profile_screen.dart';
 import 'package:chatify/Screens/profile_screen.dart';
 import 'package:chatify/Screens/view_all_members_screen.dart';
@@ -231,7 +230,7 @@ class GroupProfileScreen extends StatelessWidget {
                 Column(
                   children: [
                     Text(
-                      chat.value!.name! ?? '',
+                      chat.value?.name ?? '',
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                     ),
@@ -249,53 +248,65 @@ class GroupProfileScreen extends StatelessWidget {
                   children: [
                     CustomBox(
                       title: "Voice Call",
+                      isLoading: messageController.isGroupVoiceCallOn.value,
                       image: "assets/images/profile_voice.png",
-                      onTap: () {
-                        final channelId = chat.value!.id.toString();
-                        debugPrint('StartCAll channel:-   $channelId');
-                        final rIds = chat.value?.members
-                            ?.map((m) => m.userId)
-                            .where((id) => id != myId)
-                            .toList();
-                        final receiverIds =
-                            rIds?.map((id) => id.toString()).toList() ?? [];
-                        debugPrint("Start call receiverids:- $receiverIds");
-                        messageController.startGroupCall(
-                            context: context,
-                            channelId: channelId,
-                            callerId:
-                                profileController.user.value!.id.toString(),
-                            callerName: profileController.user.value!.firstName
-                                .toString(),
-                            isVideo: false,
-                            receiverIds: receiverIds,
-                            groupId: chat.value!.id!);
-                      },
+                      onTap: messageController.isGroupVoiceCallOn.value
+                          ? null
+                          : () {
+                              final channelId = chat.value!.id.toString();
+                              debugPrint('StartCAll channel:-   $channelId');
+                              final rIds = chat.value?.members
+                                  ?.map((m) => m.userId)
+                                  .where((id) => id != myId)
+                                  .toList();
+                              final receiverIds =
+                                  rIds?.map((id) => id.toString()).toList() ??
+                                      [];
+                              debugPrint(
+                                  "Start call receiverids:- $receiverIds");
+                              messageController.startGroupCall(
+                                  context: context,
+                                  channelId: channelId,
+                                  callerId: profileController.user.value!.id
+                                      .toString(),
+                                  callerName: profileController
+                                      .user.value!.firstName
+                                      .toString(),
+                                  isVideo: false,
+                                  receiverIds: receiverIds,
+                                  groupId: chat.value!.id!);
+                            },
                     ),
                     CustomBox(
                       title: "Video Call",
+                      isLoading: messageController.isGroupVideoCallOn.value,
                       image: "assets/images/profile_video.png",
-                      onTap: () {
-                        final channelId = chat.value!.id.toString();
-                        debugPrint('StartCAll channel:-   $channelId');
-                        final rIds = chat.value?.members
-                            ?.map((m) => m.userId)
-                            .where((id) => id != myId)
-                            .toList();
-                        final receiverIds =
-                            rIds?.map((id) => id.toString()).toList() ?? [];
-                        debugPrint("Start call receiverids:- $receiverIds");
-                        messageController.startGroupCall(
-                            context: context,
-                            channelId: channelId,
-                            callerId:
-                                profileController.user.value!.id.toString(),
-                            callerName: profileController.user.value!.firstName
-                                .toString(),
-                            isVideo: true,
-                            receiverIds: receiverIds,
-                            groupId: chat.value!.id!);
-                      },
+                      onTap: messageController.isGroupVideoCallOn.value
+                          ? null
+                          : () {
+                              final channelId = chat.value!.id.toString();
+                              debugPrint('StartCAll channel:-   $channelId');
+                              final rIds = chat.value?.members
+                                  ?.map((m) => m.userId)
+                                  .where((id) => id != myId)
+                                  .toList();
+                              final receiverIds =
+                                  rIds?.map((id) => id.toString()).toList() ??
+                                      [];
+                              debugPrint(
+                                  "Start call receiverids:- $receiverIds");
+                              messageController.startGroupCall(
+                                  context: context,
+                                  channelId: channelId,
+                                  callerId: profileController.user.value!.id
+                                      .toString(),
+                                  callerName: profileController
+                                      .user.value!.firstName
+                                      .toString(),
+                                  isVideo: true,
+                                  receiverIds: receiverIds,
+                                  groupId: chat.value!.id!);
+                            },
                     ),
                     CustomBox(
                       title: "Add ",

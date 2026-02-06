@@ -146,6 +146,7 @@ class _VideoCallScreen1State extends State<VideoCallScreen1>
           token: widget.token,
           callerId: widget.callerId,
           receiverId: widget.receiverId,
+          name: widget.name
         ),
         permanent: true);
 
@@ -427,7 +428,7 @@ class _VideoCallScreen1State extends State<VideoCallScreen1>
                                               child: _controlButton(
                                                 icon: Icons.refresh,
                                                 onPressed: () {
-                                                  // controller.retryCall();
+                                                  controller.retryCall();
                                                 },
                                                 color: AppColors.primary,
                                               ),

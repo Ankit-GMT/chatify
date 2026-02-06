@@ -202,6 +202,22 @@ class GroupVoiceCallController extends GetxController {
       await engine.release();
     } catch (_) {}
   }
+
+  Future<void> retryCall() async {
+    callUIState.value = CallUIState.calling;
+    isConnected.value = false;
+    callDuration.value = Duration.zero;
+
+    await messageController.reTryGroupCall(
+      receiverIds: receiverIds as List<String>,
+      callerId: callerId,
+      channelId: channelId,
+      groupId: int.parse(channelId),
+      callerName: profileController.user.value!.firstName!,
+      context: Get.context!,
+      isVideo: false,
+    );
+  }
 }
 
 enum CallUIState {

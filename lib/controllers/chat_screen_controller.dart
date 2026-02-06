@@ -321,20 +321,34 @@ class ChatScreenController extends GetxController {
     }
   }
 
+  void onIncomingMessage(Message message) {
+    if (message.roomId != chatId) return;
+
+    if (!messages.any((m) => m.id == message.id)) {
+      messages.add(message);
+      messages.refresh();
+
+      final myId = box.read("userId");
+      if (message.senderId != myId) {
+        socket.sendDeliveryReceipt(chatId, message.id, message.senderId);
+        socket.sendReadReceipt(chatId, message.id, message.senderId);
+      }
+    }
+  }
+
+
 
 
   @override
   void onInit() {
     // TODO: implement onInit
     super.onInit();
-    box.write("activeChatId", chatId);
-    print("Active Chat ID ;- ${box.read("activeChatId")}-= $chatId}");
+    socket.setActiveChat(chatId);
     ever(chatType, (value) {
       if (value != null && otherUserId != null) {
         socket.subscribeToUserStatus(otherUserId!);
         socket.subscribeTyping(chatId);
         socket.subscribeToReceipts();
-
         // Subscribe to receipts from the OTHER person
       }
     });
@@ -363,7 +377,7 @@ class ChatScreenController extends GetxController {
   void onClose() {
     // TODO: implement onClose
     // socket.unsubscribeFromTyping();
-    box.remove("activeChatId");
+    socket.clearActiveChat();
     super.onClose();
   }
 }

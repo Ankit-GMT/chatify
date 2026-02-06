@@ -8,6 +8,7 @@ import 'package:chatify/Screens/chat_screen.dart';
 import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/constants/custom_snackbar.dart';
 import 'package:chatify/controllers/chat_screen_controller.dart';
+import 'package:chatify/models/message.dart';
 import 'package:chatify/services/api_service.dart';
 import 'package:chatify/constants/apis.dart';
 import 'package:chatify/controllers/profile_controller.dart';
@@ -197,7 +198,6 @@ class TabBarController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    socket.connect();
     _speech = stt.SpeechToText();
     print("Active Chat ID;- ${box.read("activeChatId")}");
 
@@ -206,34 +206,41 @@ class TabBarController extends GetxController {
     await getUnreadChats();
     await _loadContacts();
 
-    // 2. Setup socket listener IMMEDIATELY
-    // Don't wait for 'ever' if already connected
-    if (socket.isConnected.value) {
-      _setupMessageListener();
-    }
-
-    // 3. Keep listening for connection changes (like after a reconnect)
-    ever(socket.isConnected, (bool connected) {
-      if (connected) {
-        _setupMessageListener();
-      }
-    });
-
     ever(searchQuery, (_) {
       filterChats();
       filterContacts();
     });
   }
+  void onGlobalMessage(Message message) {
+    final incomingChatId = message.roomId;
+    final activeChatId = box.read("activeChatId");
 
-// Extract this to a separate method
-  void _setupMessageListener() {
-    final myId = box.read("userId");
-    if (myId != null) {
-      socket.subscribeMyMessages(myId, (data) {
-        _handleIncomingSocketMessage(data);
-      });
+    bool isCurrentChat = activeChatId == incomingChatId;
+
+    int index = allChats.indexWhere((c) => c.id == incomingChatId);
+
+    if (index != -1) {
+      final chat = allChats[index];
+
+      if (!isCurrentChat) {
+        chat.lastMessageContent.value = message.content ?? '';
+        chat.lastMessageAt.value = message.sentAt.toString() ?? DateTime.now().toIso8601String();
+
+        final myId = box.read("userId");
+        if (message.senderId != myId) {
+          chat.unreadCount.value++;
+        }
+      }
+
+      allChats.removeAt(index);
+      allChats.insert(0, chat);
+    } else {
+      getAllChats();
     }
+
+    _syncFilteredLists();
   }
+
 
   var allChats = <ChatType>[].obs;
   var groupChats = <ChatType>[].obs;
@@ -393,32 +400,6 @@ class TabBarController extends GetxController {
   }
 
   // for contacts
-  // Future<List<String>> getPhoneContacts() async {
-  //   // Ask permission
-  //   if (!await FlutterContacts.requestPermission(readonly: true)) {
-  //     return [];
-  //   }
-  //
-  //   // Get contacts with phones
-  //   final contacts = await FlutterContacts.getContacts(withProperties: true);
-  //
-  //   // debugPrint("Contacts: $contacts");
-  //   List<String> phoneNumbers = [];
-  //   for (var c in contacts) {
-  //     for (var p in c.phones) {
-  //       // remove non-digit characters
-  //       String cleaned = p.number.replaceAll(RegExp(r'[^0-9]'), '');
-  //
-  //       // keep only last 10 digits
-  //       if (cleaned.length >= 10) {
-  //         String last10 = cleaned.substring(cleaned.length - 10);
-  //         phoneNumbers.add(last10);
-  //       }
-  //     }
-  //   }
-  //   return phoneNumbers.toSet().toList(); // unique 10-digit numbers
-  // }
-
 // check if users are on app
   Future<List<ContactModel>> checkUsersOnApp(List<String> phoneNumbers) async {
     final res = await ApiService.request(
@@ -436,50 +417,6 @@ class TabBarController extends GetxController {
     }
   }
 
-  // Future<void> _loadContacts({bool forceRefresh = false}) async {
-  //   debugPrint(DateTime.now());
-  //
-  //   // Show cached instantly
-  //   final cachedRegistered = box.read(registeredKey);
-  //   final cachedNotRegistered = box.read(notRegisteredKey);
-  //
-  //   if (cachedRegistered != null || cachedNotRegistered != null) {
-  //     loadContactsFromLocal();
-  //   }
-  //
-  //   // Only show loader if user explicitly refreshes
-  //   if (forceRefresh) isLoading2.value = true;
-  //
-  //   try {
-  //     // Run in background
-  //     final phoneNumbers = await getPhoneContacts();
-  //
-  //     if (phoneNumbers.isEmpty) {
-  //       debugPrint("No contacts found or permission denied");
-  //       return;
-  //     }
-  //
-  //     final users = await checkUsersOnApp(phoneNumbers);
-  //
-  //     // update reactive lists
-  //     registeredUsers.value = users.where((u) => u.registered!).toList();
-  //     notRegisteredUsers.value = users.where((u) => !u.registered!).toList();
-  //
-  //     final contacts = await FlutterContacts.getContacts(withProperties: true);
-  //     mergeNotRegisteredWithContacts(notRegisteredUsers, contacts);
-  //
-  //     // save new cache
-  //     saveContactsToLocal();
-  //
-  //     // refresh UI
-  //     filterContacts();
-  //   } catch (e) {
-  //     debugPrint("Error refreshing contacts: $e");
-  //   } finally {
-  //     isLoading2.value = false;
-  //   }
-  //   debugPrint(DateTime.now());
-  // }
 
   Future<ContactsResult> getContactsOnce() async {
     if (!await FlutterContacts.requestPermission(readonly: true)) {
@@ -589,24 +526,6 @@ class TabBarController extends GetxController {
     return cleaned;
   }
 
-  // void mergeNotRegisteredWithContacts(List<ContactModel> notRegisteredUsers,
-  //     List<Contact> localContacts) {
-  //   for (var user in notRegisteredUsers) {
-  //     String apiPhone = normalizePhone(user.phoneNumber!);
-  //
-  //     for (var c in localContacts) {
-  //       for (var p in c.phones) {
-  //         String contactPhone = normalizePhone(p.number);
-  //
-  //         if (apiPhone == contactPhone) {
-  //           // Fill missing details
-  //           user.firstName ??= c.name.first;
-  //           user.lastName ??= c.name.last;
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
 
   // filter Contacts
 

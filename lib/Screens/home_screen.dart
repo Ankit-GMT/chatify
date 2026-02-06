@@ -261,13 +261,13 @@ class HomeScreen extends StatelessWidget {
                         Row(
                           spacing: 10,
                           children: [
-                            IconButton(
-                              onPressed: () {
-                                birthdayController.handleSelfBirthdayFromApi(
-                                    25, "Alex");
-                              },
-                              icon: Icon(Icons.account_circle),
-                            ),
+                            // IconButton(
+                            //   onPressed: () {
+                            //     birthdayController.handleSelfBirthdayFromApi(
+                            //         25, "Alex");
+                            //   },
+                            //   icon: Icon(Icons.account_circle),
+                            // ),
                             birthdayController.listBirthdays.isNotEmpty
                                 ? GestureDetector(
                                     onTap: () {
