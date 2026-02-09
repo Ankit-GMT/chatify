@@ -46,15 +46,18 @@ class SelfBirthdaySheet extends StatelessWidget {
                   height: Get.height * 0.15,
                   width: Get.width,
                 ),
-                Text(
-                  "Happy Birthday, $firstName",
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.black,
-                    letterSpacing: 1.2,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Text(
+                    "Happy Birthday, $firstName",
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.black,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
                 SizedBox(

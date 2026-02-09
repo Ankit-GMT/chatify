@@ -67,6 +67,23 @@ class BirthdayController extends GetxController {
         "fullName": e["fullName"],
         "profilePhoto": e["profileImageUrl"],
       }).toList();
+      // List<Map<String, dynamic>> birthdayUsers = [
+      //   {
+      //     "userId": 1,
+      //     "fullName": "Alex",
+      //     "profilePhoto": "https://randomuser.me/api/portraits/men/75.jpg",
+      //   },
+      //   // {
+      //   //   "userId": 2,
+      //   //   "fullName": "Bob",
+      //   //   "profilePhoto": "https://randomuser.me/api/portraits/men/76.jpg",
+      //   // },
+      //   // {
+      //   //   "userId": 3,
+      //   //   "fullName": "Charlie",
+      //   //   "profilePhoto": "https://randomuser.me/api/portraits/men/77.jpg",
+      //   // }
+      // ];
 
 
       final int totalBirthdaysToday = birthdayUsers.length;

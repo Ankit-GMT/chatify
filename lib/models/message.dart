@@ -94,9 +94,9 @@ class Message {
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      id: json['id'],
-      roomId: json['roomId'],
-      senderId: json['senderId'],
+      id: json['id'] ?? 0,
+      roomId: json['roomId'] ?? 0,
+      senderId: json['senderId'] ?? 0,
       senderFirstName: json['senderFirstName'] ?? "",
       senderLastName: json['senderLastName'] ?? "",
       senderProfileImageUrl: json['senderProfileImageUrl'],
@@ -107,20 +107,21 @@ class Message {
       fileSize: (json['fileSize'] as num?)?.toInt(),
       fileMimeType: json['fileMimeType'],
       thumbnailUrl: json['thumbnailUrl'],
-      duration: json['duration'],
-      sentAt: DateTime.parse(json['sentAt']),
+      duration: (json['duration'] as num?)?.toInt(),
+      sentAt:
+          DateTime.tryParse(json['sentAt']?.toString() ?? "") ?? DateTime.now(),
       deleted: json['deleted'] ?? false,
       edited: json['edited'] == true,
       editedAt:
-          json['editedAt'] != null ? DateTime.parse(json['editedAt']) : null,
+          json['editedAt'] != null ? DateTime.tryParse(json['editedAt']) : null,
       isStatusReply: json['isStatusReply'] ?? false,
       statusId: json['statusId'],
       statusPreview: json['statusPreview'],
       dateLabel: json['dateLabel'] ?? "",
       deliveredAt: json['deliveredAt'] != null
-          ? DateTime.parse(json['deliveredAt'])
+          ? DateTime.tryParse(json['deliveredAt'])
           : null,
-      readAt: json['readAt'] != null ? DateTime.parse(json['readAt']) : null,
+      readAt: json['readAt'] != null ? DateTime.tryParse(json['readAt']) : null,
       isDelivered: json['isDelivered'] ?? false,
       isRead: json['isRead'] ?? false,
       totalRecipients: json['totalRecipients'] ?? 0,

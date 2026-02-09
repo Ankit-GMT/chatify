@@ -1,5 +1,5 @@
 import 'package:chatify/constants/app_colors.dart';
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
 
 class ProfileTile extends StatelessWidget {
@@ -9,7 +9,13 @@ class ProfileTile extends StatelessWidget {
   final Function()? onTap;
   final bool edit;
 
-  const ProfileTile({super.key, required this.title, required this.image,required this.onTap,required this.subtitle,this.edit=true});
+  const ProfileTile(
+      {super.key,
+      required this.title,
+      required this.image,
+      required this.onTap,
+      required this.subtitle,
+      this.edit = true});
 
   @override
   Widget build(BuildContext context) {
@@ -23,12 +29,23 @@ class ProfileTile extends StatelessWidget {
       leading: SizedBox(
         height: 25,
         width: 25,
-        child: Image.asset(image,scale: 2,),
+        child: Image.asset(
+          image,
+          scale: 2,
+        ),
       ),
-      title: Text(title,style: TextStyle(fontWeight: FontWeight.w500,fontSize: 16),),
-      subtitle: Text(subtitle,style: TextStyle(fontSize: 12,color: AppColors.grey),),
-      trailing:edit ? Icon(Icons.arrow_forward_ios_rounded,color: AppColors.primary,size:15): null,
-
+      title: Text(
+        title,
+        style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(fontSize: 12, color: AppColors.grey),
+      ),
+      trailing: edit
+          ? Icon(Icons.arrow_forward_ios_rounded,
+              color: AppColors.primary, size: 15)
+          : null,
     );
   }
 }

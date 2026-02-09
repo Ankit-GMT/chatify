@@ -22,10 +22,14 @@ class BirthdayTopSheet extends StatelessWidget {
         TextEditingController(text: "Happy Birthday to you...");
     final tabController = Get.find<TabBarController>();
 
+    final double? dynamicHeight = birthdayUsers.length <= 1
+        ? MediaQuery.of(context).size.height * 0.4
+        : null;
+
     return Material(
       color: Colors.transparent,
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.6,
+        height: dynamicHeight,
         decoration: const BoxDecoration(
           borderRadius: BorderRadius.only(
               bottomRight: Radius.circular(50),
@@ -40,7 +44,7 @@ class BirthdayTopSheet extends StatelessWidget {
                     bottomLeft: Radius.circular(50)),
                 child: Image.asset(
                   "assets/images/birthday_bg.png",
-                  fit: BoxFit.cover,
+                  fit: BoxFit.fill,
                 ),
               ),
             ),
@@ -51,15 +55,18 @@ class BirthdayTopSheet extends StatelessWidget {
                   height: Get.height * 0.15,
                   width: Get.width,
                 ),
-                Text(
-                  title,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.black,
-                    letterSpacing: 1.2,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    title,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.black,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
                 SizedBox(
@@ -69,7 +76,7 @@ class BirthdayTopSheet extends StatelessWidget {
                   width: Get.width * 0.65,
                   height: Get.height * 0.12,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15), // glass effect
+                    color: Colors.white.withValues(alpha: 0.15), // glass effect
                     borderRadius: BorderRadius.circular(7),
                     border: Border.all(
                       width: 1.5,
@@ -94,31 +101,42 @@ class BirthdayTopSheet extends StatelessWidget {
                   SizedBox(
                     height: Get.height * 0.12,
                     width: Get.width * 0.66,
-                    child: ListView.builder(
-                      padding: EdgeInsets.zero,
-                      itemCount: birthdayUsers.length,
-                      itemBuilder: (context, index) {
-                        final user = birthdayUsers[index];
-                        return BirthdayUserTile(
-                          name: user["fullName"],
-                          image: user["profilePhoto"],
-                          onTap: tabController.isLoading4.value
-                              ? null
-                              : () async {
-                                  // print("Tapped userId: ${user["userId"]}");
-                                  if (msgController.text.isNotEmpty) {
-                                    await tabController
-                                        .sendBirthdayMessage(
-                                            recipientUserId: user["userId"],
-                                            message: msgController.text.trim());
-                                    // Get.back();
-                                  } else {
-                                    CustomSnackbar.error(
-                                        "Empty", "Please enter a message");
-                                  }
-                                },
-                        );
-                      },
+                    child: RawScrollbar(
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      thumbVisibility: true,
+                      trackVisibility: true, // Shows the path of the slider
+                      thickness: 6,
+                      thumbColor: const Color(0xffFF512F),
+                      trackColor: Colors.black12,
+                      trackRadius: const Radius.circular(10),
+                      radius: const Radius.circular(10),
+                      interactive: true,
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: birthdayUsers.length,
+                        shrinkWrap: true,
+                        itemBuilder: (context, index) {
+                          final user = birthdayUsers[index];
+                          return BirthdayUserTile(
+                            name: user["fullName"],
+                            image: user["profilePhoto"],
+                            onTap: tabController.isLoading4.value
+                                ? null
+                                : () async {
+                                    // print("Tapped userId: ${user["userId"]}");
+                                    if (msgController.text.isNotEmpty) {
+                                      await tabController.sendBirthdayMessage(
+                                          recipientUserId: user["userId"],
+                                          message: msgController.text.trim());
+                                      // Get.back();
+                                    } else {
+                                      CustomSnackbar.error(
+                                          "Empty", "Please enter a message");
+                                    }
+                                  },
+                          );
+                        },
+                      ),
                     ),
                   ),
                 if (isMultiple)
@@ -135,11 +153,12 @@ class BirthdayTopSheet extends StatelessWidget {
                                     .map((user) => user["userId"] as int)
                                     .toList(),
                                 message: msgController.text.trim());
-                            if(context.mounted){
+                            if (context.mounted) {
                               Navigator.pop(context);
                             }
                           } else {
-                            CustomSnackbar.error("Empty", "Please enter a message");
+                            CustomSnackbar.error(
+                                "Empty", "Please enter a message");
                           }
                         },
                   child: Obx(

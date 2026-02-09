@@ -23,9 +23,9 @@ class MediaBroadcastContactsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Obx(() => Text(
-              controller.selectedUserIds.isEmpty
+              controller.selectedUserIds.isEmpty && controller.selectedGroupIds.isEmpty
                   ? "Select Recipients"
-                  : "${controller.selectedUserIds.length} selected",
+                  : "${controller.selectedUserIds.length + controller.selectedGroupIds.length} selected",
             )),
         actions: [
           Obx(() => IconButton(
@@ -37,7 +37,7 @@ class MediaBroadcastContactsScreen extends StatelessWidget {
                         Icons.send,
                         color: AppColors.primary,
                       ),
-                onPressed: controller.selectedUserIds.isEmpty
+                onPressed: controller.selectedUserIds.isEmpty && controller.selectedGroupIds.isEmpty
                     ? null
                     : () {
                         if (controller.isScheduled.value) {
@@ -51,6 +51,7 @@ class MediaBroadcastContactsScreen extends StatelessWidget {
                             type: type,
                             caption: caption,
                             recipientIds: controller.selectedUserIds.toList(),
+                            groupIds: controller.selectedGroupIds.toList(),
                             scheduledAt: controller.scheduledAt.value!,
                           );
                         } else {
@@ -59,6 +60,7 @@ class MediaBroadcastContactsScreen extends StatelessWidget {
                             type: type,
                             caption: caption,
                             recipientIds: controller.selectedUserIds.toList(),
+                            groupIds: controller.selectedGroupIds.toList(),
                           );
                         }
                       },
@@ -137,6 +139,29 @@ class MediaBroadcastContactsScreen extends StatelessWidget {
               ),
             );
           }),
+          Row(
+            children: [
+              Expanded(
+                child: Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text("Contacts",style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),),
+              ),
+              Expanded(
+                child: Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                ),
+              ),
+            ],
+          ),
           Expanded(
             child: ListView.builder(
               itemCount: tabController.registeredUsers.length,
@@ -162,6 +187,55 @@ class MediaBroadcastContactsScreen extends StatelessWidget {
               },
             ),
           ),
+          Row(
+            children: [
+              Expanded(
+                child: Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text("Groups",style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),),
+              ),
+              Expanded(
+                child: Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                ),
+              ),
+            ],
+          ),
+          Expanded(
+              child: ListView.builder(
+                itemCount: tabController.groupChats.length,
+                itemBuilder: (context, index) {
+                  final chat = tabController.groupChats[index];
+                  return Obx(
+                        () {
+                      final isSelected =
+                      controller.selectedGroupIds.contains(chat.id);
+                      return ListTile(
+                        onTap: () => controller.toggleGroup(chat.id!),
+                        leading: CircleAvatar(
+                          backgroundImage: NetworkImage(chat.groupImageUrl ?? ''),
+                        ),
+                        title: Text("${chat.name}"),
+                        trailing: isSelected
+                            ? Icon(Icons.check_circle, color: Colors.green)
+                            : Icon(Icons.radio_button_unchecked,
+                            color: Colors.grey),
+                        tileColor:
+                        isSelected ? Colors.green.withValues(alpha: 0.1) : null,
+                      );
+                    },
+                  );
+                },
+              )),
         ],
       ),
     );

@@ -32,9 +32,9 @@ class VoiceBroadcastScreen extends StatelessWidget {
             ? AppColors.black
             : AppColors.white,
         title: Obx(() => Text(
-              controller.selectedUserIds.isEmpty
+              controller.selectedUserIds.isEmpty && controller.selectedGroupIds.isEmpty
                   ? "Voice Broadcast"
-                  : "${controller.selectedUserIds.length} selected",
+                  : "${controller.selectedUserIds.length + controller.selectedGroupIds.length} selected",
               style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
@@ -53,7 +53,7 @@ class VoiceBroadcastScreen extends StatelessWidget {
                         color: AppColors.primary,
                       ),
                 onPressed: controller.recordedFilePath.isEmpty ||
-                        controller.selectedUserIds.isEmpty
+                        (controller.selectedUserIds.isEmpty && controller.selectedGroupIds.isEmpty)
                     ? null
                     : () {
                         if (controller.isScheduled.value) {
@@ -65,12 +65,14 @@ class VoiceBroadcastScreen extends StatelessWidget {
                           controller.sendScheduledVoiceBroadcast(
                               filePath: controller.recordedFilePath.value,
                               recipientIds: controller.selectedUserIds.toList(),
+                              groupIds: controller.selectedGroupIds.toList(),
                               scheduledAt: controller.scheduledAt.value!,
                               duration: controller.recordedDuration.value);
                         } else {
                           controller.sendVoiceBroadcast(
                             filePath: controller.recordedFilePath.value,
                             recipientIds: controller.selectedUserIds.toList(),
+                            groupIds: controller.selectedGroupIds.toList(),
                             duration: controller.recordedDuration.value,
                           );
                         }
@@ -177,7 +179,29 @@ class VoiceBroadcastScreen extends StatelessWidget {
             );
           }),
 
-          const Divider(),
+          Row(
+            children: [
+              Expanded(
+                child: Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text("Contacts",style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),),
+              ),
+              Expanded(
+                child: Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                ),
+              ),
+            ],
+          ),
 
           /// Select Users
           Expanded(
@@ -207,6 +231,59 @@ class VoiceBroadcastScreen extends StatelessWidget {
               },
             ),
           ),
+          Row(
+            children: [
+              Expanded(
+                child: Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                  // indent: 20,
+                  // endIndent: 20,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text("Groups",style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),),
+              ),
+              Expanded(
+                child: Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                  // indent: 20,
+                  // endIndent: 20,
+                ),
+              ),
+            ],
+          ),
+          Expanded(
+              child: ListView.builder(
+                itemCount: tabController.groupChats.length,
+                itemBuilder: (context, index) {
+                  final chat = tabController.groupChats[index];
+                  return Obx(
+                        () {
+                      final isSelected =
+                      controller.selectedGroupIds.contains(chat.id);
+                      return ListTile(
+                        onTap: () => controller.toggleGroup(chat.id!),
+                        leading: CircleAvatar(
+                          backgroundImage: NetworkImage(chat.groupImageUrl ?? ''),
+                        ),
+                        title: Text("${chat.name}"),
+                        trailing: isSelected
+                            ? Icon(Icons.check_circle, color: Colors.green)
+                            : Icon(Icons.radio_button_unchecked,
+                            color: Colors.grey),
+                        tileColor:
+                        isSelected ? Colors.green.withValues(alpha: 0.1) : null,
+                      );
+                    },
+                  );
+                },
+              )),
         ],
       ),
 

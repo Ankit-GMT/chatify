@@ -14,7 +14,6 @@ class BroadcastScreen extends StatelessWidget {
   final tabController = Get.find<TabBarController>();
   final themeController = Get.find<ThemeController>();
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,31 +22,35 @@ class BroadcastScreen extends StatelessWidget {
             ? AppColors.black
             : AppColors.white,
         title: Obx(() => Text(
-              controller.selectedUserIds.isEmpty
+              controller.selectedUserIds.isEmpty && controller.selectedGroupIds.isEmpty
                   ? "New Broadcast"
-                  : "${controller.selectedUserIds.length} selected",style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: themeController.isDarkMode.value
-                ? AppColors.white
-                : AppColors.black),
+                  : "${controller.selectedUserIds.length + controller.selectedGroupIds.length} selected",
+              style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: themeController.isDarkMode.value
+                      ? AppColors.white
+                      : AppColors.black),
             )),
         actions: [
           Obx(() => IconButton(
                 icon: controller.isLoading.value
-                    ? const CircularProgressIndicator(color: AppColors.primary,)
+                    ? const CircularProgressIndicator(
+                        color: AppColors.primary,
+                      )
                     : Icon(
                         Icons.send,
                         color: AppColors.primary,
                       ),
-                onPressed: controller.selectedUserIds.isEmpty
+                onPressed: controller.selectedUserIds.isEmpty && controller.selectedGroupIds.isEmpty
                     ? null
                     : () {
                         final message =
                             controller.messageController.text.trim();
 
                         if (message.isEmpty) {
-                          CustomSnackbar.error("Error", "Message cannot be empty");
+                          CustomSnackbar.error(
+                              "Error", "Message cannot be empty");
                           return;
                         }
 
@@ -60,12 +63,14 @@ class BroadcastScreen extends StatelessWidget {
                           controller.sendScheduledBroadcast(
                             content: message,
                             recipientIds: controller.selectedUserIds.toList(),
+                            groupIds: controller.selectedGroupIds.toList(),
                             scheduledAt: controller.scheduledAt.value!,
                           );
                         } else {
                           controller.sendBroadcastMessage(
                             content: message,
                             recipientIds: controller.selectedUserIds.toList(),
+                            groupIds: controller.selectedGroupIds.toList(),
                           );
                         }
                       },
@@ -157,7 +162,29 @@ class BroadcastScreen extends StatelessWidget {
             );
           }),
 
-          const Divider(),
+          Row(
+            children: [
+              Expanded(
+                child: Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text("Contacts",style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),),
+              ),
+              Expanded(
+                child: Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                ),
+              ),
+            ],
+          ),
 
           /// Contact List
           Expanded(
@@ -180,12 +207,65 @@ class BroadcastScreen extends StatelessWidget {
                         : Icon(Icons.radio_button_unchecked,
                             color: Colors.grey),
                     tileColor:
-                        isSelected ? Colors.green.withOpacity(0.1) : null,
+                        isSelected ? Colors.green.withValues(alpha: 0.1) : null,
                   );
                 });
               },
             ),
           ),
+          Row(
+            children: [
+              Expanded(
+                child: Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                  // indent: 20,
+                  // endIndent: 20,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text("Groups",style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),),
+              ),
+              Expanded(
+                child: Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                  // indent: 20,
+                  // endIndent: 20,
+                ),
+              ),
+            ],
+          ),
+          Expanded(
+              child: ListView.builder(
+                itemCount: tabController.groupChats.length,
+                itemBuilder: (context, index) {
+                  final chat = tabController.groupChats[index];
+                  return Obx(
+                        () {
+                      final isSelected =
+                      controller.selectedGroupIds.contains(chat.id);
+                      return ListTile(
+                        onTap: () => controller.toggleGroup(chat.id!),
+                        leading: CircleAvatar(
+                          backgroundImage: NetworkImage(chat.groupImageUrl ?? ''),
+                        ),
+                        title: Text("${chat.name}"),
+                        trailing: isSelected
+                            ? Icon(Icons.check_circle, color: Colors.green)
+                            : Icon(Icons.radio_button_unchecked,
+                            color: Colors.grey),
+                        tileColor:
+                        isSelected ? Colors.green.withValues(alpha: 0.1) : null,
+                      );
+                    },
+                  );
+                },
+              )),
         ],
       ),
     );

@@ -269,7 +269,8 @@ class HomeScreen extends StatelessWidget {
                             //   icon: Icon(Icons.account_circle),
                             // ),
                             birthdayController.listBirthdays.isNotEmpty
-                                ? GestureDetector(
+                                ?
+                            GestureDetector(
                                     onTap: () {
                                       birthdayController.handleBirthdayFromApi(
                                           birthdayController.listBirthdays);
@@ -897,11 +898,33 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 const Text(
-                  "Select Contacts",
+                  "Select Contacts & Groups",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
 
-                const Divider(),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: Colors.grey.shade300,
+                        thickness: 1,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text("Contacts",style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: Colors.grey.shade300,
+                        thickness: 1,
+                      ),
+                    ),
+                  ],
+                ),
 
                 /// CONTACT LIST
                 Expanded(
@@ -928,6 +951,59 @@ class HomeScreen extends StatelessWidget {
                     },
                   ),
                 ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: Colors.grey.shade300,
+                        thickness: 1,
+                        // indent: 20,
+                        // endIndent: 20,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text("Groups",style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: Colors.grey.shade300,
+                        thickness: 1,
+                        // indent: 20,
+                        // endIndent: 20,
+                      ),
+                    ),
+                  ],
+                ),
+                Expanded(
+                    child: ListView.builder(
+                      itemCount: tabController.groupChats.length,
+                      itemBuilder: (context, index) {
+                        final chat = tabController.groupChats[index];
+                        return Obx(
+                              () {
+                            final isSelected =
+                            controller.selectedGroupIds.contains(chat.id);
+                            return ListTile(
+                              onTap: () => controller.toggleGroup(chat.id!),
+                              leading: CircleAvatar(
+                                backgroundImage: NetworkImage(chat.groupImageUrl ?? ''),
+                              ),
+                              title: Text("${chat.name}"),
+                              trailing: isSelected
+                                  ? Icon(Icons.check_circle, color: Colors.green)
+                                  : Icon(Icons.radio_button_unchecked,
+                                  color: Colors.grey),
+                              tileColor:
+                              isSelected ? Colors.green.withValues(alpha: 0.1) : null,
+                            );
+                          },
+                        );
+                      },
+                    )),
 
                 /// CONFIRM BUTTON
                 Padding(
@@ -943,7 +1019,7 @@ class HomeScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(24),
                             ),
                             foregroundColor: AppColors.white),
-                        onPressed: controller.selectedUserIds.isEmpty
+                        onPressed: controller.selectedUserIds.isEmpty && controller.selectedGroupIds.isEmpty
                             ? null
                             : () {
                                 controller.sendScheduledBroadcast(
@@ -952,6 +1028,7 @@ class HomeScreen extends StatelessWidget {
                                       controller.content.value,
                                   recipientIds:
                                       controller.selectedUserIds.toList(),
+                                  groupIds: controller.selectedGroupIds.toList(),
                                 );
                               },
                         child: const Text("Confirm & Send"),

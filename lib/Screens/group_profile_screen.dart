@@ -554,10 +554,12 @@ class GroupProfileScreen extends StatelessWidget {
                 //       ),
                 isAdmin
                     ? ListTile(
-                        onTap: () async {
-                          await groupController.deleteGroup(
-                              groupId: chat.value!.id!);
-                          await tabController.getAllChats();
+                        onTap: () {
+                          _confirmDeleteGroup(
+                            groupId: chat.value!.id!,
+                            groupController: groupController,
+                            tabController: tabController,
+                          );
                         },
                         minTileHeight: 60,
                         tileColor: AppColors.settingTile.withAlpha(45),
@@ -787,4 +789,45 @@ class GroupProfileScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _confirmDeleteGroup({
+    required int groupId,
+    required GroupController groupController,
+    required TabBarController tabController,
+  }) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text(
+          "Delete Group?",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        content: const Text(
+          "This action is permanent.\nAll messages and members will be removed.\n\nAre you sure you want to delete this group?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text("Cancel",style: TextStyle(color: Colors.black),),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Get.back(); // close dialog first
+
+              await groupController.deleteGroup(groupId: groupId);
+              await tabController.getAllChats();
+
+              // Get.back(); // go back from group profile screen
+            },
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+      // barrierDismissible: false,
+    );
+  }
+
 }

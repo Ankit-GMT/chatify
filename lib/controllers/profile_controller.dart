@@ -12,9 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
-
 class ProfileController extends GetxController {
-
   final String baseUrl = APIs.url;
   var isLoading = false.obs;
 
@@ -54,7 +52,6 @@ class ProfileController extends GetxController {
   // Edit Profile
   Future<bool> editProfile(ChatUser user) async {
     try {
-
       var uri = Uri.parse("$baseUrl/api/user/me");
       var request = http.MultipartRequest("PATCH", uri);
 
@@ -74,7 +71,6 @@ class ProfileController extends GetxController {
 
       var res = await request.send();
       var responseData = await http.Response.fromStream(res);
-
 
       if (res.statusCode == 200) {
         debugPrint("Profile updated: ${responseData.body}");
@@ -133,7 +129,8 @@ class ProfileController extends GetxController {
       if (response.statusCode == 200) {
         CustomSnackbar.success("Success", "Profile image updated!");
       } else {
-        CustomSnackbar.error("Error", data["message"] ?? "Could not update image");
+        CustomSnackbar.error(
+            "Error", data["message"] ?? "Could not update image");
       }
     } catch (e) {
       CustomSnackbar.error("Error", e.toString());
@@ -142,15 +139,14 @@ class ProfileController extends GetxController {
     }
   }
 
-
   Future<void> pickImage(ImageSource source) async {
     final XFile? image =
-        await _picker.pickImage(source: source,imageQuality: 20);
+        await _picker.pickImage(source: source, imageQuality: 20);
 
     if (image != null) {
       pickedImage.value = File(image.path);
+      await updateUserProfileImage(pickedImage.value!);
     }
-    await updateUserProfileImage(pickedImage.value!);
   }
 
   @override
@@ -160,14 +156,14 @@ class ProfileController extends GetxController {
     super.onInit();
   }
 
- // for showing options to pick image
+  // for showing options to pick image
 
   void showPickerBottomSheet() {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-        decoration:  BoxDecoration(
-          color: Get.isDarkMode? AppColors.primary:AppColors.white,
+        decoration: BoxDecoration(
+          color: Get.isDarkMode ? AppColors.primary : AppColors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Wrap(

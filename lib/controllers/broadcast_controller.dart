@@ -23,6 +23,7 @@ class BroadCastController extends GetxController{
 
   /// Selected users
   final selectedUserIds = <int>[].obs;
+  final selectedGroupIds = <int>[].obs;
 
   void toggleUser(int userId) {
     if (selectedUserIds.contains(userId)) {
@@ -31,9 +32,18 @@ class BroadCastController extends GetxController{
       selectedUserIds.add(userId);
     }
   }
+  void toggleGroup(int groupId){
+    if (selectedGroupIds.contains(groupId)){
+      selectedGroupIds.remove(groupId);
+    }
+    else{
+      selectedGroupIds.add(groupId);
+    }
+  }
 
   void clearBroadcast() {
     selectedUserIds.clear();
+    selectedGroupIds.clear();
     messageController.clear();
     isScheduled.value = false;
     scheduledAt.value = null;
@@ -50,6 +60,7 @@ class BroadCastController extends GetxController{
   Future<void> sendBroadcastMessage({
     required String content,
     required List<int> recipientIds,
+    required List<int> groupIds
   }) async {
     try {
       isLoading.value = true;
@@ -65,6 +76,7 @@ class BroadCastController extends GetxController{
         body: jsonEncode({
           "content": content,
           "recipientIds": recipientIds,
+          "groupIds": groupIds
         }),
       );
 
@@ -74,7 +86,7 @@ class BroadCastController extends GetxController{
       if (res.statusCode == 200) {
         CustomSnackbar.success(
           "Broadcast Sent",
-          "Message sent to ${recipientIds.length} recipients",
+          "Message sent to ${recipientIds.length} recipients, ${groupIds.length} groups",
         );
 
         // Optional: clear input / navigate back
@@ -108,6 +120,7 @@ class BroadCastController extends GetxController{
   Future<void> sendVoiceBroadcast({
     required String filePath,
     required List<int> recipientIds,
+    required List<int> groupIds,
     required int duration,
   }) async {
     try {
@@ -136,6 +149,11 @@ class BroadCastController extends GetxController{
           "recipientIds": id.toString(),
         });
       }
+      for (final id in groupIds) {
+        request.fields.addAll({
+          "groupIds": id.toString(),
+        });
+      }
 
       /// Duration in seconds
       request.fields["duration"] = duration.toString();
@@ -149,7 +167,7 @@ class BroadCastController extends GetxController{
       if (response.statusCode == 200) {
         CustomSnackbar.success(
           "Voice Broadcast Sent",
-          "Sent to ${recipientIds.length} recipients",
+          "Sent to ${recipientIds.length} recipients, ${groupIds.length} groups",
         );
 
         clearBroadcast();
@@ -173,6 +191,7 @@ class BroadCastController extends GetxController{
   Future<void> sendScheduledBroadcast({
     required String content,
     required List<int> recipientIds,
+    required List<int> groupIds,
     required DateTime scheduledAt,
   }) async {
     try {
@@ -189,6 +208,7 @@ class BroadCastController extends GetxController{
         body: jsonEncode({
           "content": content,
           "recipientIds": recipientIds,
+          "groupIds": groupIds,
           "scheduledAt": scheduledAt.toIso8601String(),
         }),
       );
@@ -214,6 +234,7 @@ class BroadCastController extends GetxController{
   Future<void> sendScheduledVoiceBroadcast({
     required String filePath,
     required List<int> recipientIds,
+    required List<int> groupIds,
     required int duration,
     required DateTime scheduledAt,
   }) async {
@@ -241,6 +262,11 @@ class BroadCastController extends GetxController{
       for (final id in recipientIds) {
         request.fields.addAll({
           "recipientIds": id.toString(),
+        });
+      }
+      for (final id in groupIds) {
+        request.fields.addAll({
+          "groupIds": id.toString(),
         });
       }
 
@@ -283,6 +309,7 @@ class BroadCastController extends GetxController{
     required String type, // IMAGE or VIDEO
     String? caption,
     required List<int> recipientIds,
+    required List<int> groupIds,
   }) async {
     try {
       isLoading.value = true;
@@ -315,6 +342,9 @@ class BroadCastController extends GetxController{
       /// Add recipients (same key multiple times)
       for (final id in recipientIds) {
         request.fields["recipientIds"] = id.toString();
+      }
+      for (final id in groupIds) {
+        request.fields["groupIds"] = id.toString();
       }
 
       final streamedResponse = await request.send();
@@ -352,6 +382,7 @@ class BroadCastController extends GetxController{
     required String type, // IMAGE or VIDEO
     String? caption,
     required List<int> recipientIds,
+    required List<int> groupIds,
     required DateTime scheduledAt,
   }) async {
     try {
@@ -387,6 +418,9 @@ class BroadCastController extends GetxController{
       /// Add recipients (same key multiple times)
       for (final id in recipientIds) {
         request.fields["recipientIds"] = id.toString();
+      }
+      for (final id in groupIds) {
+        request.fields["groupIds"] = id.toString();
       }
 
       final streamedResponse = await request.send();

@@ -4,6 +4,7 @@ import 'package:chatify/constants/app_colors.dart';
 import 'package:chatify/constants/time_format.dart';
 import 'package:chatify/controllers/chat_screen_controller.dart';
 import 'package:chatify/controllers/message_controller.dart';
+import 'package:chatify/controllers/profile_controller.dart';
 import 'package:chatify/models/message.dart';
 import 'package:chatify/widgets/dialog_textfield.dart';
 import 'package:chatify/widgets/message_card.dart';
@@ -29,6 +30,7 @@ class ChatScreen extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final chatController = Get.put(ChatScreenController(chatId: chatId!));
+    final profileController = Get.find<ProfileController>();
     final messageController = Get.put(MessageController());
     final socket = Get.find<SocketService>();
 
@@ -347,11 +349,12 @@ class ChatScreen extends StatelessWidget {
                                   ),
                           ],
                         ),
-                        chatController.type.value == "GROUP"
-                            ? SizedBox()
-                            : Row(
+                        // chatController.type.value == "GROUP"
+                        //     ? SizedBox()
+                        //     :
+                        Row(
                                 children: [
-                                  messageController.isVoiceCallOn.value
+                                  messageController.isVoiceCallOn.value || messageController.isGroupVoiceCallOn.value
                                       ? SizedBox(
                                           width: Get.width * 0.04,
                                           height: Get.width * 0.04,
@@ -359,37 +362,63 @@ class ChatScreen extends StatelessWidget {
                                               color: Colors.white),
                                         )
                                       : InkWell(
-                                          onTap: () {
-                                            final channelId = chatId;
-                                            debugPrint(
-                                                'StartCAll :-   $channelId');
-                                            final receiverId = (myId ==
-                                                    chatController
-                                                        .chatType
-                                                        .value
-                                                        ?.members?[0]
-                                                        .userId)
-                                                ? (chatController.chatType.value
-                                                    ?.members?[1].userId!)
-                                                : (chatController.chatType.value
-                                                    ?.members?[0].userId!);
-                                            final receiverName = myId ==
-                                                    chatController
-                                                        .chatType
-                                                        .value
-                                                        ?.members?[0]
-                                                        .userId
-                                                ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
-                                                    ''
-                                                : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
-                                                    '';
+                                          onTap:messageController.isVoiceCallOn.value || messageController.isGroupVoiceCallOn.value ? null : () {
+                                           if(chatController.type.value == "PRIVATE"){
+                                             final channelId = chatId;
+                                             debugPrint(
+                                                 'StartCAll :-   $channelId');
+                                             final receiverId = (myId ==
+                                                 chatController
+                                                     .chatType
+                                                     .value
+                                                     ?.members?[0]
+                                                     .userId)
+                                                 ? (chatController.chatType.value
+                                                 ?.members?[1].userId!)
+                                                 : (chatController.chatType.value
+                                                 ?.members?[0].userId!);
+                                             final receiverName = myId ==
+                                                 chatController
+                                                     .chatType
+                                                     .value
+                                                     ?.members?[0]
+                                                     .userId
+                                                 ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
+                                                 ''
+                                                 : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
+                                                 '';
 
-                                            messageController.startCall(
-                                                receiverName,
-                                                receiverId.toString(),
-                                                channelId.toString(),
-                                                false,
-                                                context);
+                                             messageController.startCall(
+                                                 receiverName,
+                                                 receiverId.toString(),
+                                                 channelId.toString(),
+                                                 false,
+                                                 context);
+                                           }
+                                           else{
+                                             final channelId = chatController.chatType.value!.id.toString();
+                                             debugPrint('StartCAll channel:-   $channelId');
+                                             final rIds = chatController.chatType.value?.members
+                                                 ?.map((m) => m.userId)
+                                                 .where((id) => id != myId)
+                                                 .toList();
+                                             final receiverIds =
+                                                 rIds?.map((id) => id.toString()).toList() ??
+                                                     [];
+                                             debugPrint(
+                                                 "Start call receiverids:- $receiverIds");
+                                             messageController.startGroupCall(
+                                                 context: context,
+                                                 channelId: channelId,
+                                                 callerId: profileController.user.value!.id
+                                                     .toString(),
+                                                 callerName: profileController
+                                                     .user.value!.firstName
+                                                     .toString(),
+                                                 isVideo: false,
+                                                 receiverIds: receiverIds,
+                                                 groupId: chatController.chatType.value!.id!);
+                                           }
                                           },
                                           child: CircleAvatar(
                                             radius: Get.width * 0.05,
@@ -402,7 +431,7 @@ class ChatScreen extends StatelessWidget {
                                   SizedBox(
                                     width: Get.width * 0.05,
                                   ),
-                                  messageController.isVideoCallOn.value
+                                  messageController.isVideoCallOn.value || messageController.isGroupVideoCallOn.value
                                       ? SizedBox(
                                           width: Get.width * 0.04,
                                           height: Get.width * 0.04,
@@ -410,37 +439,64 @@ class ChatScreen extends StatelessWidget {
                                               color: Colors.white),
                                         )
                                       : InkWell(
-                                          onTap: () {
-                                            final channelId = chatId;
-                                            debugPrint(
-                                                'StartCAll :-   $channelId');
-                                            final receiverId = (myId ==
-                                                    chatController
-                                                        .chatType
-                                                        .value
-                                                        ?.members?[0]
-                                                        .userId)
-                                                ? (chatController.chatType.value
-                                                    ?.members?[1].userId!)
-                                                : (chatController.chatType.value
-                                                    ?.members?[0].userId!);
-                                            final receiverName = myId ==
-                                                    chatController
-                                                        .chatType
-                                                        .value
-                                                        ?.members?[0]
-                                                        .userId
-                                                ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
-                                                    ''
-                                                : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
-                                                    '';
+                                          onTap:
+                                          messageController.isVideoCallOn.value || messageController.isGroupVideoCallOn.value ? null : () {
+                                           if(chatController.type.value == "PRIVATE"){
+                                             final channelId = chatId;
+                                             debugPrint(
+                                                 'StartCAll :-   $channelId');
+                                             final receiverId = (myId ==
+                                                 chatController
+                                                     .chatType
+                                                     .value
+                                                     ?.members?[0]
+                                                     .userId)
+                                                 ? (chatController.chatType.value
+                                                 ?.members?[1].userId!)
+                                                 : (chatController.chatType.value
+                                                 ?.members?[0].userId!);
+                                             final receiverName = myId ==
+                                                 chatController
+                                                     .chatType
+                                                     .value
+                                                     ?.members?[0]
+                                                     .userId
+                                                 ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
+                                                 ''
+                                                 : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
+                                                 '';
 
-                                            messageController.startCall(
-                                                receiverName,
-                                                receiverId.toString(),
-                                                channelId.toString(),
-                                                true,
-                                                context);
+                                             messageController.startCall(
+                                                 receiverName,
+                                                 receiverId.toString(),
+                                                 channelId.toString(),
+                                                 true,
+                                                 context);
+                                           }
+                                           else{
+                                             final channelId = chatController.chatType.value!.id.toString();
+                                             debugPrint('StartCAll channel:-   $channelId');
+                                             final rIds = chatController.chatType.value?.members
+                                                 ?.map((m) => m.userId)
+                                                 .where((id) => id != myId)
+                                                 .toList();
+                                             final receiverIds =
+                                                 rIds?.map((id) => id.toString()).toList() ??
+                                                     [];
+                                             debugPrint(
+                                                 "Start call receiverids:- $receiverIds");
+                                             messageController.startGroupCall(
+                                                 context: context,
+                                                 channelId: channelId,
+                                                 callerId: profileController.user.value!.id
+                                                     .toString(),
+                                                 callerName: profileController
+                                                     .user.value!.firstName
+                                                     .toString(),
+                                                 isVideo: true,
+                                                 receiverIds: receiverIds,
+                                                 groupId: chatController.chatType.value!.id!);
+                                           }
                                           },
                                           child: CircleAvatar(
                                             radius: Get.width * 0.05,

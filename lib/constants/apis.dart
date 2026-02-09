@@ -1,5 +1,5 @@
 class APIs {
-  static const url = "http://192.168.1.7:8085";
+  static const url = "http://192.168.1.10:8085";
   // static const url = "https://6ed02c9e31e1.ngrok-free.app";
 }
 

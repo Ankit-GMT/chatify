@@ -44,12 +44,13 @@ class _ChatUserCardState extends State<ChatUserCard> {
 // Calculate the other user's ID
     int? otherUserId;
     if (type != "GROUP" && members != null && members.length >= 2) {
-      otherUserId = (myId == members[0].userId) ? members[1].userId : members[0].userId;
+      otherUserId =
+          (myId == members[0].userId) ? members[1].userId : members[0].userId;
     }
 
     return ListTile(
       tileColor: widget.isSelected
-          ? AppColors.primary.withAlpha(35)
+          ? AppColors.primary.withValues(alpha: 0.14) // approx 35/255
           : Colors.transparent,
       onTap: widget.onTap,
       leading: InkWell(
@@ -70,8 +71,8 @@ class _ChatUserCardState extends State<ChatUserCard> {
                 imageUrl: type == "GROUP"
                     ? widget.chatType?.groupImageUrl ?? ''
                     : myId == widget.chatType?.members?[0].userId
-                    ? (widget.chatType?.members?[1].profileImageUrl) ?? ''
-                    : widget.chatType?.members?[0].profileImageUrl ?? '',
+                        ? (widget.chatType?.members?[1].profileImageUrl) ?? ''
+                        : widget.chatType?.members?[0].profileImageUrl ?? '',
                 radius: 20),
           );
         }),
@@ -82,12 +83,10 @@ class _ChatUserCardState extends State<ChatUserCard> {
           : type == "GROUP"
               ? Text(widget.chatType?.name ?? '')
               : Text(myId == widget.chatType?.members?[0].userId
-                  ? ("${widget.chatType?.members?[1].firstName} ${widget.chatType?.members?[1].lastName}") ??
-                      ''
-                  : ("${widget.chatType?.members?[0].firstName} ${widget.chatType?.members?[0].lastName}") ??
-                      ''),
+                  ? "${widget.chatType?.members?[1].firstName ?? ''} ${widget.chatType?.members?[1].lastName ?? ''}"
+                  : "${widget.chatType?.members?[0].firstName ?? ''} ${widget.chatType?.members?[0].lastName ?? ''}"),
 
-      subtitle:Obx(() {
+      subtitle: Obx(() {
         //  Check for typing status from the socket
         final isTyping = socket.typingUsers[otherUserId ?? 0] == true;
 
@@ -105,7 +104,11 @@ class _ChatUserCardState extends State<ChatUserCard> {
         return Row(
           children: [
             widget.chatType?.lastSenderId == myId
-                ?  Icon(Icons.done_all_rounded, color:widget.chatType?.unreadCount.value == 0 ?  Colors.blue : Colors.grey, size: 15)
+                ? Icon(Icons.done_all_rounded,
+                    color: widget.chatType?.unreadCount.value == 0
+                        ? Colors.blue
+                        : Colors.grey,
+                    size: 15)
                 : const SizedBox.shrink(),
             const SizedBox(width: 5),
             SizedBox(
@@ -158,14 +161,16 @@ class _ChatUserCardState extends State<ChatUserCard> {
                 if (lastTime != null && lastTime.isNotEmpty)
                   Text(
                     TimeFormat.formatTime(lastTime),
-                    style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey),
+                    style:
+                        GoogleFonts.poppins(fontSize: 11, color: Colors.grey),
                   ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    if (widget.chatType!.muted.value)
-                      const Icon(Icons.volume_off, color: Colors.grey, size: 14),
-                    if (widget.chatType!.pinned.value)
+                    if (widget.chatType?.muted.value ?? false)
+                      const Icon(Icons.volume_off,
+                          color: Colors.grey, size: 14),
+                    if (widget.chatType?.pinned.value ?? false)
                       const Icon(Icons.push_pin, color: Colors.grey, size: 14),
                   ],
                 ),
