@@ -316,6 +316,40 @@ class GroupController extends GetxController {
     update();
   }
 
+  // Report User
+
+  final RxBool isReportLoading = false.obs;
+
+  Future<void> reportGroup({
+    required int reportedGroupId,
+    required String reason,
+    String? description,
+  }) async {
+    isReportLoading.value = true;
+
+    final body = {
+      "reportedGroupId": reportedGroupId,
+      "reason": reason,
+      "description": description ?? "",
+    };
+    try {
+      final response = await ApiService.request(
+          url: "$baseUrl/api/reports/group", method: 'POST', body: body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Get.back(); // close bottom sheet
+        CustomSnackbar.success(
+            "Reported", "Group has been reported successfully");
+      } else {
+        CustomSnackbar.error("Error", "Failed to submit report");
+      }
+    } catch (e) {
+      CustomSnackbar.error("Error", e.toString());
+    } finally {
+      isReportLoading.value = false;
+    }
+  }
+
   @override
   void onClose() {
     // TODO: implement onClose

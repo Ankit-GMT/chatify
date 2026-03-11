@@ -491,8 +491,18 @@ class HomeScreen extends StatelessWidget {
                 //       ]
                 //     : null,
                 trailing: [
+                  SizedBox(
+                    width: 2,
+                    height: 40,
+                    child: VerticalDivider(
+                      endIndent: 5,
+                      indent: 5,
+                      thickness: 0.5,
+                    ),
+                  ),
                   if (tabController.searchQuery.value.isNotEmpty)
                     IconButton(
+                      padding: EdgeInsets.zero,
                       onPressed: () {
                         tabController.searchController.clear();
                         tabController.updateSearch('');
@@ -501,17 +511,26 @@ class HomeScreen extends StatelessWidget {
                     )
                   else
                     IconButton(
+                      padding: EdgeInsets.zero,
                       onPressed: () {
                         tabController.isListening.value
                             ? tabController.stopVoiceSearch()
                             : tabController.startVoiceSearch();
                       },
-                      icon: Icon(
-                        Icons.mic,
+                      icon:
+                      Image.asset(
+                        "assets/images/profile_voice.png",
+                        scale: 5,
                         color: tabController.isListening.value
                             ? Colors.green
-                            : Colors.grey.shade600,
+                            : Colors.grey.shade500,
                       ),
+                      // Icon(
+                      //   Icons.mic,
+                      //   color: tabController.isListening.value
+                      //       ? Colors.green
+                      //       : Colors.grey.shade600,
+                      // ),
                     ),
                 ],
                 hintText: "Search",

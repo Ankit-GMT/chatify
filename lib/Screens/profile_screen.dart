@@ -19,7 +19,8 @@ class ProfileScreen extends StatelessWidget {
   final bool isFromGroup;
   final int? groupChatId;
 
-  const ProfileScreen({super.key, required this.id, required this.isFromGroup,this.groupChatId});
+  const ProfileScreen(
+      {super.key, required this.id, required this.isFromGroup, this.groupChatId});
 
   @override
   Widget build(BuildContext context) {
@@ -39,273 +40,355 @@ class ProfileScreen extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: Obx(
-            () => Column(
-              spacing: 20,
-              children: [
-                SizedBox(
-                  height: Get.height * 0.03,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // GestureDetector(
-                    //     onTap: () {
-                    //       Get.back();
-                    //     },
-                    //     child: Image.asset("assets/images/back_icon.png",scale: 3,))
-                    IconButton(
-                      color: AppColors.iconGrey,
-                      style: ButtonStyle(
-                        backgroundColor:
-                            WidgetStatePropertyAll(AppColors.white),
-                        shape: WidgetStatePropertyAll(
-                          RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(color: Colors.grey.shade200)),
-                        ),
-                      ),
-                      onPressed: () {
-                        if (isFromGroup) {
-                          chatController
-                              .fetchChatType(groupChatId!);
-                        }
-                        Get.back();
-                      },
-                      icon: Icon(Icons.arrow_left),
-                    ),
-                    // IconButton(
-                    //   onPressed: () {
-                    //     _showChatOptions(context, chat.value!.id!, chat.value!.locked.value);
-                    //   },
-                    //   icon: Icon(Icons.more_vert),
-                    // ),
-                    PopupMenuButton(
-                      style: ButtonStyle(
-                        backgroundColor: WidgetStatePropertyAll(AppColors.white),
-                        foregroundColor: WidgetStatePropertyAll(AppColors.black),
-                        shape: WidgetStatePropertyAll(
-                          RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(color: Colors.grey.shade200)),
-                        ),
-                      ),
-                      itemBuilder: (context) {
-                        return [
-                          if(!chat.value!.locked.value)
-                            PopupMenuItem(
-                              onTap: () {
-                                Get.back();
-                                _showSetPinSheet(chat.value!.id!);
-                              },
-                              child: Row(
-                                spacing: 5,
-                                children: [
-                                  Icon(Icons.lock),
-                                  Text("Lock Chat"),
-                                ],
-                              ),
-                            ),
-                          if(chat.value!.locked.value)
-                            PopupMenuItem(
-                              onTap: () {
-                                Get.back();
-                                _confirmUnlock(chat.value!.id!, chatController);
-                              },
-                              child: Row(
-                                spacing: 5,
-                                children: [
-                                  Icon(Icons.lock_open),
-                                  Text("Unlock Chat"),
-                                ],
-                              ),
-                            ),
-
-
-                        ];
-                      },
-                    )
-                  ],
-                ),
-                ProfileAvatar(
-                    imageUrl: '${userController.user.value.profileImageUrl}',
-                    radius: 50),
+                () =>
                 Column(
+                  spacing: 20,
                   children: [
-                    Text(
-                      "${userController.user.value.firstName} ${userController.user.value.lastName}",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    SizedBox(
+                      height: Get.height * 0.03,
                     ),
-                    Text(
-                      "+91 ${userController.user.value.phoneNumber}",
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.grey),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CustomBox(
-                      title: "Message",
-                      image: "assets/images/profile_message.png",
-                      onTap: () {
-                        Get.to(()=> ChatScreen(chatId: chat.value!.id!,));
-                      },
-                    ),
-                    CustomBox(
-                      title: "Voice Call",
-                      isLoading: messageController.isVoiceCallOn.value,
-                      image: "assets/images/profile_voice.png",
-                      onTap: messageController.isVoiceCallOn.value
-                          ? null
-                          : () {
-                              final channelId = chat.value!.id;
-                              debugPrint('StartCAll :-   $channelId');
-                              final receiverId =
-                                  (myId == chat.value?.members?[0].userId)
-                                      ? (chat.value?.members?[1].userId!)
-                                      : (chat.value?.members?[0].userId!);
-                              final receiverName = myId ==
-                                      chat.value?.members?[0].userId
-                                  ? ("${chat.value?.members?[1].firstName} ${chat.value?.members?[1].lastName}") ??
-                                      ''
-                                  : ("${chat.value?.members?[0].firstName} ${chat.value?.members?[0].lastName}") ??
-                                      '';
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // GestureDetector(
+                        //     onTap: () {
+                        //       Get.back();
+                        //     },
+                        //     child: Image.asset("assets/images/back_icon.png",scale: 3,))
+                        IconButton(
+                          color: AppColors.iconGrey,
+                          style: ButtonStyle(
+                            backgroundColor:
+                            WidgetStatePropertyAll(AppColors.white),
+                            shape: WidgetStatePropertyAll(
+                              RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  side: BorderSide(
+                                      color: Colors.grey.shade200)),
+                            ),
+                          ),
+                          onPressed: () {
+                            if (isFromGroup) {
+                              chatController
+                                  .fetchChatType(groupChatId!);
+                            }
+                            Get.back();
+                          },
+                          icon: Icon(Icons.arrow_left),
+                        ),
+                        // IconButton(
+                        //   onPressed: () {
+                        //     _showChatOptions(context, chat.value!.id!, chat.value!.locked.value);
+                        //   },
+                        //   icon: Icon(Icons.more_vert),
+                        // ),
+                        PopupMenuButton(
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStatePropertyAll(
+                                AppColors.white),
+                            foregroundColor: WidgetStatePropertyAll(
+                                AppColors.black),
+                            shape: WidgetStatePropertyAll(
+                              RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  side: BorderSide(
+                                      color: Colors.grey.shade200)),
+                            ),
+                          ),
+                          itemBuilder: (context) {
+                            return [
+                              if(!chat.value!.locked.value)
+                                PopupMenuItem(
+                                  onTap: () {
+                                    Get.back();
+                                    _showSetPinSheet(chat.value!.id!);
+                                  },
+                                  child: Row(
+                                    spacing: 5,
+                                    children: [
+                                      Icon(Icons.lock),
+                                      Text("Lock Chat"),
+                                    ],
+                                  ),
+                                ),
+                              if(chat.value!.locked.value)
+                                PopupMenuItem(
+                                  onTap: () {
+                                    Get.back();
+                                    _confirmUnlock(
+                                        chat.value!.id!, chatController);
+                                  },
+                                  child: Row(
+                                    spacing: 5,
+                                    children: [
+                                      Icon(Icons.lock_open),
+                                      Text("Unlock Chat"),
+                                    ],
+                                  ),
+                                ),
 
-                              messageController.startCall(
-                                  receiverName,
-                                  receiverId.toString(),
-                                  channelId.toString(),
-                                  false,
-                                  context);
-                            },
-                    ),
-                    CustomBox(
-                      title: "Video Call",
-                      isLoading: messageController.isVideoCallOn.value,
-                      image: "assets/images/profile_video.png",
-                      onTap: messageController.isVideoCallOn.value
-                          ? null
-                          : () {
-                              final channelId = chat.value!.id;
-                              debugPrint('StartCAll :-   $channelId');
-                              final receiverId = (myId ==
-                                      chatController
-                                          .chatType.value?.members?[0].userId)
-                                  ? (chatController
-                                      .chatType.value?.members?[1].userId!)
-                                  : (chatController
-                                      .chatType.value?.members?[0].userId!);
-                              final receiverName = myId ==
-                                      chatController
-                                          .chatType.value?.members?[0].userId
-                                  ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
-                                      ''
-                                  : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
-                                      '';
 
-                              messageController.startCall(
-                                  receiverName,
-                                  receiverId.toString(),
-                                  channelId.toString(),
-                                  true,
-                                  context);
-                            },
+                            ];
+                          },
+                        )
+                      ],
                     ),
-                  ],
-                ),
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 0, horizontal: 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    ProfileAvatar(
+                        imageUrl: '${userController.user.value
+                            .profileImageUrl}',
+                        radius: 50),
+                    Column(
                       children: [
                         Text(
-                          "About",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w500),
+                          "${userController.user.value
+                              .firstName} ${userController.user.value
+                              .lastName}",
+                          style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                         ),
                         Text(
-                          userController.user.value.about ?? "No bio",
+                          "+91 ${userController.user.value.phoneNumber}",
                           style: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w400),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.grey),
                         ),
                       ],
                     ),
-                  ),
-                ),
-                Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Media",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                    )),
-                SizedBox(
-                  height: 80,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: 10,
-                    padding: EdgeInsets.only(left: 0),
-                    itemBuilder: (context, index) {
-                      return Container(
-                        height: 70,
-                        width: 70,
-                        margin: EdgeInsets.only(right: 10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(5),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        CustomBox(
+                          title: "Message",
+                          image: "assets/images/profile_message.png",
+                          onTap: () {
+                            Get.to(() => ChatScreen(chatId: chat.value!.id!,));
+                          },
                         ),
-                        child: ClipRRect(
-                            borderRadius: BorderRadius.circular(5),
-                            child: Image.network(
-                              "https://picsum.photos/200/300",
-                              fit: BoxFit.cover,
-                            )),
+                        CustomBox(
+                          title: "Voice Call",
+                          isLoading: messageController.isVoiceCallOn.value,
+                          image: "assets/images/profile_voice.png",
+                          onTap: messageController.isVoiceCallOn.value
+                              ? null
+                              : () {
+                            final channelId = chat.value!.id;
+                            debugPrint('StartCAll :-   $channelId');
+                            final receiverId =
+                            (myId == chat.value?.members?[0].userId)
+                                ? (chat.value?.members?[1].userId!)
+                                : (chat.value?.members?[0].userId!);
+                            final receiverName = myId ==
+                                chat.value?.members?[0].userId
+                                ? ("${chat.value?.members?[1].firstName} ${chat
+                                .value?.members?[1].lastName}") ??
+                                ''
+                                : ("${chat.value?.members?[0].firstName} ${chat
+                                .value?.members?[0].lastName}") ??
+                                '';
+
+                            messageController.startCall(
+                                receiverName,
+                                receiverId.toString(),
+                                channelId.toString(),
+                                false,
+                                context);
+                          },
+                        ),
+                        CustomBox(
+                          title: "Video Call",
+                          isLoading: messageController.isVideoCallOn.value,
+                          image: "assets/images/profile_video.png",
+                          onTap: messageController.isVideoCallOn.value
+                              ? null
+                              : () {
+                            final channelId = chat.value!.id;
+                            debugPrint('StartCAll :-   $channelId');
+                            final receiverId = (myId ==
+                                chatController
+                                    .chatType.value?.members?[0].userId)
+                                ? (chatController
+                                .chatType.value?.members?[1].userId!)
+                                : (chatController
+                                .chatType.value?.members?[0].userId!);
+                            final receiverName = myId ==
+                                chatController
+                                    .chatType.value?.members?[0].userId
+                                ? ("${chatController.chatType.value?.members?[1]
+                                .firstName} ${chatController.chatType.value
+                                ?.members?[1].lastName}") ??
+                                ''
+                                : ("${chatController.chatType.value?.members?[0]
+                                .firstName} ${chatController.chatType.value
+                                ?.members?[0].lastName}") ??
+                                '';
+
+                            messageController.startCall(
+                                receiverName,
+                                receiverId.toString(),
+                                channelId.toString(),
+                                true,
+                                context);
+                          },
+                        ),
+                      ],
+                    ),
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            vertical: 0, horizontal: 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "About",
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              userController.user.value.about ?? "No bio",
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w400),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Media",
+                          style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        )),
+                    // Obx(() {
+                    //   // Replace 'chatMediaUrls' with whatever variable stores your media list in the controller
+                    //   final mediaList = chatController.chatMediaUrls;
+                    //
+                    //   // Handle Empty State
+                    //   if (mediaList.isEmpty) {
+                    //     return const Padding(
+                    //       padding: EdgeInsets.symmetric(vertical: 20),
+                    //       child: Align(
+                    //         alignment: Alignment.centerLeft,
+                    //         child: Text(
+                    //           "No media shared yet.",
+                    //           style: TextStyle(color: Colors.grey, fontSize: 14),
+                    //         ),
+                    //       ),
+                    //     );
+                    //   }
+                    //
+                    //   // Handle Populated State
+                    //   return SizedBox(
+                    //     height: 80,
+                    //     child: ListView.builder(
+                    //       scrollDirection: Axis.horizontal,
+                    //       itemCount: mediaList.length, // Dynamic count
+                    //       padding: const EdgeInsets.only(left: 0),
+                    //       itemBuilder: (context, index) {
+                    //         return Container(
+                    //           height: 70,
+                    //           width: 70,
+                    //           margin: const EdgeInsets.only(right: 10),
+                    //           decoration: BoxDecoration(
+                    //             borderRadius: BorderRadius.circular(5),
+                    //             color: Colors.grey.shade200, // Background while loading
+                    //           ),
+                    //           child: ClipRRect(
+                    //             borderRadius: BorderRadius.circular(5),
+                    //             child: Image.network(
+                    //               mediaList[index], // Actual URL from your controller
+                    //               fit: BoxFit.cover,
+                    //               // Add an error builder just in case a URL fails to load
+                    //               errorBuilder: (context, error, stackTrace) => const Icon(
+                    //                 Icons.broken_image,
+                    //                 color: Colors.grey,
+                    //               ),
+                    //             ),
+                    //           ),
+                    //         );
+                    //       },
+                    //     ),
+                    //   );
+                    // }),
+                    SizedBox(
+                      height: 80,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 10,
+                        padding: EdgeInsets.only(left: 0),
+                        itemBuilder: (context, index) {
+                          return Container(
+                            height: 70,
+                            width: 70,
+                            margin: EdgeInsets.only(right: 10),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: ClipRRect(
+                                borderRadius: BorderRadius.circular(5),
+                                child: Image.network(
+                                  "https://picsum.photos/200/300",
+                                  fit: BoxFit.cover,
+                                )),
+                          );
+                        },
+                      ),
+                    ),
+                    CustomTile(
+                      title: "Change Chat Background",
+                      image: "assets/images/profile_wallpaper.png",
+                      onTap: () {
+                        Get.to(
+                              () =>
+                              ChatWallpaperPicker(chatId: chat.value!.id!),
+                          binding: BindingsBuilder(() {
+                            Get.put(ChatBackgroundController(chat.value!.id!));
+                          }),
+                        );
+                      },
+                    ),
+                    CustomTile(
+                      title: "Notification",
+                      image: "assets/images/profile_notification.png",
+                      onTap: () {},
+                    ),
+                    // CustomTile(
+                    //   title: "Block Number",
+                    //   image: "assets/images/profile_block.png",
+                    //   onTap: () => _showBlockConfirmation(id!),
+                    // ),
+                    Obx(() {
+                      final userController = Get.find<UserController>();
+                      return CustomTile(
+                        title: chat.value!.isBlockedByMe.value ? "Unblock Number" : "Block Number",
+                        image: "assets/images/profile_block.png",
+                        onTap: () async{
+                          if (chat.value!.isBlockedByMe.value) {
+                            await userController.unblockUser(targetUserId: id!);
+                          } else {
+                            _showBlockConfirmation(id!);
+                          }
+                        },
                       );
-                    },
-                  ),
+                    }),
+                    CustomTile(
+                      title: "Report Number",
+                      image: "assets/images/profile_report.png",
+                      onTap: () => _showReportSheet(id!),
+                    ),
+                    Text(
+                      "Version 1.0.0",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-                CustomTile(
-                  title: "Change Chat Background",
-                  image: "assets/images/profile_wallpaper.png",
-                  onTap: () {
-                    Get.to(
-                      () => ChatWallpaperPicker(chatId: chat.value!.id!),
-                      binding: BindingsBuilder(() {
-                        Get.put(ChatBackgroundController(chat.value!.id!));
-                      }),
-                    );
-                  },
-                ),
-                CustomTile(
-                  title: "Notification",
-                  image: "assets/images/profile_notification.png",
-                  onTap: () {},
-                ),
-                CustomTile(
-                  title: "Block Number",
-                  image: "assets/images/profile_block.png",
-                  onTap: () {},
-                ),
-                CustomTile(
-                  title: "Report Number",
-                  image: "assets/images/profile_report.png",
-                  onTap: () {},
-                ),
-                Text(
-                  "Version 1.0.0",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
           ),
         ),
       ),
@@ -313,19 +396,18 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void _showSetPinSheet(int chatId) {
-
     String? pin;
     String? confirmPin;
 
     final chatController = Get.find<ChatScreenController>();
 
-    showDialog(context: Get.context!, builder: (_){
+    showDialog(context: Get.context!, builder: (_) {
       return Dialog(
         backgroundColor: AppColors.black,
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 40
+              horizontal: 20,
+              vertical: 40
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -335,12 +417,14 @@ class ProfileScreen extends StatelessWidget {
                 "Set a 4-digit PIN to lock this chat",
                 style: TextStyle(color: Colors.grey),
               ),
-               SizedBox(height: Get.height*0.03),
+              SizedBox(height: Get.height * 0.03),
               Text(
                 "Create Pin",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600,color: AppColors.white),
+                style: TextStyle(fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white),
               ),
-              SizedBox(height: Get.height*0.02),
+              SizedBox(height: Get.height * 0.02),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: Get.width * 0.04),
                 child: PinCodeTextField(
@@ -364,8 +448,8 @@ class ProfileScreen extends StatelessWidget {
                     fieldOuterPadding: EdgeInsets.symmetric(horizontal: 10),
                     shape: PinCodeFieldShape.box,
                     borderRadius: BorderRadius.circular(12),
-                    fieldHeight: Get.height *0.05,
-                    fieldWidth: Get.width *0.1,
+                    fieldHeight: Get.height * 0.05,
+                    fieldWidth: Get.width * 0.1,
                     activeFillColor: Colors.white,
                     inactiveFillColor: Colors.white,
                     selectedFillColor: Colors.white,
@@ -383,12 +467,14 @@ class ProfileScreen extends StatelessWidget {
                   enableActiveFill: true,
                 ),
               ),
-              SizedBox(height: Get.height*0.01),
+              SizedBox(height: Get.height * 0.01),
               Text(
                 "Confirm Pin",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600,color: AppColors.white),
+                style: TextStyle(fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white),
               ),
-              SizedBox(height: Get.height*0.02),
+              SizedBox(height: Get.height * 0.02),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: Get.width * 0.04),
                 child: PinCodeTextField(
@@ -412,8 +498,8 @@ class ProfileScreen extends StatelessWidget {
                     fieldOuterPadding: EdgeInsets.symmetric(horizontal: 10),
                     shape: PinCodeFieldShape.box,
                     borderRadius: BorderRadius.circular(12),
-                    fieldHeight: Get.height *0.05,
-                    fieldWidth: Get.width *0.1,
+                    fieldHeight: Get.height * 0.05,
+                    fieldWidth: Get.width * 0.1,
                     activeFillColor: Colors.white,
                     inactiveFillColor: Colors.white,
                     selectedFillColor: Colors.white,
@@ -431,16 +517,16 @@ class ProfileScreen extends StatelessWidget {
                   enableActiveFill: true,
                 ),
               ),
-               SizedBox(height: Get.height*0.02),
+              SizedBox(height: Get.height * 0.02),
 
               SizedBox(
-                width: Get.width*0.6,
+                width: Get.width * 0.6,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.white,
                   ),
-                  onPressed: () async{
+                  onPressed: () async {
                     if (pin?.length != 4) {
                       CustomSnackbar.error("Error", "PIN must be 4 digits");
                       return;
@@ -451,7 +537,7 @@ class ProfileScreen extends StatelessWidget {
                       return;
                     }
 
-                   await chatController.lockChat(
+                    await chatController.lockChat(
                       chatId: chatId.toString(),
                       pin: pin!,
                     );
@@ -530,6 +616,206 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  //for report
+
+  void _showReportSheet(int reportedUserId) {
+    // Match your backend enum values
+    final List<Map<String, String>> reportReasons = [
+      {"label": "Spam", "value": "SPAM"},
+      {"label": "Harassment or Bullying", "value": "HARASSMENT"},
+      {"label": "Illegal Content", "value": "ILLEGAL_CONTENT"},
+      {"label": "Misinformation", "value": "MISINFORMATION"},
+      {"label": "Other", "value": "OTHER"},
+    ];
+
+    String? selectedReasonValue;
+    String? selectedReasonLabel;
+    final TextEditingController descriptionController = TextEditingController();
+
+    Get.bottomSheet(
+      backgroundColor: AppColors.white,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      StatefulBuilder(
+        builder: (context, setState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+
+              Text(
+                "Report User",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 4),
+              Text(
+                "Your report is anonymous. Select a reason below.",
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              SizedBox(height: 12),
+
+              // Reason list
+              ...reportReasons.map((reason) => RadioListTile<String>(
+                contentPadding: EdgeInsets.zero,
+                activeColor: AppColors.primary,
+                title: Text(reason["label"]!),
+                value: reason["value"]!,
+                groupValue: selectedReasonValue,
+                onChanged: (val) => setState(() {
+                  selectedReasonValue = val;
+                  selectedReasonLabel = reason["label"];
+                }),
+              )),
+
+              // Description field — always visible but required only for "OTHER"
+              SizedBox(height: 8),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(
+                  hintText: selectedReasonValue == "OTHER"
+                      ? "Describe the issue (required)..."
+                      : "Add description (optional)...",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary),
+                  ),
+                ),
+                maxLines: 3,
+              ),
+
+              SizedBox(height: 16),
+
+              // Submit button
+              Obx(() {
+                final userController = Get.find<UserController>();
+                return SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: AppColors.white,
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: userController.isReportLoading.value
+                        ? null
+                        : () async {
+                      // Validations
+                      if (selectedReasonValue == null) {
+                        CustomSnackbar.error("Error", "Please select a reason");
+                        return;
+                      }
+                      if (selectedReasonValue == "OTHER" &&
+                          descriptionController.text.trim().isEmpty) {
+                        CustomSnackbar.error("Error", "Please describe the issue");
+                        return;
+                      }
+
+                      await userController.reportUser(
+                        reportedUserId: reportedUserId,
+                        reason: selectedReasonValue!,           // "HARASSMENT"
+                        description: descriptionController.text.trim(),
+                      );
+                    },
+                    child: userController.isReportLoading.value
+                        ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : Text("Submit Report"),
+                  ),
+                );
+              }),
+
+              SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+// for block
+
+  void _showBlockConfirmation(int targetUserId) {
+    final userController = Get.find<UserController>();
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          spacing: 8,
+          children: [
+            Icon(Icons.block, color: Colors.red),
+            Text("Block User"),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Are you sure you want to block ${userController.user.value
+                  .firstName}?",
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            SizedBox(height: 10),
+            Text(
+              "• They won't be able to send you messages\n"
+                  "• You won't receive their calls\n"
+                  "• They won't see your last seen or profile photo",
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              await userController.blockUser(targetUserId: targetUserId);
+            },
+            child: const Text("Block"),
+          ),
+        ],
+      ),
+    );
+  }
 
 
 }

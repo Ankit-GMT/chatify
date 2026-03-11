@@ -5,6 +5,7 @@ import 'package:chatify/constants/time_format.dart';
 import 'package:chatify/controllers/chat_screen_controller.dart';
 import 'package:chatify/controllers/message_controller.dart';
 import 'package:chatify/controllers/profile_controller.dart';
+import 'package:chatify/controllers/user_controller.dart';
 import 'package:chatify/models/message.dart';
 import 'package:chatify/widgets/dialog_textfield.dart';
 import 'package:chatify/widgets/message_card.dart';
@@ -28,7 +29,6 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final chatController = Get.put(ChatScreenController(chatId: chatId!));
     final profileController = Get.find<ProfileController>();
     final messageController = Get.put(MessageController());
@@ -177,10 +177,8 @@ class ChatScreen extends StatelessWidget {
                         bottomLeft: Radius.circular(20),
                         bottomRight: Radius.circular(20),
                       )),
-                  child: Obx(
-                    () {
-                      return
-                      Row(
+                  child: Obx(() {
+                    return Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
@@ -305,34 +303,61 @@ class ChatScreen extends StatelessWidget {
                                                       ),
                                               ),
 
-                                              chatController
-                                                  .type.value ==
-                                                  "GROUP"
-                                                  ? SizedBox.shrink():
-                                              Obx(() {
-                                                final chat = chatController.chatType.value;
-                                                if (chat == null || chat.members == null || chat.members!.length < 2) {
-                                                  return const SizedBox.shrink();
-                                                }
+                                              chatController.type.value ==
+                                                      "GROUP"
+                                                  ? SizedBox.shrink()
+                                                  : Obx(() {
+                                                      final chat =
+                                                          chatController
+                                                              .chatType.value;
+                                                      if (chat == null ||
+                                                          chat.members ==
+                                                              null ||
+                                                          chat.members!.length <
+                                                              2) {
+                                                        return const SizedBox
+                                                            .shrink();
+                                                      }
 
-                                                final int otherId =
-                                                (myId == chat.members![0].userId)
-                                                    ? chat.members![1].userId!
-                                                    : chat.members![0].userId!;
+                                                      final int otherId =
+                                                          (myId ==
+                                                                  chat
+                                                                      .members![
+                                                                          0]
+                                                                      .userId)
+                                                              ? chat.members![1]
+                                                                  .userId!
+                                                              : chat.members![0]
+                                                                  .userId!;
 
-                                                final bool isOnline = socket.onlineUsers[otherId] ?? false;
-                                                final DateTime? lastSeen = socket.lastSeenTimes[otherId];
+                                                      final bool isOnline =
+                                                          socket.onlineUsers[
+                                                                  otherId] ??
+                                                              false;
+                                                      final DateTime? lastSeen =
+                                                          socket.lastSeenTimes[
+                                                              otherId];
 
-                                                return Text(
-                                                  isOnline ? "Online" : TimeFormat.formatLastSeen(lastSeen),
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w300,
-                                                    fontSize: 12,
-                                                    // Change color based on status
-                                                    color: isOnline ? Colors.greenAccent : Colors.white.withAlpha(180),
-                                                  ),
-                                                );
-                                              }),
+                                                      return Text(
+                                                        isOnline
+                                                            ? "Online"
+                                                            : TimeFormat
+                                                                .formatLastSeen(
+                                                                    lastSeen),
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w300,
+                                                          fontSize: 12,
+                                                          // Change color based on status
+                                                          color: isOnline
+                                                              ? Colors
+                                                                  .greenAccent
+                                                              : Colors.white
+                                                                  .withAlpha(
+                                                                      180),
+                                                        ),
+                                                      );
+                                                    }),
 
                                               // Text(
                                               //   "Online",
@@ -353,166 +378,204 @@ class ChatScreen extends StatelessWidget {
                         //     ? SizedBox()
                         //     :
                         Row(
-                                children: [
-                                  messageController.isVoiceCallOn.value || messageController.isGroupVoiceCallOn.value
-                                      ? SizedBox(
-                                          width: Get.width * 0.04,
-                                          height: Get.width * 0.04,
-                                          child: CircularProgressIndicator(
-                                              color: Colors.white),
-                                        )
-                                      : InkWell(
-                                          onTap:messageController.isVoiceCallOn.value || messageController.isGroupVoiceCallOn.value ? null : () {
-                                           if(chatController.type.value == "PRIVATE"){
-                                             final channelId = chatId;
-                                             debugPrint(
-                                                 'StartCAll :-   $channelId');
-                                             final receiverId = (myId ==
-                                                 chatController
-                                                     .chatType
-                                                     .value
-                                                     ?.members?[0]
-                                                     .userId)
-                                                 ? (chatController.chatType.value
-                                                 ?.members?[1].userId!)
-                                                 : (chatController.chatType.value
-                                                 ?.members?[0].userId!);
-                                             final receiverName = myId ==
-                                                 chatController
-                                                     .chatType
-                                                     .value
-                                                     ?.members?[0]
-                                                     .userId
-                                                 ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
-                                                 ''
-                                                 : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
-                                                 '';
+                          children: [
+                            messageController.isVoiceCallOn.value ||
+                                    messageController.isGroupVoiceCallOn.value
+                                ? SizedBox(
+                                    width: Get.width * 0.04,
+                                    height: Get.width * 0.04,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white),
+                                  )
+                                : InkWell(
+                                    onTap: messageController
+                                                .isVoiceCallOn.value ||
+                                            messageController
+                                                .isGroupVoiceCallOn.value
+                                        ? null
+                                        : () {
+                                            if (chatController.type.value ==
+                                                "PRIVATE") {
+                                              final channelId = chatId;
+                                              debugPrint(
+                                                  'StartCAll :-   $channelId');
+                                              final receiverId = (myId ==
+                                                      chatController
+                                                          .chatType
+                                                          .value
+                                                          ?.members?[0]
+                                                          .userId)
+                                                  ? (chatController
+                                                      .chatType
+                                                      .value
+                                                      ?.members?[1]
+                                                      .userId!)
+                                                  : (chatController
+                                                      .chatType
+                                                      .value
+                                                      ?.members?[0]
+                                                      .userId!);
+                                              final receiverName = myId ==
+                                                      chatController
+                                                          .chatType
+                                                          .value
+                                                          ?.members?[0]
+                                                          .userId
+                                                  ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
+                                                      ''
+                                                  : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
+                                                      '';
 
-                                             messageController.startCall(
-                                                 receiverName,
-                                                 receiverId.toString(),
-                                                 channelId.toString(),
-                                                 false,
-                                                 context);
-                                           }
-                                           else{
-                                             final channelId = chatController.chatType.value!.id.toString();
-                                             debugPrint('StartCAll channel:-   $channelId');
-                                             final rIds = chatController.chatType.value?.members
-                                                 ?.map((m) => m.userId)
-                                                 .where((id) => id != myId)
-                                                 .toList();
-                                             final receiverIds =
-                                                 rIds?.map((id) => id.toString()).toList() ??
-                                                     [];
-                                             debugPrint(
-                                                 "Start call receiverids:- $receiverIds");
-                                             messageController.startGroupCall(
-                                                 context: context,
-                                                 channelId: channelId,
-                                                 callerId: profileController.user.value!.id
-                                                     .toString(),
-                                                 callerName: profileController
-                                                     .user.value!.firstName
-                                                     .toString(),
-                                                 isVideo: false,
-                                                 receiverIds: receiverIds,
-                                                 groupId: chatController.chatType.value!.id!);
-                                           }
+                                              messageController.startCall(
+                                                  receiverName,
+                                                  receiverId.toString(),
+                                                  channelId.toString(),
+                                                  false,
+                                                  context);
+                                            } else {
+                                              final channelId = chatController
+                                                  .chatType.value!.id
+                                                  .toString();
+                                              debugPrint(
+                                                  'StartCAll channel:-   $channelId');
+                                              final rIds = chatController
+                                                  .chatType.value?.members
+                                                  ?.map((m) => m.userId)
+                                                  .where((id) => id != myId)
+                                                  .toList();
+                                              final receiverIds = rIds
+                                                      ?.map(
+                                                          (id) => id.toString())
+                                                      .toList() ??
+                                                  [];
+                                              debugPrint(
+                                                  "Start call receiverids:- $receiverIds");
+                                              messageController.startGroupCall(
+                                                  context: context,
+                                                  channelId: channelId,
+                                                  callerId: profileController
+                                                      .user.value!.id
+                                                      .toString(),
+                                                  callerName: profileController
+                                                      .user.value!.firstName
+                                                      .toString(),
+                                                  isVideo: false,
+                                                  receiverIds: receiverIds,
+                                                  groupId: chatController
+                                                      .chatType.value!.id!);
+                                            }
                                           },
-                                          child: CircleAvatar(
-                                            radius: Get.width * 0.05,
-                                            backgroundColor: Colors.white,
-                                            child: Image.asset(
-                                                "assets/images/chat_call.png",
-                                                scale: 2),
-                                          ),
-                                        ),
-                                  SizedBox(
-                                    width: Get.width * 0.05,
+                                    child: CircleAvatar(
+                                      radius: Get.width * 0.05,
+                                      backgroundColor: Colors.white,
+                                      child: Image.asset(
+                                          "assets/images/chat_call.png",
+                                          scale: 2),
+                                    ),
                                   ),
-                                  messageController.isVideoCallOn.value || messageController.isGroupVideoCallOn.value
-                                      ? SizedBox(
-                                          width: Get.width * 0.04,
-                                          height: Get.width * 0.04,
-                                          child: CircularProgressIndicator(
-                                              color: Colors.white),
-                                        )
-                                      : InkWell(
-                                          onTap:
-                                          messageController.isVideoCallOn.value || messageController.isGroupVideoCallOn.value ? null : () {
-                                           if(chatController.type.value == "PRIVATE"){
-                                             final channelId = chatId;
-                                             debugPrint(
-                                                 'StartCAll :-   $channelId');
-                                             final receiverId = (myId ==
-                                                 chatController
-                                                     .chatType
-                                                     .value
-                                                     ?.members?[0]
-                                                     .userId)
-                                                 ? (chatController.chatType.value
-                                                 ?.members?[1].userId!)
-                                                 : (chatController.chatType.value
-                                                 ?.members?[0].userId!);
-                                             final receiverName = myId ==
-                                                 chatController
-                                                     .chatType
-                                                     .value
-                                                     ?.members?[0]
-                                                     .userId
-                                                 ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
-                                                 ''
-                                                 : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
-                                                 '';
+                            SizedBox(
+                              width: Get.width * 0.05,
+                            ),
+                            messageController.isVideoCallOn.value ||
+                                    messageController.isGroupVideoCallOn.value
+                                ? SizedBox(
+                                    width: Get.width * 0.04,
+                                    height: Get.width * 0.04,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white),
+                                  )
+                                : InkWell(
+                                    onTap: messageController
+                                                .isVideoCallOn.value ||
+                                            messageController
+                                                .isGroupVideoCallOn.value
+                                        ? null
+                                        : () {
+                                            if (chatController.type.value ==
+                                                "PRIVATE") {
+                                              final channelId = chatId;
+                                              debugPrint(
+                                                  'StartCAll :-   $channelId');
+                                              final receiverId = (myId ==
+                                                      chatController
+                                                          .chatType
+                                                          .value
+                                                          ?.members?[0]
+                                                          .userId)
+                                                  ? (chatController
+                                                      .chatType
+                                                      .value
+                                                      ?.members?[1]
+                                                      .userId!)
+                                                  : (chatController
+                                                      .chatType
+                                                      .value
+                                                      ?.members?[0]
+                                                      .userId!);
+                                              final receiverName = myId ==
+                                                      chatController
+                                                          .chatType
+                                                          .value
+                                                          ?.members?[0]
+                                                          .userId
+                                                  ? ("${chatController.chatType.value?.members?[1].firstName} ${chatController.chatType.value?.members?[1].lastName}") ??
+                                                      ''
+                                                  : ("${chatController.chatType.value?.members?[0].firstName} ${chatController.chatType.value?.members?[0].lastName}") ??
+                                                      '';
 
-                                             messageController.startCall(
-                                                 receiverName,
-                                                 receiverId.toString(),
-                                                 channelId.toString(),
-                                                 true,
-                                                 context);
-                                           }
-                                           else{
-                                             final channelId = chatController.chatType.value!.id.toString();
-                                             debugPrint('StartCAll channel:-   $channelId');
-                                             final rIds = chatController.chatType.value?.members
-                                                 ?.map((m) => m.userId)
-                                                 .where((id) => id != myId)
-                                                 .toList();
-                                             final receiverIds =
-                                                 rIds?.map((id) => id.toString()).toList() ??
-                                                     [];
-                                             debugPrint(
-                                                 "Start call receiverids:- $receiverIds");
-                                             messageController.startGroupCall(
-                                                 context: context,
-                                                 channelId: channelId,
-                                                 callerId: profileController.user.value!.id
-                                                     .toString(),
-                                                 callerName: profileController
-                                                     .user.value!.firstName
-                                                     .toString(),
-                                                 isVideo: true,
-                                                 receiverIds: receiverIds,
-                                                 groupId: chatController.chatType.value!.id!);
-                                           }
+                                              messageController.startCall(
+                                                  receiverName,
+                                                  receiverId.toString(),
+                                                  channelId.toString(),
+                                                  true,
+                                                  context);
+                                            } else {
+                                              final channelId = chatController
+                                                  .chatType.value!.id
+                                                  .toString();
+                                              debugPrint(
+                                                  'StartCAll channel:-   $channelId');
+                                              final rIds = chatController
+                                                  .chatType.value?.members
+                                                  ?.map((m) => m.userId)
+                                                  .where((id) => id != myId)
+                                                  .toList();
+                                              final receiverIds = rIds
+                                                      ?.map(
+                                                          (id) => id.toString())
+                                                      .toList() ??
+                                                  [];
+                                              debugPrint(
+                                                  "Start call receiverids:- $receiverIds");
+                                              messageController.startGroupCall(
+                                                  context: context,
+                                                  channelId: channelId,
+                                                  callerId: profileController
+                                                      .user.value!.id
+                                                      .toString(),
+                                                  callerName: profileController
+                                                      .user.value!.firstName
+                                                      .toString(),
+                                                  isVideo: true,
+                                                  receiverIds: receiverIds,
+                                                  groupId: chatController
+                                                      .chatType.value!.id!);
+                                            }
                                           },
-                                          child: CircleAvatar(
-                                            radius: Get.width * 0.05,
-                                            backgroundColor: Colors.white,
-                                            child: Image.asset(
-                                              "assets/images/chat_videocall.png",
-                                              scale: 2,
-                                            ),
-                                          ),
-                                        ),
-                                ],
-                              )
+                                    child: CircleAvatar(
+                                      radius: Get.width * 0.05,
+                                      backgroundColor: Colors.white,
+                                      child: Image.asset(
+                                        "assets/images/chat_videocall.png",
+                                        scale: 2,
+                                      ),
+                                    ),
+                                  ),
+                          ],
+                        )
                       ],
                     );
-      }
-                  ),
+                  }),
                 ),
                 Expanded(
                   child: Obx(
@@ -529,14 +592,12 @@ class ChatScreen extends StatelessWidget {
                             chatController.messages.length - index - 1;
 
                         final Message message =
-                        chatController.messages[realIndex];
+                            chatController.messages[realIndex];
 
-                      // OLDER message (one step back in time)
-                        final Message? previousMessage =
-                        (realIndex > 0)
+                        // OLDER message (one step back in time)
+                        final Message? previousMessage = (realIndex > 0)
                             ? chatController.messages[realIndex - 1]
                             : null;
-
 
                         final isMyMessage = message.senderId == myId;
                         // debugPrint("Index ${index}");
@@ -623,7 +684,7 @@ class ChatScreen extends StatelessWidget {
                           chatController.chatType.value?.members?[0].userId)
                       ? (chatController.chatType.value?.members?[1].userId!)
                       : (chatController.chatType.value?.members?[0].userId!);
-                  if(socket.typingUsers.isNotEmpty){
+                  if (socket.typingUsers.isNotEmpty) {
                     if (socket.typingUsers[otherUserId] == true) {
                       return Align(
                         alignment: Alignment.centerLeft,
@@ -643,114 +704,122 @@ class ChatScreen extends StatelessWidget {
                   }
                   return SizedBox.shrink();
                 }),
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: Get.width * 0.05, vertical: 5),
-                  child: SizedBox(
-                    width: double.infinity,
-                    // height: 44,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            style: TextStyle(color: AppColors.white),
-                            focusNode: messageController.focusNode,
-                            controller: msgController,
-                            maxLines: 5,
-                            minLines: 1,
-                            cursorColor: AppColors.white,
-                            onChanged: (value) {
-                              messageController.sendTyping(chatId!, true);
-                            },
-                            onEditingComplete: () {
-                              messageController.sendTyping(chatId!, false);
-                            },
-                            decoration: InputDecoration(
-                                isDense: true,
-                                filled: true,
-                                fillColor: AppColors.primary,
-                                prefixIcon: IconButton(
-                                  padding: EdgeInsets.only(bottom: 0),
-                                  onPressed:
-                                      messageController.toggleEmojiPicker,
-                                  icon: Icon(
-                                    Icons.emoji_emotions_outlined,
-                                    color: AppColors.white.withAlpha(200),
-                                  ),
-                                ),
-                                suffixIcon: IconButton(
-                                  onPressed: () {
-                                    // messageController.pickImage(
-                                    //     ImageSource.gallery, chatId!);
-                                    showAttachmentMenu(context, attachKey);
-                                  },
-                                  icon: Icon(
-                                    Icons.attach_file,
-                                    color: AppColors.white,
-                                  ),
-                                ),
-                                hintText: "Type a message . . .",
-                                hintStyle: TextStyle(
-                                    color: AppColors.white.withAlpha(155)),
-                                border: OutlineInputBorder(
-                                  borderSide: BorderSide.none,
-                                  borderRadius: BorderRadius.circular(20),
-                                )),
-                          ),
-                        ),
-                        SizedBox(
-                          width: Get.width * 0.02,
-                        ),
-                        Obx(
-                          () => messageController.isLoading.value
-                              ? SizedBox(
-                                  height: Get.height * 0.045,
-                                  width: Get.width * 0.12,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      color: AppColors.primary,
+                Obx(
+                  () {
+                    if (chatController.chatType.value?.isBlockedByMe.value ??
+                        false) {
+                      return _blockedBanner(chatController);
+                    }
+                    return Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: Get.width * 0.05, vertical: 5),
+                      child: SizedBox(
+                        width: double.infinity,
+                        // height: 44,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                style: TextStyle(color: AppColors.white),
+                                focusNode: messageController.focusNode,
+                                controller: msgController,
+                                maxLines: 5,
+                                minLines: 1,
+                                cursorColor: AppColors.white,
+                                onChanged: (value) {
+                                  messageController.sendTyping(chatId!, true);
+                                },
+                                onEditingComplete: () {
+                                  messageController.sendTyping(chatId!, false);
+                                },
+                                decoration: InputDecoration(
+                                    isDense: true,
+                                    filled: true,
+                                    fillColor: AppColors.primary,
+                                    prefixIcon: IconButton(
+                                      padding: EdgeInsets.only(bottom: 0),
+                                      onPressed:
+                                          messageController.toggleEmojiPicker,
+                                      icon: Icon(
+                                        Icons.emoji_emotions_outlined,
+                                        color: AppColors.white.withAlpha(200),
+                                      ),
                                     ),
-                                  ),
-                                )
-                              : Container(
-                                  height: Get.height * 0.045,
-                                  width: Get.width * 0.12,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: InkWell(
-                                      key: attachKey,
-                                      onTap: sendMessage,
-                                      child: Icon(
-                                        Icons.send,
-                                        size: Get.width * 0.05,
+                                    suffixIcon: IconButton(
+                                      onPressed: () {
+                                        // messageController.pickImage(
+                                        //     ImageSource.gallery, chatId!);
+                                        showAttachmentMenu(context, attachKey);
+                                      },
+                                      icon: Icon(
+                                        Icons.attach_file,
                                         color: AppColors.white,
-                                      )),
+                                      ),
+                                    ),
+                                    hintText: "Type a message . . .",
+                                    hintStyle: TextStyle(
+                                        color: AppColors.white.withAlpha(155)),
+                                    border: OutlineInputBorder(
+                                      borderSide: BorderSide.none,
+                                      borderRadius: BorderRadius.circular(20),
+                                    )),
+                              ),
+                            ),
+                            SizedBox(
+                              width: Get.width * 0.02,
+                            ),
+                            Obx(
+                              () => messageController.isLoading.value
+                                  ? SizedBox(
+                                      height: Get.height * 0.045,
+                                      width: Get.width * 0.12,
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    )
+                                  : Container(
+                                      height: Get.height * 0.045,
+                                      width: Get.width * 0.12,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: InkWell(
+                                          key: attachKey,
+                                          onTap: sendMessage,
+                                          child: Icon(
+                                            Icons.send,
+                                            size: Get.width * 0.05,
+                                            color: AppColors.white,
+                                          )),
 
-                                  // Row(
-                                  //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  //   children: [
-                                  //     InkWell(
-                                  //         onTap: _sendMessage,
-                                  //         child:
-                                  //         Image.asset(
-                                  //           "assets/images/chat_add.png",
-                                  //           scale: 2,
-                                  //         ),
-                                  //     ),
-                                  //     Image.asset(
-                                  //       "assets/images/chat_mic.png",
-                                  //       scale: 2,
-                                  //     ),
-                                  //   ],
-                                  // ),
-                                ),
+                                      // Row(
+                                      //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      //   children: [
+                                      //     InkWell(
+                                      //         onTap: _sendMessage,
+                                      //         child:
+                                      //         Image.asset(
+                                      //           "assets/images/chat_add.png",
+                                      //           scale: 2,
+                                      //         ),
+                                      //     ),
+                                      //     Image.asset(
+                                      //       "assets/images/chat_mic.png",
+                                      //       scale: 2,
+                                      //     ),
+                                      //   ],
+                                      // ),
+                                    ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
                 SizedBox(
                   height: 5,
@@ -785,6 +854,67 @@ class ChatScreen extends StatelessWidget {
             // SocketDebugOverlay(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _blockedBanner(ChatScreenController chatController) {
+    final userController = Get.find<UserController>();
+    final box = GetStorage();
+    final myId = box.read("userId");
+
+    final String firstName =
+        myId == chatController.chatType.value?.members?[0].userId
+            ? ("${chatController.chatType.value?.members?[1].firstName}") ?? ''
+            : ("${chatController.chatType.value?.members?[0].firstName}") ?? '';
+    final targetUserId =
+        myId == chatController.chatType.value?.members?[0].userId
+            ? (chatController.chatType.value?.members?[1].userId!)
+            : (chatController.chatType.value?.members?[0].userId!);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade900,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.block, color: Colors.red, size: 28),
+          SizedBox(height: 6),
+          Text(
+            "You blocked $firstName",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            "You can't send or receive messages from this contact.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+          SizedBox(height: 10),
+          TextButton(
+            onPressed: () async {
+              await userController.unblockUser(
+                  targetUserId: targetUserId!);
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.red.withValues(alpha: 0.15),
+              foregroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text("Unblock"),
+          ),
+        ],
       ),
     );
   }
@@ -880,6 +1010,7 @@ Widget chatBackground(String? bgUrl) {
     },
   );
 }
+
 // class SocketDebugOverlay extends StatelessWidget {
 //   final Widget child;
 //   const SocketDebugOverlay({super.key, required this.child});

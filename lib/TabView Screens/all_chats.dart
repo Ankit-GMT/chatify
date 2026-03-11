@@ -67,7 +67,7 @@ class AllChats extends StatelessWidget {
                         },
                         separatorBuilder: (BuildContext context, int index) {
                           return Divider(
-                            thickness: 1,
+                            thickness: 0.3,
                             indent: 15,
                             endIndent: 15,
                           );

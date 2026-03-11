@@ -329,6 +329,57 @@ class GroupProfileScreen extends StatelessWidget {
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                     )),
+                // Obx(() {
+                //   // Replace 'chatMediaUrls' with whatever variable stores your media list in the controller
+                //   final mediaList = chatController.chatMediaUrls;
+                //
+                //   // Handle Empty State
+                //   if (mediaList.isEmpty) {
+                //     return const Padding(
+                //       padding: EdgeInsets.symmetric(vertical: 20),
+                //       child: Align(
+                //         alignment: Alignment.centerLeft,
+                //         child: Text(
+                //           "No media shared yet.",
+                //           style: TextStyle(color: Colors.grey, fontSize: 14),
+                //         ),
+                //       ),
+                //     );
+                //   }
+                //
+                //   // Handle Populated State
+                //   return SizedBox(
+                //     height: 80,
+                //     child: ListView.builder(
+                //       scrollDirection: Axis.horizontal,
+                //       itemCount: mediaList.length, // Dynamic count
+                //       padding: const EdgeInsets.only(left: 0),
+                //       itemBuilder: (context, index) {
+                //         return Container(
+                //           height: 70,
+                //           width: 70,
+                //           margin: const EdgeInsets.only(right: 10),
+                //           decoration: BoxDecoration(
+                //             borderRadius: BorderRadius.circular(5),
+                //             color: Colors.grey.shade200, // Background while loading
+                //           ),
+                //           child: ClipRRect(
+                //             borderRadius: BorderRadius.circular(5),
+                //             child: Image.network(
+                //               mediaList[index], // Actual URL from your controller
+                //               fit: BoxFit.cover,
+                //               // Add an error builder just in case a URL fails to load
+                //               errorBuilder: (context, error, stackTrace) => const Icon(
+                //                 Icons.broken_image,
+                //                 color: Colors.grey,
+                //               ),
+                //             ),
+                //           ),
+                //         );
+                //       },
+                //     ),
+                //   );
+                // }),
                 SizedBox(
                   height: 80,
                   child: ListView.builder(
@@ -590,6 +641,11 @@ class GroupProfileScreen extends StatelessWidget {
                           await tabController.getAllChats();
                         },
                       ),
+                CustomTile(
+                  title: "Report Group",
+                  image: "assets/images/profile_report.png",
+                  onTap: () => _showReportSheet(chat.value!.id!),
+                ),
                 Text(
                   "Version 1.0.0",
                   style: TextStyle(
@@ -827,6 +883,154 @@ class GroupProfileScreen extends StatelessWidget {
         ],
       ),
       // barrierDismissible: false,
+    );
+  }
+
+  //for report
+
+  void _showReportSheet(int reportedGroupId) {
+    // Match your backend enum values
+    final List<Map<String, String>> reportReasons = [
+      {"label": "Spam", "value": "SPAM"},
+      {"label": "Harassment or Bullying", "value": "HARASSMENT"},
+      {"label": "Illegal Content", "value": "ILLEGAL_CONTENT"},
+      {"label": "Misinformation", "value": "MISINFORMATION"},
+      {"label": "Other", "value": "OTHER"},
+    ];
+
+    String? selectedReasonValue;
+    String? selectedReasonLabel;
+    final TextEditingController descriptionController = TextEditingController();
+
+    Get.bottomSheet(
+      backgroundColor: AppColors.white,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      StatefulBuilder(
+        builder: (context, setState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+
+              Text(
+                "Report Group",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 4),
+              Text(
+                "Your report is anonymous. Select a reason below.",
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              SizedBox(height: 12),
+
+              // Reason list
+              ...reportReasons.map((reason) => RadioListTile<String>(
+                contentPadding: EdgeInsets.zero,
+                activeColor: AppColors.primary,
+                title: Text(reason["label"]!),
+                value: reason["value"]!,
+                groupValue: selectedReasonValue,
+                onChanged: (val) => setState(() {
+                  selectedReasonValue = val;
+                  selectedReasonLabel = reason["label"];
+                }),
+              )),
+
+              // Description field — always visible but required only for "OTHER"
+              SizedBox(height: 8),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(
+                  hintText: selectedReasonValue == "OTHER"
+                      ? "Describe the issue (required)..."
+                      : "Add description (optional)...",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary),
+                  ),
+                ),
+                maxLines: 3,
+              ),
+
+              SizedBox(height: 16),
+
+              // Submit button
+              Obx(() {
+                final groupController = Get.find<GroupController>();
+                return SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: AppColors.white,
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: groupController.isReportLoading.value
+                        ? null
+                        : () async {
+                      // Validations
+                      if (selectedReasonValue == null) {
+                        CustomSnackbar.error("Error", "Please select a reason");
+                        return;
+                      }
+                      if (selectedReasonValue == "OTHER" &&
+                          descriptionController.text.trim().isEmpty) {
+                        CustomSnackbar.error("Error", "Please describe the issue");
+                        return;
+                      }
+
+                      await groupController.reportGroup(
+                        reportedGroupId: reportedGroupId,
+                        reason: selectedReasonValue!,           // "HARASSMENT"
+                        description: descriptionController.text.trim(),
+                      );
+                    },
+                    child: groupController.isReportLoading.value
+                        ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : Text("Submit Report"),
+                  ),
+                );
+              }),
+
+              SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

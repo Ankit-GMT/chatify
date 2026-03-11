@@ -30,6 +30,8 @@ class ChatScreenController extends GetxController {
 
   RxList<Message> messages = <Message>[].obs;
 
+  RxList<String> chatMediaUrls = <String>[].obs;
+
   var isLoading = true.obs;
 
   int? get otherUserId {
@@ -38,6 +40,32 @@ class ChatScreenController extends GetxController {
     final myId = box.read("userId");
     return (myId == members[0].userId) ? members[1].userId : members[0].userId;
   }
+
+  void updateMediaUrls() {
+    final List<String> extractedUrls = [];
+
+    for (var msg in messages) {
+      // Skip deleted messages or messages without files
+      if (msg.deleted || msg.fileUrl == null) continue;
+
+      // Determine if it's an image or video.
+      // You can adjust these string checks based on what your backend sends.
+      final bool isImage = msg.type == 'IMAGE' || (msg.fileMimeType?.startsWith('image/') ?? false);
+      final bool isVideo = msg.type == 'VIDEO' || (msg.fileMimeType?.startsWith('video/') ?? false);
+
+      if (isImage) {
+        extractedUrls.add(msg.fileUrl!);
+      } else if (isVideo) {
+        // If it's a video, use the thumbnail so the UI doesn't try to render a raw video URL in an Image widget.
+        // Fallback to a default placeholder string if thumbnail is somehow missing.
+        extractedUrls.add(msg.thumbnailUrl ?? "https://picsum.photos/200/300");
+      }
+    }
+
+    // 3. Update the observable list (assignAll is the most efficient way to update an RxList in GetX)
+    chatMediaUrls.assignAll(extractedUrls.reversed); // .reversed so the newest media shows first
+  }
+
 
   Future<void> loadMessages(int id) async {
     final data = await fetchMessages(id);
@@ -53,6 +81,7 @@ class ChatScreenController extends GetxController {
 
     await markChatAsRead(id);
     await initializeDownloads();
+    updateMediaUrls();
   }
 
   void fetchChatType(int id) async {
@@ -343,6 +372,7 @@ class ChatScreenController extends GetxController {
   void onInit() {
     // TODO: implement onInit
     super.onInit();
+    ever(messages, (_) => updateMediaUrls());
     socket.setActiveChat(chatId);
     ever(chatType, (value) {
       if (value != null && otherUserId != null) {

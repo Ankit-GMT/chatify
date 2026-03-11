@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 
 class ChatType {
   int? id;
@@ -16,6 +15,15 @@ class ChatType {
   RxInt unreadCount = 0.obs;
   RxString lastMessageAt = ''.obs;
   RxString lastMessageContent = ''.obs;
+  //
+  RxInt lastMessageId = 0.obs;
+  RxBool lastMessageIsRead = false.obs;
+  RxBool lastMessageIsDelivered = false.obs;
+  //
+  RxBool isBlockedByMe = false.obs;
+  RxBool isBlockedByThem = false.obs;
+  RxBool isBlocked = false.obs;
+  //
   String? lastMessageType;
   int? lastSenderId;
   String? lastSenderName;
@@ -37,6 +45,12 @@ class ChatType {
         int? unreadCount,
         String? lastMessageAt,
         String? lastMessageContent,
+        int? lastMessageId,
+        bool? lastMessageIsRead,
+        bool? lastMessageIsDelivered,
+        bool? isBlockedByMe,
+        bool? isBlockedByThem,
+        bool? isBlocked,
         this.lastMessageType,
         this.lastSenderId,
         this.lastSenderName,
@@ -47,6 +61,14 @@ class ChatType {
     this.unreadCount.value = unreadCount ?? 0;
     this.lastMessageAt.value = lastMessageAt ?? '';
     this.lastMessageContent.value = lastMessageContent ?? '';
+
+    this.lastMessageId.value = lastMessageId ?? 0;
+    this.lastMessageIsRead.value = lastMessageIsRead ?? false;
+    this.lastMessageIsDelivered.value = lastMessageIsDelivered ?? false;
+
+    this.isBlockedByMe.value = isBlockedByMe ?? false;
+    this.isBlockedByThem.value = isBlockedByThem ?? false;
+    this.isBlocked.value = isBlocked ?? false;
   }
 
   ChatType.fromJson(Map<String, dynamic> json) {
@@ -62,12 +84,19 @@ class ChatType {
     unreadCount = (json['unreadCount'] as int? ?? 0).obs;
     lastMessageAt = (json['lastMessageAt'] as String? ?? '').obs;
     lastMessageContent = (json['lastMessageContent']as String? ?? '').obs;
+    lastMessageId = (json['lastMessageId'] as int? ?? 0).obs;
+    lastMessageIsRead = (json['lastMessageIsRead'] == true).obs;
+    lastMessageIsDelivered = (json['lastMessageIsDelivered'] == true).obs;
     lastSenderId = json['lastSenderId'];
     lastSenderName = json['lastSenderName'];
     pinned = (json['pinned'] == true).obs;
 
     muted = (json["muted"] == true).obs;
     locked = (json["locked"] == true).obs;
+
+    isBlockedByMe = (json['isBlockedByMe'] == true).obs;
+    isBlockedByThem = (json['isBlockedByThem'] == true).obs;
+    isBlocked = (json['isBlocked'] == true).obs;
 
 
     if (json['members'] != null) {
@@ -92,12 +121,18 @@ class ChatType {
     data['pinOrder'] = pinOrder;
     data['lastMessageAt'] = lastMessageAt.value;
     data['lastMessageContent'] = lastMessageContent.value;
+    data['lastMessageId'] = lastMessageId.value;
+    data['lastMessageIsRead'] = lastMessageIsRead.value;
+    data['lastMessageIsDelivered'] = lastMessageIsDelivered.value;
     data['lastMessageType'] = lastMessageType;
     data['lastSenderId'] = lastSenderId;
     data['lastSenderName'] = lastSenderName;
     data['pinned'] = pinned.value;
     data['muted'] = muted.value;
     data['locked'] = locked.value;
+    data['isBlockedByMe'] = isBlockedByMe.value;
+    data['isBlockedByThem'] = isBlockedByThem.value;
+    data['isBlocked'] = isBlocked.value;
 
 
     if (members != null) {

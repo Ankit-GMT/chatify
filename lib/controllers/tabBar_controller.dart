@@ -225,6 +225,8 @@ class TabBarController extends GetxController {
       if (!isCurrentChat) {
         chat.lastMessageContent.value = message.content ?? '';
         chat.lastMessageAt.value = message.sentAt.toString() ?? DateTime.now().toIso8601String();
+        chat.lastMessageIsDelivered.value = message.isDelivered.value;
+        chat.lastMessageIsRead.value = message.isRead.value;
 
         final myId = box.read("userId");
         if (message.senderId != myId) {

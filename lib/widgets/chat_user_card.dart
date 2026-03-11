@@ -104,8 +104,12 @@ class _ChatUserCardState extends State<ChatUserCard> {
         return Row(
           children: [
             widget.chatType?.lastSenderId == myId
-                ? Icon(Icons.done_all_rounded,
-                    color: widget.chatType?.unreadCount.value == 0
+                ? Icon(
+                    ((widget.chatType?.lastMessageIsDelivered.value ?? false) ||
+                            (widget.chatType?.lastMessageIsRead.value ?? false))
+                        ? Icons.done_all_rounded
+                        : Icons.done,
+                    color: (widget.chatType?.lastMessageIsRead.value ?? false)
                         ? Colors.blue
                         : Colors.grey,
                     size: 15)
